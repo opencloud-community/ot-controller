@@ -1,4 +1,4 @@
-# Identity Provider (KeyCloak), deprecated configuration
+# Identity Provider (Keycloak), deprecated configuration
 
 This page describes how OIDC using Keycloak was configured in the controller.
 Generic information for Keycloak and its configuration can be found in the [Keycloak section](keycloak.md).

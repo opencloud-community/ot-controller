@@ -28,18 +28,18 @@ the default value.
 
 In order to use multiple tenants, `assignment` must be set to
 `"by_external_tenant_id"`. This requires the `tenant_id` field
-in the [authentication information sent by KeyCloak](../core/oidc.md#jwt-fields-for-user-login).
+in the [authentication information sent by Keycloak](../core/oidc.md#jwt-fields-for-user-login).
 Whenever a user logs in with a `tenant_id` that is unknown to the OpenTalk
 controller, a new entry for this tenant is created in the database. Because of
 that, the command-line tooling provides no option for adding tenants to the
 database.
 
-If the [find endpoint allows searching users on the KeyCloak](../core/endpoints.md),
-then the results found on the KeyCloak will be filtered by the tenant of the
-currently logged-in user. The KeyCloak attribute used for filtering is defined
+If the [find endpoint allows searching users on the Keycloak](../core/endpoints.md),
+then the results found on the Keycloak will be filtered by the tenant of the
+currently logged-in user. The Keycloak attribute used for filtering is defined
 by the value of `external_tenant_id_user_attribute_name` which defaults to
 `"tenant_id"`. :warning: Beware that this only affects the search which is
-performed through the KeyCloak Web API, so that the name of the **KeyCloak
+performed through the Keycloak Web API, so that the name of the **Keycloak
 attribute** is not enforced there, in contrast to the **JWT claim** which must
 always be configured as `tenant_id`.
 

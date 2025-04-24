@@ -196,7 +196,7 @@ impl ControllerBackend {
                         .search_user(&query.q, MAX_USER_SEARCH_RESULTS)
                         .await
                         .whatever_context::<&str, Whatever>(
-                            "Failed to search for user in keycloak",
+                            "Failed to search for user in Keycloak",
                         )?
                 }
                 TenantAssignment::ByExternalTenantId {
@@ -213,7 +213,7 @@ impl ControllerBackend {
                         )
                         .await
                         .whatever_context::<&str, Whatever>(
-                            "Failed to search for user in keycloak",
+                            "Failed to search for user in Keycloak",
                         )?
                 }
             };

@@ -17,7 +17,7 @@ recording sessions.
 
 The section in the [configuration file](../../core/configuration.md) is called `rabbit_mq`.
 
-In addition to the configuration file, keycloak needs to be configured to allow the recorder to access meetings.
+In addition to the configuration file, Keycloak needs to be configured to allow the recorder to access meetings.
 
 ### Keycloak Configuration
 
@@ -33,7 +33,7 @@ and find the corresponding section there.
 :::
 
 The recorder requires access to the controller API. For that we need to create a
-client inside keycloak and configure the recorder with the client secret. The client
+client inside Keycloak and configure the recorder with the client secret. The client
 has to be assigned to the `opentalk-recorder` role to gain access to the controller API.
 
 :::warning
@@ -56,7 +56,7 @@ client_secret = "the-client-secret"
    - Use the Client Authenticator **Client Id and Secret** .
    - The **Client secret** will be used in the field `auth.client_secret` of the configuration field.
 3. Set the correct issuer URL in `auth.issuer`
-   - Replace the domain and realm placeholders with your specific values: `http://<KeyCloak domain>/auth/realms/<OpenTalk realm>`
+   - Replace the domain and realm placeholders with your specific values: `http://<Keycloak domain>/auth/realms/<OpenTalk realm>`
 4. Grant the Recorder-Client access to the Controller API
    - [Create a realm role](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#proc-creating-realm-roles_server_administration_guide) with the id `opentalk-recorder`
    - Assign the role to the service account of the recorder client

@@ -68,12 +68,12 @@ url = "postgres://postgres:password123@localhost:5432/opentalk"
 # The port to bind the HTTP Server to (defaults to 11311).
 #port = 11311
 
-# Settings for the keycloak which is the user provider and allows authentication via OIDC.
+# Settings for the Keycloak which is the user provider and allows authentication via OIDC.
 # This is deprecated, replace with [oidc] and [user_search] sections.
 #[keycloak]
-# URL to the keycloak
+# URL to the Keycloak
 #base_url = "http://example.com/auth"
-# Name of the keycloak realm
+# Name of the Keycloak realm
 #realm = "MyRealm"
 # Client ID
 #client_id = "Controller"
@@ -260,7 +260,7 @@ urls = ["localhost:2379"]
 # This is deprecated, replace with `user_search.users_find_behavior`.
 #disable_users_find = false
 
-# Enable user-searching using keycloak's admin API.
+# Enable user-searching using Keycloak's admin API.
 # This allows for finding users which have not yet logged into the controller
 # This is deprecated, replace with `user_search.users_find_behavior`.
 #users_find_use_kc = false
