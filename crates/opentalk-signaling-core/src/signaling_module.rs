@@ -98,7 +98,7 @@ impl From<SignalingModuleError> for ApiError {
 pub struct SignalingModuleInitData {
     pub startup_settings: Arc<Settings>,
     pub settings_provider: SettingsProvider,
-    pub rabbitmq_pool: Arc<RabbitMqPool>,
+    pub rabbitmq_pool: Arc<Option<Arc<RabbitMqPool>>>,
     pub volatile: VolatileStorage,
     pub shutdown: broadcast::Sender<()>,
     pub reload: broadcast::Sender<()>,

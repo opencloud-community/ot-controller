@@ -208,8 +208,10 @@ impl ControllerBackend {
 
         self.authz.add_policies(policies).await?;
 
-        if let Some(mail_resource) = mail_resource {
-            self.mail_service
+        if let (Some(mail_resource), Some(mail_service)) =
+            (mail_resource, self.mail_service.as_ref())
+        {
+            mail_service
                 .send_registered_invite(
                     &settings,
                     mail_resource.current_user.clone(),
@@ -544,7 +546,9 @@ impl ControllerBackend {
 
         let settings = self.settings_provider.get();
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let mut conn = self.db.get_conn().await?;
 
@@ -729,11 +733,11 @@ impl ControllerBackend {
             training_participation_report: training_participation_report.map(Into::into),
         };
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             notify_invitees_about_update(
                 &settings,
                 notification_values,
-                &self.mail_service,
+                mail_service,
                 &self.user_search_client,
                 shared_folder,
                 streaming_targets,
@@ -766,6 +770,10 @@ impl ControllerBackend {
     ) -> Result<(), CaptureApiError> {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
+
+        let mail_service = (!suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
         let (
@@ -813,7 +821,7 @@ impl ControllerBackend {
 
         drop(conn);
 
-        if !suppress_email_notification {
+        if let Some(mail_service) = &mail_service {
             let notification_values = CancellationNotificationValues {
                 tenant: current_tenant,
                 created_by,
@@ -828,7 +836,7 @@ impl ControllerBackend {
             notify_invitees_about_delete(
                 &settings,
                 notification_values,
-                &self.mail_service,
+                mail_service,
                 &self.user_search_client,
             )
             .await;

@@ -205,10 +205,8 @@ pub struct Controller {
 
     authz: Authz,
 
-    mail_service: MailService,
-
     /// RabbitMQ connection pool, can be used to create connections and channels
-    pub rabbitmq_pool: Arc<RabbitMqPool>,
+    pub rabbitmq_pool: Arc<Option<Arc<RabbitMqPool>>>,
 
     /// Handle to the internal message exchange
     pub exchange_handle: ExchangeHandle,
@@ -284,24 +282,25 @@ impl Controller {
             .await
             .whatever_context("Failed to migrate database")?;
 
-        let rabbitmq_pool = RabbitMqPool::from_config(
-            &settings.raw.rabbit_mq.url,
-            settings.raw.rabbit_mq.min_connections,
-            settings.raw.rabbit_mq.max_channels_per_connection,
-        );
+        let rabbitmq_pool = Arc::new(settings.rabbit_mq.as_ref().map(|config| {
+            RabbitMqPool::from_config(
+                &config.url,
+                config.min_connections,
+                config.max_channels_per_connection,
+            )
+        }));
 
-        // Only use rabbitmq in the exchange when a redis instance is configured
+        // Only use rabbitmq in the exchange when a both rabbitmq and redis are configured.
         // This assumes that the existence of redis means multiple controllers are used
         // and share their signaling state via redis. Only in this case rabbitmq is required
         // in the exchange.
-        let exchange_handle = if settings.redis.is_some() {
-            ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
+        let exchange_handle = match (settings.redis.is_some(), rabbitmq_pool.as_ref()) {
+            (true, Some(rabbitmq_pool)) => ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
                 .await
-                .whatever_context("Failed to spawn exchange task")?
-        } else {
-            ExchangeTask::spawn()
+                .whatever_context("Failed to spawn exchange task")?,
+            _ => ExchangeTask::spawn()
                 .await
-                .whatever_context("Failed to spawn exchange task")?
+                .whatever_context("Failed to spawn exchange task")?,
         };
 
         // Connect to postgres
@@ -380,28 +379,33 @@ impl Controller {
         let (shutdown, _) = broadcast::channel::<()>(1);
         let (reload, _) = broadcast::channel::<()>(4);
 
-        let authz = if settings.raw.authz.synchronize_controllers {
-            kustos::Authz::new_with_autoload_and_metrics(
+        let authz = match (
+            settings.authz.synchronize_controllers,
+            rabbitmq_pool.as_ref(),
+        ) {
+            (true, Some(rabbitmq_pool)) => kustos::Authz::new_with_autoload_and_metrics(
                 db.clone(),
                 rabbitmq_pool.clone(),
                 metrics.kustos.clone(),
             )
             .await
-            .whatever_context("Failed to initialize kustos/authz")?
-        } else {
-            kustos::Authz::new(db.clone())
+            .whatever_context("Failed to initialize kustos/authz")?,
+            _ => kustos::Authz::new(db.clone())
                 .await
-                .whatever_context("Failed to initialize kustos/authz")?
+                .whatever_context("Failed to initialize kustos/authz")?,
         };
 
-        let mail_service = MailService::new(
-            metrics.endpoint.clone(),
-            rabbitmq_pool.clone(),
-            rabbitmq_pool
-                .create_channel()
-                .await
-                .whatever_context("Failed to create rabbitmq channel")?,
-        );
+        let mail_service = Arc::new(match rabbitmq_pool.as_ref() {
+            Some(rabbitmq_pool) => Some(MailService::new(
+                metrics.endpoint.clone(),
+                rabbitmq_pool.clone(),
+                rabbitmq_pool
+                    .create_channel()
+                    .await
+                    .whatever_context("Failed to create rabbitmq channel")?,
+            )),
+            None => None,
+        });
 
         let mut initializer = ModuleInitializer {
             init_data: SignalingModuleInitData {
@@ -450,7 +454,6 @@ impl Controller {
             oidc,
             user_search_client,
             authz,
-            mail_service,
             rabbitmq_pool,
             exchange_handle,
             volatile,
@@ -487,7 +490,6 @@ impl Controller {
         let http_server = {
             let settings_provider = self.settings_provider.clone();
             let volatile = self.volatile.clone();
-            let rabbitmq_pool = Data::from(self.rabbitmq_pool.clone());
             let exchange_handle = Data::new(self.exchange_handle);
             let signaling_modules = Arc::downgrade(&signaling_modules);
             let signaling_metrics = Data::from(self.metrics.signaling.clone());
@@ -498,8 +500,6 @@ impl Controller {
             let shutdown = self.shutdown.clone();
 
             let user_search_client = Data::from(self.user_search_client);
-
-            let mail_service = Data::new(self.mail_service);
 
             log::info!("Making sure the default permissions are set");
             check_or_create_kustos_default_permissions(&self.authz)
@@ -524,8 +524,6 @@ impl Controller {
                 let authz = Data::new(self.authz.clone());
                 let volatile = Data::new(volatile.clone());
 
-                let mail_service = mail_service.clone();
-
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
@@ -548,13 +546,11 @@ impl Controller {
                     .app_data(authz.clone())
                     .app_data(volatile)
                     .app_data(Data::new(shutdown.clone()))
-                    .app_data(rabbitmq_pool.clone())
                     .app_data(exchange_handle.clone())
                     .app_data(signaling_modules)
                     .app_data(SignalingProtocols::data())
                     .app_data(signaling_metrics.clone())
                     .app_data(metrics.clone())
-                    .app_data(mail_service)
                     .service(api::well_known::well_known_api)
                     .service(api::signaling::ws_service)
                     .service(metrics::metrics)
@@ -641,13 +637,15 @@ impl Controller {
         // Drop signaling modules to drop any data contained in the module builders.
         drop(signaling_modules);
 
-        // Close all rabbitmq connections
-        // TODO what code and text to use here
-        if let Err(e) = self.rabbitmq_pool.close(0, "shutting down").await {
-            log::error!(
-                "Failed to close RabbitMQ connections, {}",
-                Report::from_error(e)
-            );
+        if let Some(rabbitmq_pool) = self.rabbitmq_pool.as_ref() {
+            // Close all rabbitmq connections
+            // TODO what code and text to use here
+            if let Err(e) = rabbitmq_pool.close(0, "shutting down").await {
+                log::error!(
+                    "Failed to close RabbitMQ connections, {}",
+                    Report::from_error(e)
+                );
+            }
         }
 
         if self.shutdown.receiver_count() > 0 {

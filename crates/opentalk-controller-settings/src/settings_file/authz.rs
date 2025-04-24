@@ -5,19 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Authz {
-    #[serde(default = "authz_default_synchronize_controller")]
-    pub synchronize_controllers: bool,
-}
-
-impl Default for Authz {
-    fn default() -> Self {
-        Self {
-            synchronize_controllers: authz_default_synchronize_controller(),
-        }
-    }
-}
-
-fn authz_default_synchronize_controller() -> bool {
-    true
+pub(crate) struct Authz {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub synchronize_controllers: Option<bool>,
 }

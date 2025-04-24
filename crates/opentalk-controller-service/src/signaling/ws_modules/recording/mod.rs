@@ -299,21 +299,20 @@ impl SignalingModule for Recording {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        if let Some(queue) = init
+        let Some(rabbitmq_pool) = init.rabbitmq_pool.as_ref() else {
+            return Ok(None);
+        };
+
+        let Some(queue) = init
             .settings_provider
             .get()
-            .raw
             .rabbit_mq
-            .recording_task_queue
-            .clone()
-        {
-            Ok(Some((
-                init.rabbitmq_pool.clone(),
-                RecordingParams { queue },
-            )))
-        } else {
-            Ok(None)
-        }
+            .as_ref()
+            .and_then(|c| c.recording_task_queue.clone())
+        else {
+            return Ok(None);
+        };
+        Ok(Some((rabbitmq_pool.clone(), RecordingParams { queue })))
     }
 }
 

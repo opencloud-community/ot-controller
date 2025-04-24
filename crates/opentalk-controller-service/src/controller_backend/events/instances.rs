@@ -443,26 +443,28 @@ impl ControllerBackend {
                 .finish();
             self.authz.add_policies(policies).await?;
 
-            let notification_values = UpdateNotificationValues {
-                tenant: current_tenant.clone(),
-                created_by,
-                event: event.clone(),
-                event_exception: Some(exception.clone()),
-                room,
-                sip_config,
-                users_to_notify: invited_users,
-                invite_for_room,
-            };
+            if let Some(mail_service) = self.mail_service.as_ref() {
+                let notification_values = UpdateNotificationValues {
+                    tenant: current_tenant.clone(),
+                    created_by,
+                    event: event.clone(),
+                    event_exception: Some(exception.clone()),
+                    room,
+                    sip_config,
+                    users_to_notify: invited_users,
+                    invite_for_room,
+                };
 
-            notify_invitees_about_update(
-                &settings,
-                notification_values,
-                &self.mail_service,
-                &self.user_search_client,
-                None,
-                streaming_targets,
-            )
-            .await;
+                notify_invitees_about_update(
+                    &settings,
+                    notification_values,
+                    mail_service,
+                    &self.user_search_client,
+                    None,
+                    streaming_targets,
+                )
+                .await;
+            }
         }
 
         drop(conn);

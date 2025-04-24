@@ -21,7 +21,12 @@ impl ControllerBackend {
         let mut conn = self.db.get_conn().await?;
         let mut volatile = self.volatile.clone();
 
-        if settings.raw.rabbit_mq.recording_task_queue.is_none() {
+        if settings
+            .rabbit_mq
+            .as_ref()
+            .and_then(|c| c.recording_task_queue.as_ref())
+            .is_none()
+        {
             return Err(ApiError::not_found().into());
         }
 

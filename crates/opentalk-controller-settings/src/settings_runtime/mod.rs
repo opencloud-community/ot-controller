@@ -18,6 +18,7 @@
     unused_results
 )]
 
+mod authz;
 mod database;
 mod http;
 mod http_tls;
@@ -25,6 +26,7 @@ mod oidc;
 mod oidc_and_user_search_builder;
 mod oidc_controller;
 mod oidc_frontend;
+mod rabbitmq;
 mod redis;
 mod settings;
 mod stun;
@@ -33,12 +35,14 @@ mod turn_server;
 mod user_search_backend;
 mod user_search_backend_keycloak;
 
+pub use authz::Authz;
 pub use database::Database;
 pub use http::Http;
 pub use http_tls::HttpTls;
 pub use oidc::Oidc;
 pub use oidc_controller::OidcController;
 pub use oidc_frontend::OidcFrontend;
+pub use rabbitmq::RabbitMq;
 pub use redis::Redis;
 pub use settings::Settings;
 pub use stun::Stun;

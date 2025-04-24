@@ -136,7 +136,9 @@ impl ControllerBackend {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
         let current_user = User::get(&mut conn, current_user.id).await?;
@@ -150,8 +152,7 @@ impl ControllerBackend {
                     current_user,
                     event_id,
                     user_invite,
-                    &self.mail_service,
-                    send_email_notification,
+                    &mail_service,
                 )
                 .await
             }
@@ -165,8 +166,7 @@ impl ControllerBackend {
                     &current_user,
                     event_id,
                     email_invite,
-                    &self.mail_service,
-                    send_email_notification,
+                    &mail_service,
                 )
                 .await
             }
@@ -231,7 +231,9 @@ impl ControllerBackend {
     ) -> Result<(), CaptureApiError> {
         let settings = self.settings_provider.get();
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
         let mut conn = self.db.get_conn().await?;
 
         // TODO(w.rabl) Further DB access optimization (replacing call to get_with_invite_and_room)?
@@ -278,7 +280,7 @@ impl ControllerBackend {
 
         drop(conn);
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             // Notify just the specified user. Currently, unlike the create_invite_to_event counterpart, this endpoint
             // only handles and notifies a single registered user. This somehow contradicts patch_event and delete_event
             // as well.
@@ -304,7 +306,7 @@ impl ControllerBackend {
             notify_invitees_about_uninvite(
                 &settings,
                 notification_values,
-                &self.mail_service,
+                mail_service,
                 &self.user_search_client,
                 shared_folder.map(SharedFolder::from),
                 streaming_targets,
@@ -334,7 +336,9 @@ impl ControllerBackend {
 
         let tenant_filter = get_tenant_filter(&current_tenant, &settings.raw.tenants.assignment);
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let (
             event,
@@ -403,7 +407,7 @@ impl ControllerBackend {
             MailRecipient::External(ExternalMailRecipient { email })
         };
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             let notification_values = UninviteNotificationValues {
                 tenant: current_tenant,
                 created_by,
@@ -416,7 +420,7 @@ impl ControllerBackend {
             notify_invitees_about_uninvite(
                 &settings,
                 notification_values,
-                &self.mail_service,
+                mail_service,
                 &self.user_search_client,
                 shared_folder.map(SharedFolder::from),
                 streaming_targets,
@@ -483,8 +487,7 @@ async fn create_user_event_invite(
     inviter: User,
     event_id: EventId,
     user_invite: UserInvite,
-    mail_service: &MailService,
-    send_email_notification: bool,
+    mail_service: &Option<MailService>,
 ) -> Result<bool, CaptureApiError> {
     let mut conn = db.get_conn().await?;
 
@@ -524,7 +527,7 @@ async fn create_user_event_invite(
 
             authz.add_policies(policies).await?;
 
-            if send_email_notification {
+            if let Some(mail_service) = mail_service {
                 mail_service
                     .send_registered_invite(
                         settings,
@@ -564,8 +567,7 @@ async fn create_email_event_invite(
     current_user: &User,
     event_id: EventId,
     email_invite: EmailInvite,
-    mail_service: &MailService,
-    send_email_notification: bool,
+    mail_service: &Option<MailService>,
 ) -> Result<bool, CaptureApiError> {
     let email = email_invite.email.to_lowercase();
 
@@ -661,7 +663,7 @@ async fn create_email_event_invite(
 
             authz.add_policies(policies).await?;
 
-            if send_email_notification {
+            if let Some(mail_service) = mail_service {
                 mail_service
                     .send_registered_invite(
                         settings,
@@ -695,7 +697,6 @@ async fn create_email_event_invite(
                 authz,
                 user_search_client,
                 mail_service,
-                send_email_notification,
                 current_tenant,
                 current_user.clone(),
                 event,
@@ -720,8 +721,7 @@ async fn create_invite_to_non_matching_email(
     db: &Db,
     authz: &Authz,
     user_search_client: &Option<KeycloakAdminClient>,
-    mail_service: &MailService,
-    send_email_notification: bool,
+    mail_service: &Option<MailService>,
     current_tenant: &Tenant,
     current_user: User,
     event: Event,
@@ -768,7 +768,7 @@ async fn create_invite_to_non_matching_email(
 
         match res {
             Some(_) => {
-                if let (Some(invitee_user), true) = (invitee_user, send_email_notification) {
+                if let (Some(invitee_user), Some(mail_service)) = (invitee_user, mail_service) {
                     mail_service
                         .send_unregistered_invite(
                             settings,
@@ -807,7 +807,7 @@ async fn create_invite_to_non_matching_email(
 
                     authz.add_policies(policies).await?;
 
-                    if send_email_notification {
+                    if let Some(mail_service) = mail_service {
                         mail_service
                             .send_external_invite(
                                 settings,
