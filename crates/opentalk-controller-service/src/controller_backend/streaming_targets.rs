@@ -72,19 +72,21 @@ impl ControllerBackend {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let room_streaming_target =
             insert_room_streaming_target(&mut conn, room_id, streaming_target).await?;
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
                 &self.user_search_client,
                 &settings,
-                &self.mail_service,
+                mail_service,
                 current_tenant,
                 current_user,
                 &mut conn,
@@ -162,7 +164,9 @@ impl ControllerBackend {
             return Err(ApiError::bad_request().into());
         }
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let (kind, streaming_endpoint, streaming_key, public_url) = match streaming_target.kind {
             Some(kind) => match kind {
@@ -223,14 +227,14 @@ impl ControllerBackend {
             },
         };
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
                 &self.user_search_client,
                 &settings,
-                &self.mail_service,
+                mail_service,
                 current_tenant,
                 current_user,
                 &mut conn,
@@ -254,18 +258,20 @@ impl ControllerBackend {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         RoomStreamingTargetRecord::delete_by_id(&mut conn, room_id, streaming_target_id).await?;
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
             let current_user = User::get(&mut conn, current_user.id).await?;
 
             notify_event_invitees_by_room_about_update(
                 &self.user_search_client,
                 &settings,
-                &self.mail_service,
+                mail_service,
                 current_tenant,
                 current_user,
                 &mut conn,

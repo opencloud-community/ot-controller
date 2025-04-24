@@ -211,7 +211,11 @@ impl MailService {
     }
 
     async fn send_to_rabbitmq(&self, settings: &Settings, mail_task: MailTask) -> Result<()> {
-        if let Some(queue_name) = &settings.raw.rabbit_mq.mail_task_queue {
+        if let Some(queue_name) = &settings
+            .rabbit_mq
+            .as_ref()
+            .and_then(|c| c.mail_task_queue.as_ref())
+        {
             let channel = {
                 let mut channel = self.rabbitmq_channel.lock().await;
 

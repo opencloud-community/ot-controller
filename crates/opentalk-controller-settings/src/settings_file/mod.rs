@@ -42,7 +42,7 @@ mod user_search;
 mod user_search_backend;
 mod users_find_behavior;
 
-pub use authz::Authz;
+pub(crate) use authz::Authz;
 pub use avatar::Avatar;
 pub use call_in::CallIn;
 pub(crate) use database::Database;
@@ -62,7 +62,7 @@ pub use monitoring_settings::MonitoringSettings;
 pub(crate) use oidc::Oidc;
 pub(crate) use oidc_controller::OidcController;
 pub(crate) use oidc_frontend::OidcFrontend;
-pub use rabbit_mq_config::RabbitMqConfig;
+pub(crate) use rabbit_mq_config::RabbitMqConfig;
 pub(crate) use redis_config::RedisConfig;
 pub use reports::Reports;
 pub use reports_template::ReportsTemplate;

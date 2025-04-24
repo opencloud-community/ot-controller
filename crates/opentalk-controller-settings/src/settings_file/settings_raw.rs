@@ -37,11 +37,14 @@ pub struct SettingsRaw {
     pub(crate) redis: Option<RedisConfig>,
 
     #[serde(default)]
-    pub rabbit_mq: RabbitMqConfig,
+    pub(crate) rabbit_mq: Option<RabbitMqConfig>,
+
     #[serde(default)]
     pub logging: Logging,
+
     #[serde(default)]
-    pub authz: Authz,
+    pub(crate) authz: Option<Authz>,
+
     #[serde(default)]
     pub avatar: Avatar,
     #[serde(default)]
@@ -134,9 +137,9 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         turn: None,
         stun: None,
         redis: None,
-        rabbit_mq: RabbitMqConfig::default(),
+        rabbit_mq: None,
         logging: Logging::default(),
-        authz: Authz::default(),
+        authz: None,
         avatar: Avatar::default(),
         metrics: Metrics::default(),
         etcd: None,

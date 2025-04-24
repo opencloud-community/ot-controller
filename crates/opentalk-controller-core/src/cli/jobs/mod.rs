@@ -94,15 +94,21 @@ async fn execute_job(
         serde_json::from_str(&parameters).whatever_context("Failed to serialize parameter")?;
     ensure_whatever!(parameters.is_object(), "Parameters must be a JSON object");
 
-    let rabbitmq_pool = RabbitMqPool::from_config(
-        &settings.raw.rabbit_mq.url,
-        settings.raw.rabbit_mq.min_connections,
-        settings.raw.rabbit_mq.max_channels_per_connection,
-    );
-
-    let exchange_handle = ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
-        .await
-        .whatever_context("Failed to spawn exchange task")?;
+    let rabbitmq_pool = settings.rabbit_mq.as_ref().map(|config| {
+        RabbitMqPool::from_config(
+            &config.url,
+            config.min_connections,
+            config.max_channels_per_connection,
+        )
+    });
+    let exchange_handle = match (settings.redis.is_some(), &rabbitmq_pool) {
+        (true, Some(rabbitmq_pool)) => ExchangeTask::spawn_with_rabbitmq(rabbitmq_pool.clone())
+            .await
+            .whatever_context("Failed to spawn exchange task")?,
+        _ => ExchangeTask::spawn()
+            .await
+            .whatever_context("Failed to spawn exchange task")?,
+    };
 
     let data = JobExecutionData {
         logger: &logger,

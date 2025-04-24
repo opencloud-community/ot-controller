@@ -71,7 +71,9 @@ impl ControllerBackend {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let (shared_folder, created) = put_shared_folder(&settings, event_id, &mut conn).await?;
 
@@ -86,7 +88,7 @@ impl ControllerBackend {
             _training_participation_report,
         ) = Event::get_with_related_items(&mut conn, current_user.id, event_id).await?;
 
-        if send_email_notification {
+        if let Some(mail_service) = &mail_service {
             let shared_folder_for_user = shared_folder_for_user(
                 Some(shared_folder.clone()),
                 event.created_by,
@@ -100,7 +102,7 @@ impl ControllerBackend {
             notify_event_invitees_about_update(
                 &self.user_search_client,
                 &settings,
-                &self.mail_service,
+                mail_service,
                 current_tenant,
                 current_user,
                 &mut conn,
@@ -125,7 +127,9 @@ impl ControllerBackend {
         let settings = self.settings_provider.get();
         let mut conn = self.db.get_conn().await?;
 
-        let send_email_notification = !query.suppress_email_notification;
+        let mail_service = (!query.suppress_email_notification)
+            .then(|| self.mail_service.as_ref().clone())
+            .flatten();
 
         let (
             event,
@@ -148,14 +152,14 @@ impl ControllerBackend {
                 Ok(()) => {
                     shared_folder.delete(&mut conn).await?;
 
-                    if send_email_notification {
+                    if let Some(mail_service) = &mail_service {
                         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
                         let current_user = User::get(&mut conn, current_user.id).await?;
 
                         notify_event_invitees_about_update(
                             &self.user_search_client,
                             &settings,
-                            &self.mail_service,
+                            mail_service,
                             current_tenant,
                             current_user,
                             &mut conn,
@@ -178,7 +182,7 @@ impl ControllerBackend {
                         );
                         shared_folder.delete(&mut conn).await?;
 
-                        if send_email_notification {
+                        if let Some(mail_service) = &mail_service {
                             let current_tenant =
                                 Tenant::get(&mut conn, current_user.tenant_id).await?;
                             let current_user = User::get(&mut conn, current_user.id).await?;
@@ -186,7 +190,7 @@ impl ControllerBackend {
                             notify_event_invitees_about_update(
                                 &self.user_search_client,
                                 &settings,
-                                &self.mail_service,
+                                mail_service,
                                 current_tenant,
                                 current_user,
                                 &mut conn,
