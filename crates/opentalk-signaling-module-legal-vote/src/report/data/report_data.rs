@@ -16,7 +16,9 @@ pub struct ReportData {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use opentalk_types_common::users::DisplayName;
     use opentalk_types_signaling_legal_vote::{
+        cancel::{CancelReason, CustomCancelReason},
         issue::{Issue, OtherIssue, TechnicalIssue, TechnicalIssueKind},
         tally::Tally,
         user_parameters::Duration,
@@ -28,7 +30,8 @@ pub(crate) mod tests {
     use super::ReportData;
     use crate::{
         report::data::{
-            Event, ResolvedReportedIssue, ResolvedVote, StopReason, Summary, TimedEvent,
+            Event, ResolvedCancel, ResolvedReportedIssue, ResolvedVote, StopReason, Summary,
+            TimedEvent,
         },
         storage::v1::FinalResults,
     };
@@ -268,6 +271,17 @@ pub(crate) mod tests {
                 .expect("value must be deserializable"),
             example_live_roll_call(),
         );
+    }
+
+    pub(crate) fn canceled_live_roll_call() -> ReportData {
+        let mut report_data = example_live_roll_call();
+        report_data.summary.final_results = None;
+        report_data.summary.stop_reason = StopReason::Canceled(ResolvedCancel {
+            user: DisplayName::from_str_lossy("Bob"),
+            reason: CancelReason::Custom(CustomCancelReason::try_from("test").unwrap()),
+        });
+
+        report_data
     }
 
     pub(crate) fn example_roll_call() -> ReportData {

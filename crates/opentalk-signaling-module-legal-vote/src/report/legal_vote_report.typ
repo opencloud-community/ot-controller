@@ -148,7 +148,7 @@
 
 #set table.hline(stroke: 0.5pt + rgb("bfbfbf"))
 
-#if data.summary.final_results.results == "valid" [
+#if "final_results" in data.summary and data.summary.final_results.results == "valid" [
 
 == Results
 

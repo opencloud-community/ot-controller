@@ -74,7 +74,7 @@ mod tests {
         },
         generate_from_template, DEFAULT_TEMPLATE,
     };
-    use crate::MODULE_ID;
+    use crate::{report::data::report_data::tests::canceled_live_roll_call, MODULE_ID};
 
     fn generate(sample_name: &str, parameter: &ReportData) -> String {
         let pdf = generate_from_template(
@@ -271,5 +271,64 @@ mod tests {
         Event log
          Name Timestamp Event
         "#);
+    }
+
+    #[test]
+    fn generate_canceled_live_roll_call() {
+        assert_snapshot!(
+            generate("canceled_live_roll_call", &canceled_live_roll_call()),
+            @r#"
+        OpenTalk Vote Report
+         Title : Weather Vote
+
+        Subtitle : Another one of these weather votes
+
+        Topic : Is the weather good today?
+
+        Vote kind : Live roll call
+
+        Referendum leader : Alice Adams
+
+        Vote id : ee621ab4-72f6-4d39-bbc4-dc1b96a606cf
+
+        Start : 2025-01-02 03:04:05
+
+        End : 2025-01-02 03:09:05
+
+        Report timezone : Europe/Berlin
+
+        Participant count : 8
+
+        Scheduled duration : 300 s
+
+        Abstention : Disallowed
+
+        Automatic close : Enabled
+
+        Vote ended due to : Aborted for custom reason: test
+
+        Number of votes : 6
+
+        Recorded votes
+         Name Token Vote Timestamp
+
+        Alice Adams aaaaaaaa Yes 2025-01-02 03:04:24
+
+        Bob Burton bbbbbbbb No 2025-01-02 03:04:20
+
+        Charlie Cooper cccccccc No 2025-01-02 03:04:21
+
+        Dave Dunn dddddddd Yes 2025-01-02 03:04:19
+
+        Erin Eaton eeeeeeee Yes 2025-01-02 03:06:00
+
+        George Grump gggggggg Yes 2025-01-02 03:06:00
+
+        Event log
+         Name Timestamp Event
+
+        Charlie Cooper 2025-01-02 03:04:18 Reports a screenshare issue
+        "#
+        );
     }
 }
