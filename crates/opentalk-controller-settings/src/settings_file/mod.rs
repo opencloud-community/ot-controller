@@ -56,7 +56,7 @@ pub(crate) use http_tls::HttpTls;
 pub(crate) use keycloak::Keycloak;
 pub use live_kit_settings::LiveKitSettings;
 pub(crate) use logging::Logging;
-pub use metrics::Metrics;
+pub(crate) use metrics::Metrics;
 pub use minio::MinIO;
 pub use monitoring_settings::MonitoringSettings;
 pub(crate) use oidc::Oidc;

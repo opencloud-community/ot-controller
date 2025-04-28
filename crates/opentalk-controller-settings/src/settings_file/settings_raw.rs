@@ -49,7 +49,7 @@ pub struct SettingsRaw {
     pub(crate) avatar: Option<Avatar>,
 
     #[serde(default)]
-    pub metrics: Metrics,
+    pub(crate) metrics: Option<Metrics>,
 
     #[serde(default)]
     pub etcd: Option<Etcd>,
@@ -142,7 +142,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         logging: None,
         authz: None,
         avatar: None,
-        metrics: Metrics::default(),
+        metrics: None,
         etcd: None,
         etherpad: None,
         spacedeck: None,
