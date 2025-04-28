@@ -49,7 +49,7 @@ pub(crate) use database::Database;
 pub use defaults::Defaults;
 pub use endpoints::Endpoints;
 pub(crate) use etcd::Etcd;
-pub use etherpad::Etherpad;
+pub(crate) use etherpad::Etherpad;
 pub use extensions::Extensions;
 pub(crate) use http::Http;
 pub(crate) use http_tls::HttpTls;
