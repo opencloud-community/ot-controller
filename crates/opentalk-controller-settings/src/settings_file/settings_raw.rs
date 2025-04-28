@@ -76,7 +76,7 @@ pub struct SettingsRaw {
     pub defaults: Defaults,
 
     #[serde(default)]
-    pub endpoints: Endpoints,
+    pub(crate) endpoints: Option<Endpoints>,
 
     pub minio: MinIO,
 
@@ -151,7 +151,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         shared_folder: None,
         call_in: None,
         defaults: Defaults::default(),
-        endpoints: Endpoints::default(),
+        endpoints: None,
         minio: MinIO {
             uri: "http://localhost:9555"
                 .parse()

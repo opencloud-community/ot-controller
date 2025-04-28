@@ -746,7 +746,7 @@ async fn create_invite_to_non_matching_email(
         None
     };
 
-    if invitee_user.is_some() || settings.raw.endpoints.event_invite_external_email_address {
+    if invitee_user.is_some() || settings.endpoints.event_invite_external_email_address {
         let inviter = current_user.clone();
         let invitee_email = email.clone();
 

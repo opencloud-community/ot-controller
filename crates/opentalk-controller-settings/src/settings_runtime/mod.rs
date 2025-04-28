@@ -21,6 +21,7 @@
 mod authz;
 mod avatar;
 mod database;
+mod endpoints;
 mod etcd;
 mod etherpad;
 mod http;
@@ -47,6 +48,7 @@ mod user_search_backend_keycloak;
 pub use authz::Authz;
 pub use avatar::Avatar;
 pub use database::Database;
+pub use endpoints::Endpoints;
 pub use etcd::Etcd;
 pub use etherpad::Etherpad;
 pub use http::Http;

@@ -27,14 +27,12 @@ impl OidcAndUserSearchBuilder {
             keycloak,
             oidc,
             user_search,
-            endpoints:
-                settings_file::Endpoints {
-                    disable_users_find,
-                    users_find_use_kc,
-                    ..
-                },
+            endpoints,
             ..
         } = raw;
+
+        let disable_users_find = endpoints.as_ref().and_then(|e| e.disable_users_find);
+        let users_find_use_kc = endpoints.as_ref().and_then(|e| e.users_find_use_kc);
 
         if let Some(oidc) = oidc {
             ensure!(
@@ -62,11 +60,7 @@ impl OidcAndUserSearchBuilder {
             return OidcConfigurationMissingSnafu.fail();
         };
 
-        Self::load_from_settings_raw_with_keycloak(
-            keycloak,
-            *disable_users_find,
-            *users_find_use_kc,
-        )
+        Self::load_from_settings_raw_with_keycloak(keycloak, disable_users_find, users_find_use_kc)
     }
 
     fn load_from_settings_raw_oidc(
@@ -337,7 +331,10 @@ mod tests {
             client_secret: ClientSecret::new("MySecret".to_string()),
             external_id_user_attribute_name: Some("TheExternalAttribute".to_string()),
         });
-        raw.endpoints.users_find_use_kc = Some(true);
+        raw.endpoints = Some(crate::settings_file::Endpoints {
+            users_find_use_kc: Some(true),
+            ..Default::default()
+        });
 
         let builder = OidcAndUserSearchBuilder::load_from_settings_raw(&raw)
             .expect("must be a valid configuration");
@@ -385,7 +382,10 @@ mod tests {
             client_secret: ClientSecret::new("MySecret".to_string()),
             external_id_user_attribute_name: Some("TheExternalAttribute".to_string()),
         });
-        raw.endpoints.users_find_use_kc = Some(true);
+        raw.endpoints = Some(crate::settings_file::Endpoints {
+            users_find_use_kc: Some(true),
+            ..Default::default()
+        });
 
         assert_matches!(
             OidcAndUserSearchBuilder::load_from_settings_raw(&raw),
@@ -410,7 +410,10 @@ mod tests {
     #[test]
     fn invalid_oidc_with_endpoints_disable_users_find() {
         let mut raw = settings_raw_minimal_example();
-        raw.endpoints.disable_users_find = Some(true);
+        raw.endpoints = Some(crate::settings_file::Endpoints {
+            disable_users_find: Some(true),
+            ..Default::default()
+        });
 
         assert_matches!(
             OidcAndUserSearchBuilder::load_from_settings_raw(&raw),
@@ -423,7 +426,10 @@ mod tests {
     #[test]
     fn invalid_oidc_with_endpoints_users_find_use_kc() {
         let mut raw = settings_raw_minimal_example();
-        raw.endpoints.users_find_use_kc = Some(true);
+        raw.endpoints = Some(crate::settings_file::Endpoints {
+            users_find_use_kc: Some(true),
+            ..Default::default()
+        });
 
         assert_matches!(
             OidcAndUserSearchBuilder::load_from_settings_raw(&raw),

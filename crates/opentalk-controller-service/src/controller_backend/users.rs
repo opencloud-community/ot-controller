@@ -46,7 +46,7 @@ impl ControllerBackend {
         let mut conn = self.db.get_conn().await?;
 
         // Prohibit display name editing, if configured
-        if settings.raw.endpoints.disallow_custom_display_name {
+        if settings.endpoints.disallow_custom_display_name {
             if let Some(display_name) = &patch.display_name {
                 if &current_user.display_name != display_name {
                     return Err(ApiError::bad_request()

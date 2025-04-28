@@ -47,7 +47,7 @@ pub(crate) use avatar::Avatar;
 pub use call_in::CallIn;
 pub(crate) use database::Database;
 pub use defaults::Defaults;
-pub use endpoints::Endpoints;
+pub(crate) use endpoints::Endpoints;
 pub(crate) use etcd::Etcd;
 pub(crate) use etherpad::Etherpad;
 pub use extensions::Extensions;

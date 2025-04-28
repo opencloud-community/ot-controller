@@ -2420,7 +2420,6 @@ impl Runner {
                 if self
                     .settings_provider
                     .get()
-                    .raw
                     .endpoints
                     .disallow_custom_display_name
                 {

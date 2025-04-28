@@ -527,8 +527,7 @@ impl Controller {
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
-                let swagger_service_enabled =
-                    !settings_provider.get().raw.endpoints.disable_openapi;
+                let swagger_service_enabled = !settings_provider.get().endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))
