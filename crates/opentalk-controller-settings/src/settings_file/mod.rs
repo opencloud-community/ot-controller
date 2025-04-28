@@ -70,7 +70,7 @@ pub use settings_raw::SettingsRaw;
 #[cfg(test)]
 pub(crate) use settings_raw::{settings_raw_minimal_example, SETTINGS_RAW_MINIMAL_CONFIG_TOML};
 pub use shared_folder::SharedFolder;
-pub use spacedeck::Spacedeck;
+pub(crate) use spacedeck::Spacedeck;
 pub(crate) use stun::Stun;
 pub use subroom_audio::SubroomAudio;
 pub use tariff_assignment::TariffAssignment;

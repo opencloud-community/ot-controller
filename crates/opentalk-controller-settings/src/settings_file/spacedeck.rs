@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Spacedeck {
+pub(crate) struct Spacedeck {
     pub url: url::Url,
     pub api_key: String,
 }

@@ -6,7 +6,8 @@ use std::sync::Arc;
 
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, Database, Etcd,
-    Etherpad, Http, Logging, Metrics, Oidc, RabbitMq, Redis, Stun, Turn, UserSearchBackend,
+    Etherpad, Http, Logging, Metrics, Oidc, RabbitMq, Redis, Spacedeck, Stun, Turn,
+    UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -64,6 +65,9 @@ pub struct Settings {
 
     /// The etherpad settings.
     pub etherpad: Option<Etherpad>,
+
+    /// The Spacedeck settings.
+    pub spacedeck: Option<Spacedeck>,
 }
 
 impl Settings {
@@ -113,6 +117,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let metrics = raw.metrics.clone().map(Into::into).unwrap_or_default();
         let etcd = raw.etcd.clone().map(Into::into);
         let etherpad = raw.etherpad.clone().map(Into::into);
+        let spacedeck = raw.spacedeck.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -131,6 +136,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             metrics,
             etcd,
             etherpad,
+            spacedeck,
         })
     }
 }

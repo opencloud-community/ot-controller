@@ -72,7 +72,7 @@ impl WhiteboardStorageProvider for VolatileStorage {
 impl SignalingModule for Whiteboard {
     const NAMESPACE: ModuleId = MODULE_ID;
 
-    type Params = opentalk_controller_settings::settings_file::Spacedeck;
+    type Params = opentalk_controller_settings::Spacedeck;
 
     type Incoming = WhiteboardCommand;
 
@@ -269,7 +269,7 @@ impl SignalingModule for Whiteboard {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        let spacedeck = init.settings_provider.get().raw.spacedeck.clone();
+        let spacedeck = init.settings_provider.get().spacedeck.clone();
 
         Ok(spacedeck)
     }

@@ -58,7 +58,7 @@ pub struct SettingsRaw {
     pub(crate) etherpad: Option<Etherpad>,
 
     #[serde(default)]
-    pub spacedeck: Option<Spacedeck>,
+    pub(crate) spacedeck: Option<Spacedeck>,
 
     #[serde(default)]
     pub subroom_audio: Option<SubroomAudio>,
