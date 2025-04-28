@@ -116,7 +116,7 @@ fn to_event(
 
     let mut call_in = None;
 
-    if call_in_feature_is_enabled {
+    if call_in_feature_is_enabled && !room.e2e_encryption {
         if let (Some(call_in_settings), Some(sip_config)) = (&settings.call_in, sip_config) {
             call_in = Some(v1::CallIn {
                 sip_tel: call_in_settings.tel.clone(),
