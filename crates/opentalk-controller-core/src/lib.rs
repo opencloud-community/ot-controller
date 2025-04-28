@@ -55,8 +55,7 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
-    settings_file::MonitoringSettings, HttpTls, Settings, SettingsProvider, UserSearchBackend,
-    UserSearchBackendKeycloak,
+    HttpTls, Monitoring, Settings, SettingsProvider, UserSearchBackend, UserSearchBackendKeycloak,
 };
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
@@ -470,7 +469,7 @@ impl Controller {
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling_modules);
 
-        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.raw.monitoring {
+        if let Some(Monitoring { port, addr }) = self.startup_settings.monitoring {
             start_probe(addr, port, ServiceState::Up)
                 .await
                 .whatever_context("Failed to start monitoring")?;

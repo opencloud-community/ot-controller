@@ -7,17 +7,9 @@ use std::net::IpAddr;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct MonitoringSettings {
-    #[serde(default = "default_monitoring_port")]
-    pub port: u16,
-    #[serde(default = "default_monitoring_addr")]
-    pub addr: IpAddr,
-}
-
-fn default_monitoring_port() -> u16 {
-    11411
-}
-
-fn default_monitoring_addr() -> IpAddr {
-    [0, 0, 0, 0].into()
+pub(crate) struct MonitoringSettings {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub addr: Option<IpAddr>,
 }
