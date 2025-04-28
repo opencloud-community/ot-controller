@@ -141,7 +141,6 @@ fn create_changeset<'a>(
     }
 
     let token_phone = if let Some((call_in, phone_number)) = settings
-        .raw
         .call_in
         .as_ref()
         .zip(user_info.phone_number.as_deref())

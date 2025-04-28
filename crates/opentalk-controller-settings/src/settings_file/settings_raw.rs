@@ -70,7 +70,7 @@ pub struct SettingsRaw {
     pub(crate) shared_folder: Option<SharedFolder>,
 
     #[serde(default)]
-    pub call_in: Option<CallIn>,
+    pub(crate) call_in: Option<CallIn>,
 
     #[serde(default)]
     pub defaults: Defaults,

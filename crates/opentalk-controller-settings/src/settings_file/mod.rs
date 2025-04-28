@@ -44,7 +44,7 @@ mod users_find_behavior;
 
 pub(crate) use authz::Authz;
 pub(crate) use avatar::Avatar;
-pub use call_in::CallIn;
+pub(crate) use call_in::CallIn;
 pub(crate) use database::Database;
 pub use defaults::Defaults;
 pub(crate) use endpoints::Endpoints;

@@ -1680,11 +1680,7 @@ impl Runner {
         let mut conn = self.db.get_conn().await?;
         let event_info = match event.as_ref() {
             Some(event) => {
-                let call_in_tel = settings
-                    .raw
-                    .call_in
-                    .as_ref()
-                    .map(|call_in| call_in.tel.clone());
+                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
                 Some(
                     build_event_info(
                         &mut conn,
@@ -2431,7 +2427,7 @@ impl Runner {
             Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
-                if let Some(call_in) = self.settings_provider.get().raw.call_in.as_ref() {
+                if let Some(call_in) = self.settings_provider.get().call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {

@@ -5,9 +5,9 @@
 use std::sync::Arc;
 
 use super::{
-    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, Database, Endpoints,
-    Etcd, Etherpad, Http, Logging, Metrics, MinIO, Monitoring, Oidc, RabbitMq, Redis, SharedFolder,
-    Spacedeck, Stun, SubroomAudio, Turn, UserSearchBackend,
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
+    Endpoints, Etcd, Etherpad, Http, Logging, Metrics, MinIO, Monitoring, Oidc, RabbitMq, Redis,
+    SharedFolder, Spacedeck, Stun, SubroomAudio, Turn, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -83,6 +83,9 @@ pub struct Settings {
 
     /// The monitoring settings
     pub monitoring: Option<Monitoring>,
+
+    /// The call-in settings
+    pub call_in: Option<CallIn>,
 }
 
 impl Settings {
@@ -142,6 +145,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let endpoints = raw.endpoints.clone().map(Into::into).unwrap_or_default();
         let minio = raw.minio.clone().into();
         let monitoring = raw.monitoring.clone().map(Into::into);
+        let call_in = raw.call_in.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -166,6 +170,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             endpoints,
             minio,
             monitoring,
+            call_in,
         })
     }
 }

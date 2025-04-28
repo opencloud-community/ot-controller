@@ -20,6 +20,7 @@
 
 mod authz;
 mod avatar;
+mod call_in;
 mod database;
 mod endpoints;
 mod etcd;
@@ -49,6 +50,7 @@ mod user_search_backend_keycloak;
 
 pub use authz::Authz;
 pub use avatar::Avatar;
+pub use call_in::CallIn;
 pub use database::Database;
 pub use endpoints::Endpoints;
 pub use etcd::Etcd;

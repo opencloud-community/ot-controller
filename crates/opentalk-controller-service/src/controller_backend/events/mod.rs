@@ -991,7 +991,7 @@ impl EventRoomInfoExt for EventRoomInfo {
         let mut call_in = None;
 
         if call_in_feature_is_enabled {
-            if let (Some(call_in_config), Some(sip_config)) = (&settings.raw.call_in, sip_config) {
+            if let (Some(call_in_config), Some(sip_config)) = (&settings.call_in, sip_config) {
                 call_in = Some(CallInInfo {
                     tel: call_in_config.tel.clone(),
                     uri: None,
