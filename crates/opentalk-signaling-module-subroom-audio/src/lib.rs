@@ -137,10 +137,9 @@ impl SignalingModule for SubroomAudio {
     async fn build_params(
         init: SignalingModuleInitData,
     ) -> Result<Option<Self::Params>, SignalingModuleError> {
-        match &init.startup_settings.raw.subroom_audio {
-            Some(config) if config.enable_whisper => {}
-            _ => return Ok(None),
-        };
+        if !init.startup_settings.subroom_audio.enable_whisper {
+            return Ok(None);
+        }
 
         let livekit_settings = &init.startup_settings.raw.livekit;
 

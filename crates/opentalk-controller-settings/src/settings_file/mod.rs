@@ -72,7 +72,7 @@ pub(crate) use settings_raw::{settings_raw_minimal_example, SETTINGS_RAW_MINIMAL
 pub use shared_folder::SharedFolder;
 pub(crate) use spacedeck::Spacedeck;
 pub(crate) use stun::Stun;
-pub use subroom_audio::SubroomAudio;
+pub(crate) use subroom_audio::SubroomAudio;
 pub use tariff_assignment::TariffAssignment;
 pub use tariff_status_mapping::TariffStatusMapping;
 pub use tariffs::Tariffs;
