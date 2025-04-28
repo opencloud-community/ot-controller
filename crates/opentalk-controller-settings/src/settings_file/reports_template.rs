@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum ReportsTemplate {
+pub(crate) enum ReportsTemplate {
     /// Use the Template included with the application.
     #[default]
     BuiltIn,

@@ -64,7 +64,7 @@ pub struct SettingsRaw {
     pub(crate) subroom_audio: Option<SubroomAudio>,
 
     #[serde(default)]
-    pub reports: Option<Reports>,
+    pub(crate) reports: Option<Reports>,
 
     #[serde(default)]
     pub shared_folder: Option<SharedFolder>,
