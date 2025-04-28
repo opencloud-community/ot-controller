@@ -6,8 +6,8 @@ use std::sync::Arc;
 
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, Database, Etcd,
-    Etherpad, Http, Logging, Metrics, Oidc, RabbitMq, Redis, Spacedeck, Stun, SubroomAudio, Turn,
-    UserSearchBackend,
+    Etherpad, Http, Logging, Metrics, Oidc, RabbitMq, Redis, SharedFolder, Spacedeck, Stun,
+    SubroomAudio, Turn, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -71,6 +71,9 @@ pub struct Settings {
 
     /// The SubroomAudio settings.
     pub subroom_audio: SubroomAudio,
+
+    /// The SharedFolder settings.
+    pub shared_folder: Option<SharedFolder>,
 }
 
 impl Settings {
@@ -126,6 +129,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             .clone()
             .map(Into::into)
             .unwrap_or_default();
+        let shared_folder = raw.shared_folder.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -146,6 +150,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             etherpad,
             spacedeck,
             subroom_audio,
+            shared_folder,
         })
     }
 }

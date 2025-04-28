@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(tag = "provider", rename_all = "snake_case")]
-pub enum SharedFolder {
+pub(crate) enum SharedFolder {
     Nextcloud {
         url: url::Url,
         username: String,

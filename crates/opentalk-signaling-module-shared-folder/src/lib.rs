@@ -186,7 +186,6 @@ impl SignalingModule for SharedFolder {
         Ok(init
             .settings_provider
             .get()
-            .raw
             .shared_folder
             .as_ref()
             .map(|_| ()))

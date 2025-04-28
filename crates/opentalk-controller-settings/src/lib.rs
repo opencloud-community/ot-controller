@@ -42,8 +42,8 @@ pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
     Avatar, Database, Etcd, Etherpad, Http, HttpTls, Logging, LoggingOltpTracing, Metrics, Oidc,
-    OidcController, OidcFrontend, Settings, Spacedeck, Stun, SubroomAudio, Turn, TurnServer,
-    UserSearchBackend, UserSearchBackendKeycloak,
+    OidcController, OidcFrontend, Settings, SharedFolder, Spacedeck, Stun, SubroomAudio, Turn,
+    TurnServer, UserSearchBackend, UserSearchBackendKeycloak,
 };
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;

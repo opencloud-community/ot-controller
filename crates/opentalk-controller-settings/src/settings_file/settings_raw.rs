@@ -67,7 +67,7 @@ pub struct SettingsRaw {
     pub(crate) reports: Option<Reports>,
 
     #[serde(default)]
-    pub shared_folder: Option<SharedFolder>,
+    pub(crate) shared_folder: Option<SharedFolder>,
 
     #[serde(default)]
     pub call_in: Option<CallIn>,
