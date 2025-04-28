@@ -275,7 +275,7 @@ api_secret = "your-livekit-api-secret"
 #[call_in]
 # Set a phone number which will be displayed to the user
 # for the call-in service
-#tel="03012345678"
+#tel="+493012345678"
 # Enable the mapping of user names to their phone number. This requires
 # the OIDC provider to have a phone number field configured for their users.
 #enable_phone_mapping=false
