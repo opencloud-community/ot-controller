@@ -48,7 +48,7 @@ pub use call_in::CallIn;
 pub(crate) use database::Database;
 pub use defaults::Defaults;
 pub use endpoints::Endpoints;
-pub use etcd::Etcd;
+pub(crate) use etcd::Etcd;
 pub use etherpad::Etherpad;
 pub use extensions::Extensions;
 pub(crate) use http::Http;

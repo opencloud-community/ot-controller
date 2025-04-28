@@ -77,20 +77,19 @@ impl JobRunner {
         settings: Arc<Settings>,
         exchange_handle: ExchangeHandle,
     ) -> Result<(), JobRunnerError> {
-        let etcd_urls = match &settings.raw.etcd {
-            Some(etcd) => &etcd.urls,
-            None => {
-                log::info!("Missing etcd configuration, skipping JobRunner");
-                return Ok(());
-            }
-        };
-
         log::info!("Starting JobRunner");
 
-        let etcd_urls = etcd_urls
-            .iter()
-            .map(|url| url.to_string())
-            .collect::<Vec<String>>();
+        let Some(etcd) = settings.etcd.as_ref() else {
+            log::info!("No etcd configuration, skipping JobRunner");
+            return Ok(());
+        };
+
+        let etcd_urls = Vec::from_iter(etcd.urls.iter().map(ToString::to_string));
+
+        if etcd_urls.is_empty() {
+            log::info!("Empty url list in etcd configuration, skipping JobRunner");
+            return Ok(());
+        }
 
         let election_handle =
             ElectionTask::start(etcd_urls.clone())

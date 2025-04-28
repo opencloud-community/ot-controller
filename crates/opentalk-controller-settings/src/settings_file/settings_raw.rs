@@ -52,7 +52,7 @@ pub struct SettingsRaw {
     pub(crate) metrics: Option<Metrics>,
 
     #[serde(default)]
-    pub etcd: Option<Etcd>,
+    pub(crate) etcd: Option<Etcd>,
 
     #[serde(default)]
     pub etherpad: Option<Etherpad>,

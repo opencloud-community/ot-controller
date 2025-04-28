@@ -5,8 +5,8 @@
 use std::sync::Arc;
 
 use super::{
-    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, Database, Http, Logging,
-    Metrics, Oidc, RabbitMq, Redis, Stun, Turn, UserSearchBackend,
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, Database, Etcd, Http,
+    Logging, Metrics, Oidc, RabbitMq, Redis, Stun, Turn, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -58,6 +58,9 @@ pub struct Settings {
 
     /// The metrics settings.
     pub metrics: Metrics,
+
+    /// The etcd settings.
+    pub etcd: Option<Etcd>,
 }
 
 impl Settings {
@@ -105,6 +108,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let logging = raw.logging.clone().map(Into::into).unwrap_or_default();
         let avatar = raw.avatar.clone().map(Into::into).unwrap_or_default();
         let metrics = raw.metrics.clone().map(Into::into).unwrap_or_default();
+        let etcd = raw.etcd.clone().map(Into::into);
 
         Ok(Settings {
             raw,
@@ -121,6 +125,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             logging,
             avatar,
             metrics,
+            etcd,
         })
     }
 }

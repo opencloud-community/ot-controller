@@ -41,8 +41,9 @@ pub use settings_error::SettingsError;
 pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
-    Avatar, Database, Http, HttpTls, Logging, LoggingOltpTracing, Oidc, OidcController,
-    OidcFrontend, Settings, Stun, Turn, TurnServer, UserSearchBackend, UserSearchBackendKeycloak,
+    Avatar, Database, Etcd, Http, HttpTls, Logging, LoggingOltpTracing, Metrics, Oidc,
+    OidcController, OidcFrontend, Settings, Stun, Turn, TurnServer, UserSearchBackend,
+    UserSearchBackendKeycloak,
 };
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;
