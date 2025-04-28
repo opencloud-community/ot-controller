@@ -78,7 +78,7 @@ pub struct SettingsRaw {
     #[serde(default)]
     pub(crate) endpoints: Option<Endpoints>,
 
-    pub minio: MinIO,
+    pub(crate) minio: MinIO,
 
     #[serde(default)]
     pub monitoring: Option<MonitoringSettings>,

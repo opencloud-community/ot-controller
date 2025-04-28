@@ -311,7 +311,7 @@ impl Controller {
 
         // Connect to MinIO
         let storage = Arc::new(
-            ObjectStorage::new(&settings.raw.minio)
+            ObjectStorage::new(&settings.minio)
                 .await
                 .whatever_context("Failed to initialize object storage")?,
         );

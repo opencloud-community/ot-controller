@@ -42,7 +42,7 @@ pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
     Avatar, Database, Endpoints, Etcd, Etherpad, Http, HttpTls, Logging, LoggingOltpTracing,
-    Metrics, Oidc, OidcController, OidcFrontend, Settings, SharedFolder, Spacedeck, Stun,
+    Metrics, MinIO, Oidc, OidcController, OidcFrontend, Settings, SharedFolder, Spacedeck, Stun,
     SubroomAudio, Turn, TurnServer, UserSearchBackend, UserSearchBackendKeycloak,
 };
 

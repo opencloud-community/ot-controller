@@ -57,7 +57,7 @@ pub(crate) use keycloak::Keycloak;
 pub use live_kit_settings::LiveKitSettings;
 pub(crate) use logging::Logging;
 pub(crate) use metrics::Metrics;
-pub use minio::MinIO;
+pub(crate) use minio::MinIO;
 pub use monitoring_settings::MonitoringSettings;
 pub(crate) use oidc::Oidc;
 pub(crate) use oidc_controller::OidcController;
