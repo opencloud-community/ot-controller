@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct LiveKitSettings {
+pub(crate) struct LiveKitSettings {
     pub api_key: String,
     pub api_secret: String,
     pub public_url: String,

@@ -14,7 +14,7 @@ use livekit_api::{
     services::room::{CreateRoomOptions, RoomClient},
 };
 use livekit_protocol::TrackSource;
-use opentalk_controller_settings::settings_file::LiveKitSettings;
+use opentalk_controller_settings::LiveKit;
 use opentalk_signaling_core::{
     control, CleanupScope, DestroyContext, Event as SignalingEvent, InitContext, ModuleContext,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
@@ -47,7 +47,7 @@ pub struct SubroomAudio {
 }
 
 pub struct SubroomAudioParams {
-    settings: LiveKitSettings,
+    settings: LiveKit,
     room_client: RoomClient,
 }
 
@@ -141,7 +141,7 @@ impl SignalingModule for SubroomAudio {
             return Ok(None);
         }
 
-        let livekit_settings = &init.startup_settings.raw.livekit;
+        let livekit_settings = &init.startup_settings.livekit;
 
         let room_client = RoomClient::with_api_key(
             &livekit_settings.service_url,

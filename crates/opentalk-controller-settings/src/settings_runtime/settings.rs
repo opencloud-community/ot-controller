@@ -6,8 +6,9 @@ use std::sync::Arc;
 
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
-    Defaults, Endpoints, Etcd, Etherpad, Http, Logging, Metrics, MinIO, Monitoring, Oidc, RabbitMq,
-    Redis, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearchBackend,
+    Defaults, Endpoints, Etcd, Etherpad, Http, LiveKit, Logging, Metrics, MinIO, Monitoring, Oidc,
+    RabbitMq, Redis, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn,
+    UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -95,6 +96,9 @@ pub struct Settings {
 
     /// The defaults configuration.
     pub defaults: Defaults,
+
+    /// The livekit settings.
+    pub livekit: LiveKit,
 }
 
 impl Settings {
@@ -158,6 +162,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let tenants = raw.tenants.clone().map(Into::into).unwrap_or_default();
         let tariffs = raw.tariffs.clone().map(Into::into).unwrap_or_default();
         let defaults = raw.defaults.clone().map(Into::into).unwrap_or_default();
+        let livekit = raw.livekit.clone().into();
 
         Ok(Settings {
             raw,
@@ -186,6 +191,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             tenants,
             tariffs,
             defaults,
+            livekit,
         })
     }
 }

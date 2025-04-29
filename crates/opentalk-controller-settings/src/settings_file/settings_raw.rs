@@ -89,7 +89,7 @@ pub struct SettingsRaw {
     #[serde(default)]
     pub(crate) tariffs: Option<Tariffs>,
 
-    pub livekit: LiveKitSettings,
+    pub(crate) livekit: LiveKitSettings,
 
     #[serde(flatten)]
     pub extensions: Extensions,
