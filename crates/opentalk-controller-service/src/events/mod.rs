@@ -6,7 +6,7 @@
 
 pub(crate) mod notifications;
 
-use opentalk_controller_settings::{settings_file::TenantAssignment, Settings};
+use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{email_invites::EventEmailInvite, shared_folders::EventSharedFolder, EventInvite},
@@ -70,7 +70,7 @@ async fn enrich_invitees_from_user_search(
     current_tenant: &Tenant,
     invitees: Vec<EventInvitee>,
 ) -> Vec<EventInvitee> {
-    let tenant_assignment = &settings.raw.tenants.assignment;
+    let tenant_assignment = &settings.tenants.assignment;
     let invitee_mapping_futures = invitees.into_iter().map(|invitee| async move {
         if let EventInviteeProfile::Email(profile_details) = invitee.profile {
             let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
@@ -173,7 +173,7 @@ async fn enrich_from_user_search(
     current_tenant: &Tenant,
     user_search_client: &KeycloakAdminClient,
 ) -> MailRecipient {
-    let tenant_assignment = &settings.raw.tenants.assignment;
+    let tenant_assignment = &settings.tenants.assignment;
     if let MailRecipient::External(recipient) = recipient {
         let tenant_filter = get_tenant_filter(current_tenant, tenant_assignment);
 

@@ -43,6 +43,8 @@ mod shared_folder;
 mod spacedeck;
 mod stun;
 mod subroom_audio;
+mod tenant_assignment;
+mod tenants;
 mod turn;
 mod turn_server;
 mod user_search_backend;
@@ -72,6 +74,10 @@ pub use shared_folder::SharedFolder;
 pub use spacedeck::Spacedeck;
 pub use stun::Stun;
 pub use subroom_audio::SubroomAudio;
+pub use tenant_assignment::{
+    TenantAssignment, DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TENANT_ID,
+};
+pub use tenants::Tenants;
 pub use turn::Turn;
 pub use turn_server::TurnServer;
 pub use user_search_backend::UserSearchBackend;

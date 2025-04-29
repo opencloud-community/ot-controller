@@ -334,7 +334,7 @@ impl ControllerBackend {
         let current_tenant = Tenant::get(&mut conn, current_user.tenant_id).await?;
         let current_user = User::get(&mut conn, current_user.id).await?;
 
-        let tenant_filter = get_tenant_filter(&current_tenant, &settings.raw.tenants.assignment);
+        let tenant_filter = get_tenant_filter(&current_tenant, &settings.tenants.assignment);
 
         let mail_service = (!query.suppress_email_notification)
             .then(|| self.mail_service.as_ref().clone())
@@ -732,7 +732,7 @@ async fn create_invite_to_non_matching_email(
     shared_folder: Option<SharedFolder>,
     streaming_targets: Vec<RoomStreamingTarget>,
 ) -> Result<bool, CaptureApiError> {
-    let tenant_filter = get_tenant_filter(current_tenant, &settings.raw.tenants.assignment);
+    let tenant_filter = get_tenant_filter(current_tenant, &settings.tenants.assignment);
 
     let invitee_user = if let Some(user_search_client) = user_search_client {
         user_search_client

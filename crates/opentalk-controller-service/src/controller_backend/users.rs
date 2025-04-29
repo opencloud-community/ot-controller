@@ -4,8 +4,8 @@
 
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    settings_file::{TenantAssignment, UsersFindBehavior},
-    UserSearchBackend, UserSearchBackendKeycloak,
+    settings_file::UsersFindBehavior, TenantAssignment, UserSearchBackend,
+    UserSearchBackendKeycloak,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, DbConnection};
@@ -188,7 +188,7 @@ impl ControllerBackend {
                     .with_message("search backend not properly configured")
                     .into());
             };
-            let mut found_kc_users = match &settings.raw.tenants.assignment {
+            let mut found_kc_users = match &settings.tenants.assignment {
                 TenantAssignment::Static { .. } => {
                     // Do not filter by tenant_id if the assignment is static, since that's used
                     // when Keycloak does not provide any tenant information we can filter over anyway

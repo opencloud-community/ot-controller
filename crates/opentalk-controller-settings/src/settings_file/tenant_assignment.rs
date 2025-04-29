@@ -6,24 +6,13 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
-pub enum TenantAssignment {
+pub(crate) enum TenantAssignment {
     Static {
-        static_tenant_id: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        static_tenant_id: Option<String>,
     },
     ByExternalTenantId {
-        #[serde(default = "default_external_tenant_id_user_attribute_name")]
-        external_tenant_id_user_attribute_name: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        external_tenant_id_user_attribute_name: Option<String>,
     },
-}
-
-fn default_external_tenant_id_user_attribute_name() -> String {
-    "tenant_id".to_owned()
-}
-
-impl Default for TenantAssignment {
-    fn default() -> Self {
-        Self::Static {
-            static_tenant_id: String::from("OpenTalkDefaultTenant"),
-        }
-    }
 }

@@ -84,7 +84,7 @@ pub struct SettingsRaw {
     pub(crate) monitoring: Option<MonitoringSettings>,
 
     #[serde(default)]
-    pub tenants: Tenants,
+    pub(crate) tenants: Option<Tenants>,
 
     #[serde(default)]
     pub tariffs: Tariffs,
@@ -161,7 +161,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             secret_key: "minioadmin".to_string(),
         },
         monitoring: None,
-        tenants: Tenants::default(),
+        tenants: None,
         tariffs: Tariffs::default(),
         livekit: LiveKitSettings {
             public_url: "ws://localhost:7880".to_string(),

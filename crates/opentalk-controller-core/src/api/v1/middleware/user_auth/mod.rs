@@ -29,8 +29,8 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    settings_file::{TariffAssignment, TariffStatusMapping, TenantAssignment},
-    Settings, SettingsProvider,
+    settings_file::{TariffAssignment, TariffStatusMapping},
+    Settings, SettingsProvider, TenantAssignment,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
@@ -401,7 +401,7 @@ async fn check_access_token_inner(
     };
 
     // Get the tenant_id depending on the configured assignment
-    let tenant_id = match &settings.raw.tenants.assignment {
+    let tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
         TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
             log::error!("Invalid access token, missing tenant_id");
