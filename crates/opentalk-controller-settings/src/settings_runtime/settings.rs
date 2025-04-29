@@ -7,7 +7,7 @@ use std::sync::Arc;
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
     Endpoints, Etcd, Etherpad, Http, Logging, Metrics, MinIO, Monitoring, Oidc, RabbitMq, Redis,
-    SharedFolder, Spacedeck, Stun, SubroomAudio, Tenants, Turn, UserSearchBackend,
+    SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -89,6 +89,9 @@ pub struct Settings {
 
     /// The tenant configuration.
     pub tenants: Tenants,
+
+    /// The tariff configuration.
+    pub tariffs: Tariffs,
 }
 
 impl Settings {
@@ -150,6 +153,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
         let monitoring = raw.monitoring.clone().map(Into::into);
         let call_in = raw.call_in.clone().map(Into::into);
         let tenants = raw.tenants.clone().map(Into::into).unwrap_or_default();
+        let tariffs = raw.tariffs.clone().map(Into::into).unwrap_or_default();
 
         Ok(Settings {
             raw,
@@ -176,6 +180,7 @@ impl TryFrom<Arc<SettingsRaw>> for Settings {
             monitoring,
             call_in,
             tenants,
+            tariffs,
         })
     }
 }

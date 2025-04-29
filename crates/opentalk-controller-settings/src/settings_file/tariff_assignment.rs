@@ -4,17 +4,17 @@
 
 use serde::Deserialize;
 
+use super::TariffStatusMapping;
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "assignment")]
-pub enum TariffAssignment {
-    Static { static_tariff_name: String },
-    ByExternalTariffId,
-}
-
-impl Default for TariffAssignment {
-    fn default() -> Self {
-        Self::Static {
-            static_tariff_name: String::from("OpenTalkDefaultTariff"),
-        }
-    }
+pub(crate) enum TariffAssignment {
+    Static {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        static_tariff_name: Option<String>,
+    },
+    ByExternalTariffId {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        status_mapping: Option<TariffStatusMapping>,
+    },
 }

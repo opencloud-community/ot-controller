@@ -87,7 +87,7 @@ pub struct SettingsRaw {
     pub(crate) tenants: Option<Tenants>,
 
     #[serde(default)]
-    pub tariffs: Tariffs,
+    pub(crate) tariffs: Option<Tariffs>,
 
     pub livekit: LiveKitSettings,
 
@@ -162,7 +162,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         },
         monitoring: None,
         tenants: None,
-        tariffs: Tariffs::default(),
+        tariffs: None,
         livekit: LiveKitSettings {
             public_url: "ws://localhost:7880".to_string(),
             service_url: "http://localhost:7880".to_string(),

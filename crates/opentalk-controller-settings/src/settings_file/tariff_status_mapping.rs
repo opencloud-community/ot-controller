@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use rustc_hash::FxHashSet;
+use std::collections::BTreeSet;
+
 use serde::Deserialize;
 
-#[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct TariffStatusMapping {
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub(crate) struct TariffStatusMapping {
     pub downgraded_tariff_name: String,
-    pub default: FxHashSet<String>,
-    pub paid: FxHashSet<String>,
-    pub downgraded: FxHashSet<String>,
+    pub default: BTreeSet<String>,
+    pub paid: BTreeSet<String>,
+    pub downgraded: BTreeSet<String>,
 }

@@ -43,8 +43,9 @@ pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
     Avatar, CallIn, Database, Endpoints, Etcd, Etherpad, Http, HttpTls, Logging,
     LoggingOltpTracing, Metrics, MinIO, Monitoring, Oidc, OidcController, OidcFrontend, Settings,
-    SharedFolder, Spacedeck, Stun, SubroomAudio, TenantAssignment, Tenants, Turn, TurnServer,
-    UserSearchBackend, UserSearchBackendKeycloak, DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME,
+    SharedFolder, Spacedeck, Stun, SubroomAudio, TariffAssignment, TariffStatusMapping, Tariffs,
+    TenantAssignment, Tenants, Turn, TurnServer, UserSearchBackend, UserSearchBackendKeycloak,
+    DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TARIFF_NAME,
     DEFAULT_STATIC_TENANT_ID,
 };
 
