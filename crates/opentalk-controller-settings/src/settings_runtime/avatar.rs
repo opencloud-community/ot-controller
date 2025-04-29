@@ -4,7 +4,8 @@
 
 use crate::settings_file;
 
-const DEFAULT_LIBRAVATAR_URL: &str = "https://seccdn.libravatar.org/avatar/";
+/// The default libravatar url.
+pub const DEFAULT_LIBRAVATAR_URL: &str = "https://seccdn.libravatar.org/avatar/";
 
 /// Avatar settings.
 #[derive(Debug, Clone, PartialEq, Eq)]

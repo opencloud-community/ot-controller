@@ -47,6 +47,6 @@ impl Default for Defaults {
     }
 }
 
-fn default_user_language() -> Language {
+pub(crate) fn default_user_language() -> Language {
     "en-US".parse().expect("valid language")
 }

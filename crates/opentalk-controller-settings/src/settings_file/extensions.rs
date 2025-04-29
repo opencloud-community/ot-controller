@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
-pub struct Extensions(pub HashMap<String, config::Value>);
+pub(crate) struct Extensions(pub HashMap<String, config::Value>);
 
 impl Eq for Extensions {}
 

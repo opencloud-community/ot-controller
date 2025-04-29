@@ -24,12 +24,12 @@ impl SettingsProvider {
     /// and will override the settings found in the file.
     pub fn load(file_name: &str) -> Result<Self> {
         let settings_raw = Self::load_raw(file_name)?;
-        Self::new_raw(Arc::new(settings_raw))
+        Self::new_raw(settings_raw)
     }
 
     /// Create a new [`SettingsProvider`] with settings that are already loaded.
-    pub fn new_raw(settings_raw: Arc<SettingsRaw>) -> Result<Self> {
-        let settings = Settings::try_from(settings_raw.clone())?;
+    pub fn new_raw(settings_raw: SettingsRaw) -> Result<Self> {
+        let settings = Settings::try_from(settings_raw)?;
         Ok(Self {
             settings: Arc::new(ArcSwap::new(Arc::new(settings))),
         })
@@ -85,8 +85,8 @@ mod tests {
 
     use super::SettingsProvider;
     use crate::{
-        settings_file::{settings_raw_minimal_example, SETTINGS_RAW_MINIMAL_CONFIG_TOML},
-        SettingsError,
+        settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
+        settings_runtime::settings::minimal_example, SettingsError,
     };
 
     #[test]
@@ -105,10 +105,7 @@ mod tests {
             SettingsProvider::load(path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(
-            &(*settings_provider.get().raw),
-            &settings_raw_minimal_example()
-        );
+        assert_eq!(&(*settings_provider.get()), &minimal_example());
     }
 
     #[test]
@@ -168,19 +165,13 @@ mod tests {
             SettingsProvider::load(modified_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_ne!(
-            &(*settings_provider.get().raw),
-            &settings_raw_minimal_example()
-        );
+        assert_ne!(&(*settings_provider.get()), &minimal_example());
 
         settings_provider
             .reload(minimal_path.to_str().expect("valid file path expected"))
             .expect("reload is expected to succeed");
 
-        assert_eq!(
-            &(*settings_provider.get().raw),
-            &settings_raw_minimal_example()
-        );
+        assert_eq!(&(*settings_provider.get()), &minimal_example());
     }
 
     #[test]
@@ -204,10 +195,7 @@ mod tests {
             SettingsProvider::load(minimal_path.to_str().expect("valid file path expected"))
                 .expect("valid configuration expected");
 
-        assert_eq!(
-            &(*settings_provider.get().raw),
-            &settings_raw_minimal_example()
-        );
+        assert_eq!(&(*settings_provider.get()), &minimal_example());
 
         assert_matches!(
             settings_provider.reload(invalid_path.to_str().expect("valid file path expected")),
@@ -217,9 +205,6 @@ mod tests {
             })
         );
 
-        assert_eq!(
-            &(*settings_provider.get().raw),
-            &settings_raw_minimal_example()
-        );
+        assert_eq!(&(*settings_provider.get()), &minimal_example());
     }
 }

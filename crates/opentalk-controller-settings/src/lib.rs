@@ -45,8 +45,8 @@ pub use settings_runtime::{
     LoggingOltpTracing, Metrics, MinIO, Monitoring, Oidc, OidcController, OidcFrontend, Settings,
     SharedFolder, Spacedeck, Stun, SubroomAudio, TariffAssignment, TariffStatusMapping, Tariffs,
     TenantAssignment, Tenants, Turn, TurnServer, UserSearchBackend, UserSearchBackendKeycloak,
-    DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TARIFF_NAME,
-    DEFAULT_STATIC_TENANT_ID,
+    DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_LIBRAVATAR_URL,
+    DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID,
 };
 
 type Result<T, E = SettingsError> = std::result::Result<T, E>;

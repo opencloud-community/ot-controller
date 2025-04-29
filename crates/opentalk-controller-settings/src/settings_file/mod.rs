@@ -50,7 +50,7 @@ pub(crate) use defaults::Defaults;
 pub(crate) use endpoints::Endpoints;
 pub(crate) use etcd::Etcd;
 pub(crate) use etherpad::Etherpad;
-pub use extensions::Extensions;
+pub(crate) use extensions::Extensions;
 pub(crate) use http::Http;
 pub(crate) use http_tls::HttpTls;
 pub(crate) use keycloak::Keycloak;

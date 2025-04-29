@@ -92,7 +92,7 @@ pub struct SettingsRaw {
     pub(crate) livekit: LiveKitSettings,
 
     #[serde(flatten)]
-    pub extensions: Extensions,
+    pub(crate) extensions: Extensions,
 }
 
 #[cfg(test)]

@@ -40,7 +40,7 @@ mod oidc_controller;
 mod oidc_frontend;
 mod rabbitmq;
 mod redis;
-mod settings;
+pub(crate) mod settings;
 mod shared_folder;
 mod spacedeck;
 mod stun;
@@ -56,7 +56,7 @@ mod user_search_backend;
 mod user_search_backend_keycloak;
 
 pub use authz::Authz;
-pub use avatar::Avatar;
+pub use avatar::{Avatar, DEFAULT_LIBRAVATAR_URL};
 pub use call_in::CallIn;
 pub use database::Database;
 pub use defaults::Defaults;
