@@ -33,6 +33,7 @@ opentalk-signaling-module-chat = { path = "crates/opentalk-signaling-module-chat
 opentalk-signaling-module-core = { path = "crates/opentalk-signaling-module-core", version = "0.29.0" }
 opentalk-signaling-module-e2ee = { path = "crates/opentalk-signaling-module-e2ee", version = "0.29.0" }
 opentalk-signaling-module-integration = { path = "crates/opentalk-signaling-module-integration", version = "0.29.0" }
+opentalk-signaling-module-legal-vote = { path = "crates/opentalk-signaling-module-legal-vote", version = "0.29.0" }
 opentalk-signaling-module-livekit = { path = "crates/opentalk-signaling-module-livekit", version = "0.29.0" }
 opentalk-signaling-module-meeting-notes = { path = "crates/opentalk-signaling-module-meeting-notes", version = "0.29.0" }
 opentalk-signaling-module-meeting-report = { path = "crates/opentalk-signaling-module-meeting-report", version = "0.29.0" }
@@ -101,6 +102,7 @@ opentalk-types-signaling-breakout = "0.33"
 opentalk-types-signaling-chat = "0.33"
 opentalk-types-signaling-control = "0.33"
 opentalk-types-signaling-e2ee = "0.2"
+opentalk-types-signaling-legal-vote = "0.4"
 opentalk-types-signaling-livekit = "0.33"
 opentalk-types-signaling-meeting-notes = "0.33"
 opentalk-types-signaling-meeting-report = "0.33"

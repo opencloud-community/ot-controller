@@ -1195,6 +1195,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb97d56060ee67d285efb8001fec9d2a4c710c32efd2e14b5cbb5ba71930fc2d"
 
 [[package]]
+name = "basen"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dbe4bb73fd931c4d1aaf53b35d1286c8a948ad00ec92c8e3c856f15fd027f43"
+
+[[package]]
 name = "biblatex"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5263,6 +5269,7 @@ dependencies = [
  "opentalk-signaling-module-chat",
  "opentalk-signaling-module-core",
  "opentalk-signaling-module-integration",
+ "opentalk-signaling-module-legal-vote",
  "opentalk-signaling-module-livekit",
  "opentalk-signaling-module-meeting-notes",
  "opentalk-signaling-module-meeting-report",
@@ -5859,6 +5866,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-signaling-module-legal-vote"
+version = "0.29.0"
+dependencies = [
+ "actix-rt",
+ "async-trait",
+ "bytes",
+ "chrono",
+ "chrono-tz",
+ "either",
+ "futures",
+ "insta",
+ "kustos",
+ "log",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-report-generation",
+ "opentalk-signaling-core",
+ "opentalk-test-util",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
+ "opentalk-types-signaling-legal-vote",
+ "parking_lot",
+ "pdf-extract",
+ "pretty_assertions",
+ "redis",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "snafu",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "opentalk-signaling-module-livekit"
 version = "0.29.0"
 dependencies = [
@@ -6284,6 +6328,26 @@ dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
  "serde",
+]
+
+[[package]]
+name = "opentalk-types-signaling-legal-vote"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83b64c67749395fa41ef07f94691722b4e35dec8f0a4e4814facc6cd195e7db8"
+dependencies = [
+ "basen",
+ "chrono",
+ "chrono-tz",
+ "derive_more 2.0.1",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "rand 0.9.0",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "snafu",
+ "uuid",
 ]
 
 [[package]]

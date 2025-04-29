@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+name = "opentalk-signaling-module-legal-vote"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+chrono.workspace = true
+chrono-tz = { workspace = true, features = ["serde"] }
+either.workspace = true
+futures.workspace = true
+kustos.workspace = true
+log.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-report-generation.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend", "kustos"] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-legal-vote = { workspace = true, features = [
+  "backend",
+] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+snafu.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+actix-rt.workspace = true
+insta.workspace = true
+opentalk-test-util = { workspace = true, features = ["controller"] }
+opentalk-types-signaling-control = { workspace = true, features = ["backend"] }
+pdf-extract.workspace = true
+pretty_assertions.workspace = true
+serial_test.workspace = true
