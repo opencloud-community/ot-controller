@@ -981,7 +981,6 @@ impl EventRoomInfoExt for EventRoomInfo {
         tariff: &Tariff,
     ) -> Self {
         let call_in_feature_is_enabled = !settings
-            .raw
             .defaults
             .disabled_features
             .contains(&features::CALL_IN_MODULE_FEATURE_ID)

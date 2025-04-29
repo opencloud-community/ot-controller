@@ -125,7 +125,7 @@ pub async fn require_feature(
     user_id: UserId,
     feature: &ModuleFeatureId,
 ) -> opentalk_database::Result<(), CaptureApiError> {
-    if settings.raw.defaults.disabled_features.contains(feature) {
+    if settings.defaults.disabled_features.contains(feature) {
         return Err(ApiError::forbidden()
             .with_code("feature_disabled")
             .with_message(format!("The feature \"{feature}\" is disabled"))

@@ -56,7 +56,7 @@ pub(super) async fn create_user(
                 lastname: info.lastname,
                 avatar_url: info.avatar_url,
                 // TODO: try to get user language from accept-language header
-                language: settings.raw.defaults.user_language.clone(),
+                language: settings.defaults.user_language.clone(),
                 phone: phone_number,
                 tenant_id: tenant.id,
                 tariff_id: tariff.id,

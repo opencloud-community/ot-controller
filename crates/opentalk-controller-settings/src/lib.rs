@@ -41,7 +41,7 @@ pub use settings_error::SettingsError;
 pub use settings_file::SettingsRaw;
 pub use settings_provider::SettingsProvider;
 pub use settings_runtime::{
-    Avatar, CallIn, Database, Endpoints, Etcd, Etherpad, Http, HttpTls, Logging,
+    Avatar, CallIn, Database, Defaults, Endpoints, Etcd, Etherpad, Http, HttpTls, Logging,
     LoggingOltpTracing, Metrics, MinIO, Monitoring, Oidc, OidcController, OidcFrontend, Settings,
     SharedFolder, Spacedeck, Stun, SubroomAudio, TariffAssignment, TariffStatusMapping, Tariffs,
     TenantAssignment, Tenants, Turn, TurnServer, UserSearchBackend, UserSearchBackendKeycloak,

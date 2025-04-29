@@ -243,7 +243,7 @@ impl ControllerBackend {
         let tariff = room.get_tariff(&mut conn).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.raw.defaults.disabled_features.clone(),
+            settings.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 

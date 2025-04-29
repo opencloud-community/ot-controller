@@ -110,7 +110,6 @@ fn to_event(
     let end_time: Option<v1::Time> = event.ends_at_of_first_occurrence().map(Into::into);
 
     let call_in_feature_is_enabled = !settings
-        .raw
         .defaults
         .disabled_features
         .contains(&features::CALL_IN_MODULE_FEATURE_ID);

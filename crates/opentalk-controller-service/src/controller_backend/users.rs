@@ -105,7 +105,7 @@ impl ControllerBackend {
         let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.raw.defaults.disabled_features.clone(),
+            settings.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 

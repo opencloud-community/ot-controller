@@ -566,7 +566,6 @@ impl Livekit {
             .params
             .settings_provider
             .get()
-            .raw
             .defaults
             .screen_share_requires_permission;
 

@@ -1671,10 +1671,7 @@ impl Runner {
             });
 
         let tariff_resource = tariff
-            .to_tariff_resource(
-                settings.raw.defaults.disabled_features.clone(),
-                module_features,
-            )
+            .to_tariff_resource(settings.defaults.disabled_features.clone(), module_features)
             .into();
 
         let mut conn = self.db.get_conn().await?;

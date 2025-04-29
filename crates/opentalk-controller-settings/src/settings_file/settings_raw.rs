@@ -73,7 +73,7 @@ pub struct SettingsRaw {
     pub(crate) call_in: Option<CallIn>,
 
     #[serde(default)]
-    pub defaults: Defaults,
+    pub(crate) defaults: Option<Defaults>,
 
     #[serde(default)]
     pub(crate) endpoints: Option<Endpoints>,
@@ -150,7 +150,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         reports: None,
         shared_folder: None,
         call_in: None,
-        defaults: Defaults::default(),
+        defaults: None,
         endpoints: None,
         minio: MinIO {
             uri: "http://localhost:9555"
