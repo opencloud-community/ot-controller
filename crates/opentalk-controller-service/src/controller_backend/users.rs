@@ -4,8 +4,8 @@
 
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    settings_file::{TenantAssignment, UsersFindBehavior},
-    UserSearchBackend, UserSearchBackendKeycloak,
+    settings_file::UsersFindBehavior, TenantAssignment, UserSearchBackend,
+    UserSearchBackendKeycloak,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, DbConnection};
@@ -46,7 +46,7 @@ impl ControllerBackend {
         let mut conn = self.db.get_conn().await?;
 
         // Prohibit display name editing, if configured
-        if settings.raw.endpoints.disallow_custom_display_name {
+        if settings.endpoints.disallow_custom_display_name {
             if let Some(display_name) = &patch.display_name {
                 if &current_user.display_name != display_name {
                     return Err(ApiError::bad_request()
@@ -105,7 +105,7 @@ impl ControllerBackend {
         let tariff = Tariff::get(&mut conn, current_user.tariff_id).await?;
 
         let response = tariff.to_tariff_resource(
-            settings.raw.defaults.disabled_features.clone(),
+            settings.defaults.disabled_features.clone(),
             self.module_features.clone(),
         );
 
@@ -188,7 +188,7 @@ impl ControllerBackend {
                     .with_message("search backend not properly configured")
                     .into());
             };
-            let mut found_kc_users = match &settings.raw.tenants.assignment {
+            let mut found_kc_users = match &settings.tenants.assignment {
                 TenantAssignment::Static { .. } => {
                     // Do not filter by tenant_id if the assignment is static, since that's used
                     // when Keycloak does not provide any tenant information we can filter over anyway
@@ -252,10 +252,8 @@ impl ControllerBackend {
                     GetFindResponseEntry::Registered(user.to_public_user_profile(&settings))
                 })
                 .chain(found_kc_users.into_iter().map(|kc_user| {
-                    let avatar_url = email_to_libravatar_url(
-                        &settings.raw.avatar.libravatar_url,
-                        &kc_user.email,
-                    );
+                    let avatar_url =
+                        email_to_libravatar_url(&settings.avatar.libravatar_url, &kc_user.email);
 
                     GetFindResponseEntry::Unregistered(UnregisteredUser {
                         email: kc_user.email,

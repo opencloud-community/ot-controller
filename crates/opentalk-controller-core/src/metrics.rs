@@ -227,7 +227,6 @@ pub async fn metrics(
     let settings = settings.get();
 
     let allowed = &settings
-        .raw
         .metrics
         .allowlist
         .iter()

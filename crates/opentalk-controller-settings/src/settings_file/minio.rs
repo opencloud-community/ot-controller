@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct MinIO {
+pub(crate) struct MinIO {
     pub uri: String,
     pub bucket: String,
     pub access_key: String,

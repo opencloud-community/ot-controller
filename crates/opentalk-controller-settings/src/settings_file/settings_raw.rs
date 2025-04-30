@@ -40,58 +40,59 @@ pub struct SettingsRaw {
     pub(crate) rabbit_mq: Option<RabbitMqConfig>,
 
     #[serde(default)]
-    pub logging: Logging,
+    pub(crate) logging: Option<Logging>,
 
     #[serde(default)]
     pub(crate) authz: Option<Authz>,
 
     #[serde(default)]
-    pub avatar: Avatar,
-    #[serde(default)]
-    pub metrics: Metrics,
+    pub(crate) avatar: Option<Avatar>,
 
     #[serde(default)]
-    pub etcd: Option<Etcd>,
+    pub(crate) metrics: Option<Metrics>,
 
     #[serde(default)]
-    pub etherpad: Option<Etherpad>,
+    pub(crate) etcd: Option<Etcd>,
 
     #[serde(default)]
-    pub spacedeck: Option<Spacedeck>,
+    pub(crate) etherpad: Option<Etherpad>,
 
     #[serde(default)]
-    pub subroom_audio: Option<SubroomAudio>,
+    pub(crate) spacedeck: Option<Spacedeck>,
 
     #[serde(default)]
-    pub reports: Option<Reports>,
+    pub(crate) subroom_audio: Option<SubroomAudio>,
 
     #[serde(default)]
-    pub shared_folder: Option<SharedFolder>,
+    pub(crate) reports: Option<Reports>,
 
     #[serde(default)]
-    pub call_in: Option<CallIn>,
+    pub(crate) shared_folder: Option<SharedFolder>,
 
     #[serde(default)]
-    pub defaults: Defaults,
+    pub(crate) call_in: Option<CallIn>,
 
     #[serde(default)]
-    pub endpoints: Endpoints,
-
-    pub minio: MinIO,
+    pub(crate) defaults: Option<Defaults>,
 
     #[serde(default)]
-    pub monitoring: Option<MonitoringSettings>,
+    pub(crate) endpoints: Option<Endpoints>,
+
+    pub(crate) minio: MinIO,
 
     #[serde(default)]
-    pub tenants: Tenants,
+    pub(crate) monitoring: Option<MonitoringSettings>,
 
     #[serde(default)]
-    pub tariffs: Tariffs,
+    pub(crate) tenants: Option<Tenants>,
 
-    pub livekit: LiveKitSettings,
+    #[serde(default)]
+    pub(crate) tariffs: Option<Tariffs>,
+
+    pub(crate) livekit: LiveKitSettings,
 
     #[serde(flatten)]
-    pub extensions: Extensions,
+    pub(crate) extensions: Extensions,
 }
 
 #[cfg(test)]
@@ -138,10 +139,10 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         stun: None,
         redis: None,
         rabbit_mq: None,
-        logging: Logging::default(),
+        logging: None,
         authz: None,
-        avatar: Avatar::default(),
-        metrics: Metrics::default(),
+        avatar: None,
+        metrics: None,
         etcd: None,
         etherpad: None,
         spacedeck: None,
@@ -149,8 +150,8 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
         reports: None,
         shared_folder: None,
         call_in: None,
-        defaults: Defaults::default(),
-        endpoints: Endpoints::default(),
+        defaults: None,
+        endpoints: None,
         minio: MinIO {
             uri: "http://localhost:9555"
                 .parse()
@@ -160,8 +161,8 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             secret_key: "minioadmin".to_string(),
         },
         monitoring: None,
-        tenants: Tenants::default(),
-        tariffs: Tariffs::default(),
+        tenants: None,
+        tariffs: None,
         livekit: LiveKitSettings {
             public_url: "ws://localhost:7880".to_string(),
             service_url: "http://localhost:7880".to_string(),

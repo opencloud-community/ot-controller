@@ -5,13 +5,19 @@
 use serde::Deserialize;
 
 #[derive(Clone, Default, Debug, PartialEq, Eq, Deserialize)]
-pub struct Endpoints {
+pub(crate) struct Endpoints {
+    #[serde(default)]
     pub(crate) disable_users_find: Option<bool>,
+
+    #[serde(default)]
     pub(crate) users_find_use_kc: Option<bool>,
+
     #[serde(default)]
-    pub event_invite_external_email_address: bool,
+    pub(crate) event_invite_external_email_address: Option<bool>,
+
     #[serde(default)]
-    pub disallow_custom_display_name: bool,
+    pub(crate) disallow_custom_display_name: Option<bool>,
+
     #[serde(default)]
-    pub disable_openapi: bool,
+    pub(crate) disable_openapi: Option<bool>,
 }

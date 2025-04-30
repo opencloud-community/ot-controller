@@ -125,7 +125,12 @@ mod tests {
         assert_eq!(settings.database.url, env_db_url);
         assert_eq!(settings.http.as_ref().unwrap().port, Some(env_http_port));
         assert_eq!(
-            settings.defaults.screen_share_requires_permission,
+            settings
+                .defaults
+                .as_ref()
+                .unwrap()
+                .screen_share_requires_permission
+                .unwrap(),
             screen_share_requires_permission
         );
 

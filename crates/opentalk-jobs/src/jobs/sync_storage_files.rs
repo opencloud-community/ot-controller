@@ -62,7 +62,7 @@ impl Job for SyncStorageFiles {
 
         let mut conn = db.get_conn().await?;
 
-        let object_storage = ObjectStorage::new(&settings.raw.minio).await?;
+        let object_storage = ObjectStorage::new(&settings.minio).await?;
 
         sync_files(
             logger,
@@ -181,7 +181,7 @@ async fn sync_files(
 mod tests {
     use bytes::Bytes;
     use futures::stream;
-    use opentalk_controller_settings::settings_file::MinIO;
+    use opentalk_controller_settings::MinIO;
     use opentalk_db_storage::assets::{Asset, NewAsset, UpdateAsset};
     use opentalk_signaling_core::{
         assets::{save_asset, NewAssetFileName},

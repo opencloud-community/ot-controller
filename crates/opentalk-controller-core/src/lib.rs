@@ -55,8 +55,7 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
-    settings_file::MonitoringSettings, HttpTls, Settings, SettingsProvider, UserSearchBackend,
-    UserSearchBackendKeycloak,
+    HttpTls, Monitoring, Settings, SettingsProvider, UserSearchBackend, UserSearchBackendKeycloak,
 };
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
@@ -258,7 +257,7 @@ impl Controller {
             SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
-        trace::init(&settings.raw.logging).whatever_context("Failed to initialize tracing")?;
+        trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
 
         log::info!("Starting {}", program_name);
 
@@ -311,7 +310,7 @@ impl Controller {
 
         // Connect to MinIO
         let storage = Arc::new(
-            ObjectStorage::new(&settings.raw.minio)
+            ObjectStorage::new(&settings.minio)
                 .await
                 .whatever_context("Failed to initialize object storage")?,
         );
@@ -470,7 +469,7 @@ impl Controller {
     pub async fn run(self) -> Result<()> {
         let signaling_modules = Arc::new(self.signaling_modules);
 
-        if let Some(MonitoringSettings { port, addr }) = self.startup_settings.raw.monitoring {
+        if let Some(Monitoring { port, addr }) = self.startup_settings.monitoring {
             start_probe(addr, port, ServiceState::Up)
                 .await
                 .whatever_context("Failed to start monitoring")?;
@@ -527,8 +526,7 @@ impl Controller {
                 let acl = authz_middleware.clone();
 
                 let signaling_modules = Data::from(signaling_modules.upgrade().unwrap());
-                let swagger_service_enabled =
-                    !settings_provider.get().raw.endpoints.disable_openapi;
+                let swagger_service_enabled = !settings_provider.get().endpoints.disable_openapi;
 
                 App::new()
                     .wrap(RequestMetrics::new(metrics.endpoint.clone()))

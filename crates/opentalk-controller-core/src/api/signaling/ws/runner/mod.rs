@@ -1671,20 +1671,13 @@ impl Runner {
             });
 
         let tariff_resource = tariff
-            .to_tariff_resource(
-                settings.raw.defaults.disabled_features.clone(),
-                module_features,
-            )
+            .to_tariff_resource(settings.defaults.disabled_features.clone(), module_features)
             .into();
 
         let mut conn = self.db.get_conn().await?;
         let event_info = match event.as_ref() {
             Some(event) => {
-                let call_in_tel = settings
-                    .raw
-                    .call_in
-                    .as_ref()
-                    .map(|call_in| call_in.tel.clone());
+                let call_in_tel = settings.call_in.as_ref().map(|call_in| call_in.tel.clone());
                 Some(
                     build_event_info(
                         &mut conn,
@@ -1701,7 +1694,7 @@ impl Runner {
         };
 
         let room_info = self
-            .build_room_info(&mut conn, &settings.raw.avatar.libravatar_url)
+            .build_room_info(&mut conn, &settings.avatar.libravatar_url)
             .await?;
 
         self.ws_send_control(
@@ -2420,7 +2413,6 @@ impl Runner {
                 if self
                     .settings_provider
                     .get()
-                    .raw
                     .endpoints
                     .disallow_custom_display_name
                 {
@@ -2432,7 +2424,7 @@ impl Runner {
             Participant::Guest => join_display_name,
             Participant::Recorder => join_display_name,
             Participant::Sip => {
-                if let Some(call_in) = self.settings_provider.get().raw.call_in.as_ref() {
+                if let Some(call_in) = self.settings_provider.get().call_in.as_ref() {
                     call_in::display_name(&self.db, call_in, self.room.tenant_id, join_display_name)
                         .await
                 } else {
@@ -2491,7 +2483,7 @@ impl Runner {
                 let settings = self.settings_provider.get();
                 format!(
                     "{}{:x}",
-                    settings.raw.avatar.libravatar_url,
+                    settings.avatar.libravatar_url,
                     md5::compute(&user.email)
                 )
             })),

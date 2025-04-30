@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct Etherpad {
+pub(crate) struct Etherpad {
     pub url: url::Url,
     pub api_key: String,
 }

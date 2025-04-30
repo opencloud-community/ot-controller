@@ -947,8 +947,7 @@ impl EventInviteeExt for EventInvitee {
     }
 
     fn from_email_invite(invite: EventEmailInvite, settings: &Settings) -> EventInvitee {
-        let avatar_url =
-            email_to_libravatar_url(&settings.raw.avatar.libravatar_url, &invite.email);
+        let avatar_url = email_to_libravatar_url(&settings.avatar.libravatar_url, &invite.email);
         EventInvitee {
             profile: EventInviteeProfile::Email(EmailOnlyUser {
                 email: invite.email,
@@ -982,7 +981,6 @@ impl EventRoomInfoExt for EventRoomInfo {
         tariff: &Tariff,
     ) -> Self {
         let call_in_feature_is_enabled = !settings
-            .raw
             .defaults
             .disabled_features
             .contains(&features::CALL_IN_MODULE_FEATURE_ID)
@@ -992,7 +990,7 @@ impl EventRoomInfoExt for EventRoomInfo {
         let mut call_in = None;
 
         if call_in_feature_is_enabled {
-            if let (Some(call_in_config), Some(sip_config)) = (&settings.raw.call_in, sip_config) {
+            if let (Some(call_in_config), Some(sip_config)) = (&settings.call_in, sip_config) {
                 call_in = Some(CallInInfo {
                     tel: call_in_config.tel.clone(),
                     uri: None,

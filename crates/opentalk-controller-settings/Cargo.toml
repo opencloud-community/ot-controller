@@ -28,11 +28,11 @@ openidconnect.workspace = true
 opentalk-types-common = { workspace = true, features = ["serde"] }
 owo-colors.workspace = true
 phonenumber.workspace = true
-rustc-hash.workspace = true
 serde.workspace = true
 serde_path_to_error = "0.1.16"
 snafu.workspace = true
 url.workspace = true
+uuid = { workspace = true, features = ["v4"] }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = [

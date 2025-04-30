@@ -20,7 +20,7 @@ use phonenumber::PhoneNumber;
 /// Returns the display name for a given SIP display name, e.g. a phone number
 pub async fn display_name(
     db: &Arc<Db>,
-    settings: &settings::settings_file::CallIn,
+    settings: &settings::CallIn,
     tenant_id: TenantId,
     phone_number_display_name: DisplayName,
 ) -> DisplayName {

@@ -5,7 +5,7 @@
 use serde::Deserialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
-pub struct SubroomAudio {
+pub(crate) struct SubroomAudio {
     #[serde(default)]
     pub enable_whisper: bool,
 }

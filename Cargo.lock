@@ -5461,7 +5461,6 @@ dependencies = [
  "owo-colors",
  "phonenumber",
  "pretty_assertions",
- "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "serde_path_to_error",
@@ -5469,6 +5468,7 @@ dependencies = [
  "tempfile",
  "toml",
  "url",
+ "uuid",
 ]
 
 [[package]]

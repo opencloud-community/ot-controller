@@ -226,12 +226,12 @@ pub async fn put_shared_folder(
     if let Some(shared_folder) = shared_folder {
         return Ok((shared_folder, false));
     }
-    let shared_folder_settings = settings.raw.shared_folder.as_ref().ok_or_else(|| {
+    let shared_folder_settings = settings.shared_folder.as_ref().ok_or_else(|| {
         ApiError::bad_request().with_message("No shared folder configured for this server")
     })?;
 
     match shared_folder_settings {
-        opentalk_controller_settings::settings_file::SharedFolder::Nextcloud {
+        opentalk_controller_settings::SharedFolder::Nextcloud {
             url,
             username,
             password,
@@ -387,7 +387,7 @@ pub async fn delete_shared_folders(
         return Ok(());
     }
 
-    let shared_folder_settings = if let Some(settings) = settings.raw.shared_folder.as_ref() {
+    let shared_folder_settings = if let Some(settings) = settings.shared_folder.as_ref() {
         settings
     } else {
         return Err(
@@ -396,7 +396,7 @@ pub async fn delete_shared_folders(
     };
 
     match shared_folder_settings {
-        opentalk_controller_settings::settings_file::SharedFolder::Nextcloud {
+        opentalk_controller_settings::SharedFolder::Nextcloud {
             url,
             username,
             password,

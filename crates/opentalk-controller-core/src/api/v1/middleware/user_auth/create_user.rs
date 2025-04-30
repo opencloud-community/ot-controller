@@ -36,11 +36,8 @@ pub(super) async fn create_user(
 ) -> Result<LoginResult, CaptureApiError> {
     let info_display_name = build_info_display_name(&info);
 
-    let phone_number = if let Some((call_in, phone_number)) = settings
-        .raw
-        .call_in
-        .as_ref()
-        .zip(info.phone_number.as_deref())
+    let phone_number = if let Some((call_in, phone_number)) =
+        settings.call_in.as_ref().zip(info.phone_number.as_deref())
     {
         parse_phone_number(phone_number, call_in.default_country_code)
             .map(|p| p.format().mode(phonenumber::Mode::E164).to_string())
@@ -59,7 +56,7 @@ pub(super) async fn create_user(
                 lastname: info.lastname,
                 avatar_url: info.avatar_url,
                 // TODO: try to get user language from accept-language header
-                language: settings.raw.defaults.user_language.clone(),
+                language: settings.defaults.user_language.clone(),
                 phone: phone_number,
                 tenant_id: tenant.id,
                 tariff_id: tariff.id,

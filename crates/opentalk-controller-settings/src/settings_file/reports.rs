@@ -7,7 +7,7 @@ use serde::Deserialize;
 use super::ReportsTemplate;
 
 #[derive(Default, Clone, Debug, Deserialize, PartialEq, Eq)]
-pub struct Reports {
+pub(crate) struct Reports {
     #[serde(default)]
     pub template: ReportsTemplate,
 }

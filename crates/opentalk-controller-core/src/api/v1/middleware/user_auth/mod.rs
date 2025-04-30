@@ -29,8 +29,7 @@ use opentalk_controller_service::{
 };
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    settings_file::{TariffAssignment, TariffStatusMapping, TenantAssignment},
-    Settings, SettingsProvider,
+    Settings, SettingsProvider, TariffAssignment, TariffStatusMapping, TenantAssignment,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
@@ -351,12 +350,12 @@ async fn check_access_token_inner(
     let mut conn = db.get_conn().await?;
 
     // Get tariff depending on the configured assignment
-    let (tariff, tariff_status) = match &settings.raw.tariffs.assignment {
+    let (tariff, tariff_status) = match &settings.tariffs.assignment {
         TariffAssignment::Static { static_tariff_name } => (
             Tariff::get_by_name(&mut conn, static_tariff_name).await?,
             TariffStatus::Default,
         ),
-        TariffAssignment::ByExternalTariffId => {
+        TariffAssignment::ByExternalTariffId { status_mapping } => {
             let external_tariff_id = info.tariff_id.clone().ok_or_else(|| {
                 ApiError::bad_request()
                     .with_code("invalid_claims")
@@ -373,7 +372,7 @@ async fn check_access_token_inner(
                             .with_message("JWT contained unknown tariff_id")
                     })?;
 
-            if let Some(mapping) = settings.raw.tariffs.status_mapping.as_ref() {
+            if let Some(mapping) = status_mapping.as_ref() {
                 let status_name = info.tariff_status.clone().ok_or_else(|| {
                     ApiError::bad_request()
                         .with_code("invalid_claims")
@@ -401,7 +400,7 @@ async fn check_access_token_inner(
     };
 
     // Get the tenant_id depending on the configured assignment
-    let tenant_id = match &settings.raw.tenants.assignment {
+    let tenant_id = match &settings.tenants.assignment {
         TenantAssignment::Static { static_tenant_id } => static_tenant_id.clone(),
         TenantAssignment::ByExternalTenantId { .. } => info.tenant_id.clone().ok_or_else(|| {
             log::error!("Invalid access token, missing tenant_id");

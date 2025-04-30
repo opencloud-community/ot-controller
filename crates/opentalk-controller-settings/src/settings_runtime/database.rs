@@ -4,7 +4,7 @@
 
 use crate::settings_file;
 
-pub const DEFAULT_MAX_CONNECTIONS: u32 = 100;
+pub const DEFAULT_DATABASE_MAX_CONNECTIONS: u32 = 100;
 
 /// The runtime configuration for the database connection used by the OpenTalk controller.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,7 +25,7 @@ impl From<settings_file::Database> for Database {
     ) -> Self {
         Self {
             url,
-            max_connections: max_connections.unwrap_or(DEFAULT_MAX_CONNECTIONS),
+            max_connections: max_connections.unwrap_or(DEFAULT_DATABASE_MAX_CONNECTIONS),
         }
     }
 }
