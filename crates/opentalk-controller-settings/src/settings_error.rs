@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::path::PathBuf;
+
 use snafu::Snafu;
 use url::Url;
 
@@ -11,9 +13,9 @@ pub enum SettingsError {
     #[snafu(display("Failed to read data as config: {}", source), context(false))]
     BuildConfig { source: config::ConfigError },
 
-    #[snafu(display("Failed to apply configuration from {} or environment", file_name))]
+    #[snafu(display("Failed to apply configuration from {} or environment", file_path.to_string_lossy()))]
     DeserializeConfig {
-        file_name: String,
+        file_path: PathBuf,
 
         #[snafu(source(from(serde_path_to_error::Error<config::ConfigError>, Box::new)))]
         source: Box<serde_path_to_error::Error<config::ConfigError>>,

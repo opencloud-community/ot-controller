@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::path::PathBuf;
+
 use clap::{ArgAction, Parser, Subcommand};
 use opentalk_controller_settings::SettingsProvider;
 use opentalk_signaling_core::RegisterModules;
@@ -27,7 +29,7 @@ pub struct Args {
         default_value = "config.toml",
         help = "Specify path to configuration file"
     )]
-    pub config: String,
+    pub config: PathBuf,
 
     /// Triggers a reload of reloadable configuration options
     #[clap(long)]
@@ -118,8 +120,8 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
         reload::trigger_reload()?;
     }
     if let Some(sub_command) = args.cmd.clone() {
-        let settings_provider =
-            SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
+        let settings_provider = SettingsProvider::load_from_path(&args.config)
+            .whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
         match sub_command {

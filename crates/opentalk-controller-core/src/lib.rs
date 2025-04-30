@@ -253,8 +253,8 @@ impl Controller {
             return Ok(None);
         }
 
-        let settings_provider =
-            SettingsProvider::load(&args.config).whatever_context("Failed to load settings")?;
+        let settings_provider = SettingsProvider::load_from_path(&args.config)
+            .whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
         trace::init(&settings.logging).whatever_context("Failed to initialize tracing")?;
@@ -602,7 +602,7 @@ impl Controller {
                 _ = reload_signal.recv() => {
                     log::info!("Got reload signal, reloading");
 
-                    if let Err(e) = self.settings_provider.reload(&self.args.config) {
+                    if let Err(e) = self.settings_provider.reload_from_path(&self.args.config) {
                         log::error!("Failed to reload settings, {}", Report::from_error(e));
                         continue
                     }

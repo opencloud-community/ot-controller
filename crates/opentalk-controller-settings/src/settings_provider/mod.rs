@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use arc_swap::ArcSwap;
 
@@ -22,8 +22,8 @@ impl SettingsProvider {
     /// This will succeed in case the file could be loaded successfully.
     /// Environment variables in the `OPENTALK_CTRL_*` pattern are considiered
     /// and will override the settings found in the file.
-    pub fn load(file_name: &str) -> Result<Self> {
-        let settings_raw = Self::load_raw(file_name)?;
+    pub fn load_from_path(file_path: &Path) -> Result<Self> {
+        let settings_raw = Self::load_raw(file_path)?;
         Self::new_raw(settings_raw)
     }
 
@@ -62,8 +62,8 @@ impl SettingsProvider {
     /// unchanged, so wherever these are used, the values will not change.
     /// Because an `Arc` was given to these callers, the value will be freed
     /// once the last reference to it has been dropped.
-    pub fn reload(&self, config_path: &str) -> Result<()> {
-        let settings_raw = Self::load_raw(config_path)?;
+    pub fn reload_from_path(&self, file_path: &Path) -> Result<()> {
+        let settings_raw = Self::load_raw(file_path)?;
 
         let mut current_settings = (*self.settings.load_full()).clone();
 
@@ -102,8 +102,7 @@ mod tests {
         }
 
         let settings_provider =
-            SettingsProvider::load(path.to_str().expect("valid file path expected"))
-                .expect("valid configuration expected");
+            SettingsProvider::load_from_path(&path).expect("valid configuration expected");
 
         assert_eq!(&(*settings_provider.get()), &minimal_example());
     }
@@ -120,9 +119,9 @@ mod tests {
         }
 
         assert_matches!(
-            SettingsProvider::load(path.to_str().expect("valid file path expected")),
+            SettingsProvider::load_from_path(&path),
             Err(SettingsError::DeserializeConfig {
-                file_name: _,
+                file_path: _,
                 source: _
             })
         );
@@ -162,13 +161,12 @@ mod tests {
         }
 
         let settings_provider =
-            SettingsProvider::load(modified_path.to_str().expect("valid file path expected"))
-                .expect("valid configuration expected");
+            SettingsProvider::load_from_path(&modified_path).expect("valid configuration expected");
 
         assert_ne!(&(*settings_provider.get()), &minimal_example());
 
         settings_provider
-            .reload(minimal_path.to_str().expect("valid file path expected"))
+            .reload_from_path(&minimal_path)
             .expect("reload is expected to succeed");
 
         assert_eq!(&(*settings_provider.get()), &minimal_example());
@@ -192,15 +190,14 @@ mod tests {
         }
 
         let settings_provider =
-            SettingsProvider::load(minimal_path.to_str().expect("valid file path expected"))
-                .expect("valid configuration expected");
+            SettingsProvider::load_from_path(&minimal_path).expect("valid configuration expected");
 
         assert_eq!(&(*settings_provider.get()), &minimal_example());
 
         assert_matches!(
-            settings_provider.reload(invalid_path.to_str().expect("valid file path expected")),
+            settings_provider.reload_from_path(&invalid_path),
             Err(SettingsError::DeserializeConfig {
-                file_name: _,
+                file_path: _,
                 source: _
             })
         );
