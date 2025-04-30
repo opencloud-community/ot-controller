@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_community_signaling_modules::CommunityModules;
 use opentalk_controller_core::Controller;
 use opentalk_controller_service::Whatever;
+use opentalk_signaling_modules::Modules;
 
 #[actix_web::main]
 async fn main() {
@@ -24,9 +24,7 @@ async fn run() -> Result<(), Whatever> {
         }
         _ => {}
     }
-    if let Some(controller) =
-        Controller::create::<CommunityModules>("OpenTalk Controller Community Edition").await?
-    {
+    if let Some(controller) = Controller::create::<Modules>("OpenTalk Controller").await? {
         controller.run().await?;
     }
 
