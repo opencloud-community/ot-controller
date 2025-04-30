@@ -14,7 +14,10 @@ use opentalk_db_storage::{
     tenants::Tenant,
     users::NewUser,
 };
-use opentalk_types_common::{tariffs::TariffStatus, users::UserTitle};
+use opentalk_types_common::{
+    tariffs::TariffStatus,
+    users::{Language, UserTitle},
+};
 
 use super::{build_info_display_name, LoginResult};
 
@@ -25,6 +28,7 @@ use super::{build_info_display_name, LoginResult};
 /// If any email-invites in the given tenant exist for the new user's email, they will be migrated to user-invites.
 ///
 /// Returns the created user, their groups and all events they are invited to.
+#[allow(clippy::too_many_arguments)]
 pub(super) async fn create_user(
     settings: &Settings,
     conn: &mut DbConnection,
@@ -33,6 +37,7 @@ pub(super) async fn create_user(
     groups: Vec<Group>,
     tariff: Tariff,
     tariff_status: TariffStatus,
+    fallback_locale: Language,
 ) -> Result<LoginResult, CaptureApiError> {
     let info_display_name = build_info_display_name(&info);
 
@@ -45,6 +50,8 @@ pub(super) async fn create_user(
         None
     };
 
+    let language = info.locale.unwrap_or(fallback_locale);
+
     conn.transaction(|conn| {
         async move {
             let user = NewUser {
@@ -55,8 +62,7 @@ pub(super) async fn create_user(
                 firstname: info.firstname,
                 lastname: info.lastname,
                 avatar_url: info.avatar_url,
-                // TODO: try to get user language from accept-language header
-                language: settings.defaults.user_language.clone(),
+                language,
                 phone: phone_number,
                 tenant_id: tenant.id,
                 tariff_id: tariff.id,

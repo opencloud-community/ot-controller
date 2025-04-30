@@ -27,7 +27,7 @@ use opentalk_types_api_v1::{
     error::{ApiError, AuthenticationError},
     turn::{GetTurnResponseBody, IceServer},
 };
-use opentalk_types_common::rooms::invite_codes::InviteCode;
+use opentalk_types_common::{rooms::invite_codes::InviteCode, users::Language};
 use rand::{
     distr::{Distribution, Uniform},
     seq::IndexedRandom,
@@ -90,8 +90,18 @@ pub async fn get(
     let turn_servers = &settings.turn;
     let stun_servers = &settings.stun;
 
-    // This is a omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
-    match check_access_token_or_invite(&settings, authz, db, &req, &caches, oidc_ctx).await? {
+    // This is an omniauth endpoint. AccessTokens and InviteCodes are allowed as Bearer tokens
+    match check_access_token_or_invite(
+        &settings,
+        authz,
+        db,
+        &req,
+        &caches,
+        oidc_ctx,
+        settings.defaults.user_language.clone(),
+    )
+    .await?
+    {
         Either::Right(invite) => {
             log::trace!(
                 "Generating new turn credentials for invite {} and servers {:?}",
@@ -201,6 +211,7 @@ async fn check_access_token_or_invite(
     req: &HttpRequest,
     caches: &Caches,
     oidc_ctx: Data<OidcContext>,
+    fallback_locale: Language,
 ) -> Result<Either<User, Invite>, CaptureApiError> {
     let auth = Authorization::<Bearer>::parse(req).map_err(|e| {
         log::warn!("Unable to parse access token, {}", Report::from_error(e));
@@ -217,6 +228,7 @@ async fn check_access_token_or_invite(
         oidc_ctx,
         &caches.user_access_tokens,
         &AccessToken::new(access_token.clone()),
+        fallback_locale,
     )
     .await;
 

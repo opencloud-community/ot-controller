@@ -30,6 +30,7 @@ chrono.workspace = true
 clap.workspace = true
 diesel-async.workspace = true
 either.workspace = true
+fluent-langneg.workspace = true
 futures.workspace = true
 http.workspace = true
 itertools.workspace = true
