@@ -23,13 +23,18 @@ mod tenants;
 #[derive(Parser, Debug, Clone)]
 #[clap(name = "opentalk-controller")]
 pub struct Args {
-    #[clap(
-        short,
-        long,
-        default_value = "config.toml",
-        help = "Specify path to configuration file"
-    )]
-    pub config: PathBuf,
+    /// Path of the configuration file.
+    ///
+    /// If present, exactly this config file will be used.
+    ///
+    /// If absent, `controller` looks for a config file in these locations and uses the first one that is found:
+    ///
+    /// - `config.toml` in the current directory (deprecated, for backwards compatiblity only)
+    /// - `controller.toml` in the current directory
+    /// - `<XDG_CONFIG_HOME>/opentalk/controller.toml` (where `XDG_CONFIG_HOME` is usually `~/.config`)
+    /// - `/etc/opentalk/controller.toml`
+    #[clap(short, long, verbatim_doc_comment)]
+    pub config: Option<PathBuf>,
 
     /// Triggers a reload of reloadable configuration options
     #[clap(long)]
@@ -120,8 +125,9 @@ pub async fn parse_args<M: RegisterModules>() -> Result<Args> {
         reload::trigger_reload()?;
     }
     if let Some(sub_command) = args.cmd.clone() {
-        let settings_provider = SettingsProvider::load_from_path(&args.config)
-            .whatever_context("Failed to load settings")?;
+        let settings_provider =
+            SettingsProvider::load_from_path_or_standard_paths(args.config.as_deref())
+                .whatever_context("Failed to load settings")?;
         let settings = settings_provider.get();
 
         match sub_command {

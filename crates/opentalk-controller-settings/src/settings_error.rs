@@ -10,6 +10,9 @@ use url::Url;
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
 pub enum SettingsError {
+    #[snafu(display("Couldn't find a configuration file. Searched: \"{}\".", paths.join("\", \"")))]
+    ConfigurationFileNotFound { paths: Vec<String> },
+
     #[snafu(display("Failed to read data as config: {}", source), context(false))]
     BuildConfig { source: config::ConfigError },
 

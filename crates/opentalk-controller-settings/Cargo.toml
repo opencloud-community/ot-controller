@@ -23,6 +23,8 @@ anstream.workspace = true
 arc-swap.workspace = true
 cidr = { version = "0.3", features = ["serde"] }
 config.workspace = true
+dirs.workspace = true
+itertools.workspace = true
 log = { workspace = true, features = ["serde"] }
 openidconnect.workspace = true
 opentalk-types-common = { workspace = true, features = ["serde"] }

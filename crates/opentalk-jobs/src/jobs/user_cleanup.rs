@@ -176,8 +176,10 @@ mod tests {
     #[serial_test::serial]
     async fn cleanup_user_with_event_and_invites() {
         init_logger();
-        let settings_provider =
-            SettingsProvider::load_from_path(Path::new("../../extra/example.toml")).unwrap();
+        let settings_provider = SettingsProvider::load_from_path_or_standard_paths(Some(
+            Path::new("../../extra/example.toml"),
+        ))
+        .unwrap();
         let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;
@@ -230,8 +232,10 @@ mod tests {
     #[serial_test::serial]
     async fn cleanup_user() {
         init_logger();
-        let settings_provider =
-            SettingsProvider::load_from_path(Path::new("../../extra/example.toml")).unwrap();
+        let settings_provider = SettingsProvider::load_from_path_or_standard_paths(Some(
+            Path::new("../../extra/example.toml"),
+        ))
+        .unwrap();
         let settings = settings_provider.get();
 
         let db_ctx = DatabaseContext::new(false).await;

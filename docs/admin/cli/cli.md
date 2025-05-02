@@ -46,10 +46,26 @@ Commands:
   help        Print this message or the help of the given subcommand(s)
 
 Options:
-  -c, --config <CONFIG>  Specify path to configuration file [default: config.toml]
-      --reload           Triggers a reload of reloadable configuration options
-  -V, --version          Print version information
-  -h, --help             Print help
+  -c, --config <CONFIG>
+          Path of the configuration file.
+
+          If present, exactly this config file will be used.
+
+          If absent, `controller` looks for a config file in these locations and uses the first one that is found:
+
+          - `config.toml` in the current directory (deprecated, for backwards compatiblity only)
+          - `controller.toml` in the current directory
+          - `<XDG_CONFIG_HOME>/opentalk/controller.toml` (where `XDG_CONFIG_HOME` is usually `~/.config`)
+          - `/etc/opentalk/controller.toml`
+
+      --reload
+          Triggers a reload of reloadable configuration options
+
+  -V, --version
+          Print version information
+
+  -h, --help
+          Print help (see a summary with '-h')
 ```
 
 <!-- end:fromfile:cli-usage/opentalk-controller-help.md -->

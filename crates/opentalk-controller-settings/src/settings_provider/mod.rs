@@ -2,11 +2,17 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use arc_swap::ArcSwap;
+use dirs::config_dir;
+use itertools::Itertools as _;
+use owo_colors::OwoColorize as _;
 
-use crate::{Result, Settings, SettingsRaw};
+use crate::{settings_error::ConfigurationFileNotFoundSnafu, Result, Settings, SettingsRaw};
 
 mod loading;
 
@@ -22,13 +28,13 @@ impl SettingsProvider {
     /// This will succeed in case the file could be loaded successfully.
     /// Environment variables in the `OPENTALK_CTRL_*` pattern are considiered
     /// and will override the settings found in the file.
-    pub fn load_from_path(file_path: &Path) -> Result<Self> {
+    fn load_from_path(file_path: &Path) -> Result<Self> {
         let settings_raw = Self::load_raw(file_path)?;
         Self::new_raw(settings_raw)
     }
 
     /// Create a new [`SettingsProvider`] with settings that are already loaded.
-    pub fn new_raw(settings_raw: SettingsRaw) -> Result<Self> {
+    fn new_raw(settings_raw: SettingsRaw) -> Result<Self> {
         let settings = Settings::try_from(settings_raw)?;
         Ok(Self {
             settings: Arc::new(ArcSwap::new(Arc::new(settings))),
@@ -62,7 +68,7 @@ impl SettingsProvider {
     /// unchanged, so wherever these are used, the values will not change.
     /// Because an `Arc` was given to these callers, the value will be freed
     /// once the last reference to it has been dropped.
-    pub fn reload_from_path(&self, file_path: &Path) -> Result<()> {
+    fn reload_from_path(&self, file_path: &Path) -> Result<()> {
         let settings_raw = Self::load_raw(file_path)?;
 
         let mut current_settings = (*self.settings.load_full()).clone();
@@ -74,11 +80,102 @@ impl SettingsProvider {
 
         Ok(())
     }
+
+    fn reload_from_standard_paths(&self) -> Result<()> {
+        self.reload_from_path(&Self::select_standard_path()?)
+    }
+
+    pub fn load_from_path_or_standard_paths(file_path: Option<&Path>) -> Result<Self> {
+        if let Some(file_path) = file_path {
+            return Self::load_from_path(file_path);
+        }
+        Self::load_from_standard_paths()
+    }
+
+    pub fn reload_from_path_or_standard_paths(&self, file_path: Option<&Path>) -> Result<()> {
+        if let Some(file_path) = file_path {
+            return self.reload_from_path(file_path);
+        }
+        self.reload_from_standard_paths()
+    }
+
+    fn load_from_standard_paths() -> Result<Self> {
+        Self::load_from_path(&Self::select_standard_path()?)
+    }
+
+    fn select_standard_path() -> Result<PathBuf> {
+        let paths = Self::build_search_search_paths();
+        for ConfigSearchPath { path, deprecated } in &paths {
+            if path.exists() {
+                if *deprecated {
+                    let supported_paths = paths
+                        .iter()
+                        .filter_map(ConfigSearchPath::display_non_deprecated)
+                        .join(", ");
+                    anstream::eprintln!(
+                        "{}: You're using the deprecated configuration path \"{}\", please use one of these instead: {}.",
+                        "DEPRECATION WARNING".yellow().bold(),
+                        path.to_string_lossy(),
+                        supported_paths
+                    );
+                }
+                return Ok(path.to_path_buf());
+            }
+        }
+
+        let paths: Vec<String> = paths
+            .iter()
+            .map(|ConfigSearchPath { path, .. }| path.to_string_lossy().to_string())
+            .collect();
+        ConfigurationFileNotFoundSnafu { paths }.fail()
+    }
+
+    fn build_search_search_paths() -> Vec<ConfigSearchPath> {
+        let mut paths = vec![];
+
+        paths.push(ConfigSearchPath {
+            path: "config.toml".into(),
+            deprecated: true,
+        });
+
+        paths.push(ConfigSearchPath {
+            path: "controller.toml".into(),
+            deprecated: false,
+        });
+
+        if let Some(config_dir) = config_dir() {
+            paths.push(ConfigSearchPath {
+                path: config_dir.join("opentalk/controller.toml"),
+                deprecated: false,
+            });
+        }
+
+        paths.push(ConfigSearchPath {
+            path: "/etc/opentalk/controller.toml".into(),
+            deprecated: false,
+        });
+
+        paths
+    }
+}
+
+struct ConfigSearchPath {
+    path: PathBuf,
+    deprecated: bool,
+}
+
+impl ConfigSearchPath {
+    fn display_non_deprecated(&self) -> Option<String> {
+        if self.deprecated {
+            return None;
+        }
+        Some(format!("\"{}\"", self.path.to_string_lossy()))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs::File, io::Write as _};
+    use std::{env, fs::File, io::Write as _, path::Path};
 
     use pretty_assertions::{assert_eq, assert_matches, assert_ne};
     use tempfile::tempdir;
@@ -88,6 +185,12 @@ mod tests {
         settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
         settings_runtime::settings::minimal_example, SettingsError,
     };
+
+    #[test]
+    fn load_example_toml() -> Result<(), SettingsError> {
+        SettingsProvider::load_from_path(Path::new("../../extra/example.toml"))?;
+        Ok(())
+    }
 
     #[test]
     fn load_minimal() {
