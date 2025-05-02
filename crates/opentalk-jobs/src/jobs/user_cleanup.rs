@@ -177,7 +177,7 @@ mod tests {
     async fn cleanup_user_with_event_and_invites() {
         init_logger();
         let settings_provider = SettingsProvider::load_from_path_or_standard_paths(Some(
-            Path::new("../../extra/example.toml"),
+            Path::new("../../example/controller.toml"),
         ))
         .unwrap();
         let settings = settings_provider.get();
@@ -233,7 +233,7 @@ mod tests {
     async fn cleanup_user() {
         init_logger();
         let settings_provider = SettingsProvider::load_from_path_or_standard_paths(Some(
-            Path::new("../../extra/example.toml"),
+            Path::new("../../example/controller.toml"),
         ))
         .unwrap();
         let settings = settings_provider.get();

@@ -103,7 +103,7 @@ mod tests {
         env::remove_var("OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
 
         // Sanity check
-        let settings = SettingsProvider::load_raw(Path::new("../../extra/example.toml"))?;
+        let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
 
         assert_eq!(
             settings.database.url,
@@ -122,7 +122,7 @@ mod tests {
             screen_share_requires_permission.to_string(),
         );
 
-        let settings = SettingsProvider::load_raw(Path::new("../../extra/example.toml"))?;
+        let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
 
         assert_eq!(settings.database.url, env_db_url);
         assert_eq!(settings.http.as_ref().unwrap().port, Some(env_http_port));

@@ -10,4 +10,4 @@ set -o pipefail
 
 OPENTALK_CONTROLLER_CMD=${OPENTALK_CONTROLLER_CMD:-target/release/opentalk-controller}
 
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml  openapi dump api/controller/frontend_api.yaml
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml  openapi dump api/controller/frontend_api.yaml

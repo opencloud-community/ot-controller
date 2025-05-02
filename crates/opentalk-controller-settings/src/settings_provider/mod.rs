@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn load_example_toml() -> Result<(), SettingsError> {
-        SettingsProvider::load_from_path(Path::new("../../extra/example.toml"))?;
+        SettingsProvider::load_from_path(Path::new("../../example/controller.toml"))?;
         Ok(())
     }
 

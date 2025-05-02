@@ -13,11 +13,11 @@ See the [administration guide](docs/admin/README.md) for more information.
 See the [configuration](docs/admin/configuration.md) chapter of the
 administration guide for more information.
 
-An example configuration is available in the [`extra/example.toml`](extra/
-example.toml) file. It can be copied to the root directory:
+An example configuration is available in the
+[`example/controller.toml`](example/controller.toml) file. It can be copied to the root directory:
 
 ```sh
-cp ./extra/example.toml ./config.toml
+cp ./example/controller.toml ./controller.toml
 ```
 
 ## Upgrading

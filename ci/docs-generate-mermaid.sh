@@ -27,7 +27,7 @@ ER_DIAGRAM_MERMAID="$DB_DIR/er-diagram.mermaid"
 mkdir -p "$DB_DIR"
 
 # Initialize the database schema
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml migrate-db
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml migrate-db
 
-# Generated the ER-diragra
+# Generate the ER diagram
 sqlant -o mermaid "$OPENTALK_CTRL_DATABASE__URL" > $ER_DIAGRAM_MERMAID
