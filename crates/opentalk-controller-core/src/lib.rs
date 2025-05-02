@@ -11,9 +11,9 @@
 //! use opentalk_controller_service::Whatever;
 //!
 //! # use opentalk_signaling_core::{ModulesRegistrar, RegisterModules};
-//! # struct CommunityModules;
+//! # struct Modules;
 //! # #[async_trait::async_trait(?Send)]
-//! # impl RegisterModules for CommunityModules {
+//! # impl RegisterModules for Modules {
 //! #     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error=E>) -> Result<(), E> {
 //! #         unimplemented!();
 //! #     }
@@ -25,7 +25,7 @@
 //! }
 //!
 //! async fn run() -> Result<(), Whatever> {
-//!    if let Some(controller) = Controller::create::<CommunityModules>("OpenTalk Controller Community Edition").await? {
+//!    if let Some(controller) = Controller::create::<Modules>("OpenTalk Controller").await? {
 //!         controller.run().await?;
 //!     }
 //!

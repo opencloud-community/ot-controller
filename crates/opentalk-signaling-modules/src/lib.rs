@@ -19,10 +19,10 @@ use opentalk_signaling_module_timer::Timer;
 use opentalk_signaling_module_training_participation_report::TrainingParticipationReport;
 use opentalk_signaling_module_whiteboard::Whiteboard;
 
-pub struct CommunityModules;
+pub struct Modules;
 
 #[async_trait(?Send)]
-impl RegisterModules for CommunityModules {
+impl RegisterModules for Modules {
     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E> {
         registrar.register::<Core>().await?;
         registrar.register::<Chat>().await?;
