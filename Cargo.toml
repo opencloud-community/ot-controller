@@ -67,6 +67,7 @@ config = { version = "0.15", default-features = false, features = ["toml"] }
 derive_more = "2.0"
 diesel = "2"
 diesel-async = "0.5"
+dirs = "6"
 either = "1"
 env_logger = "0.11"
 fluent-langneg = "0.14.1"

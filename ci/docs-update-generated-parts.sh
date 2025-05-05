@@ -61,7 +61,7 @@ fi
 
 cat $ER_DIAGRAM_MERMAID | codify mermaid > $DB_DIR/er-diagram.md
 
-codify toml < extra/example.toml > "$CONFIG_DIR"/example.toml.md
+codify toml < example/controller.toml > "$CONFIG_DIR"/controller.toml.md
 
 $OPENTALK_CONTROLLER_CMD help | codify text > "$CLI_DIR"/"$CMDNAME"-help.md
 $OPENTALK_CONTROLLER_CMD fix-acl --help | codify text > "$CLI_DIR"/"$CMDNAME"-fix-acl-help.md
@@ -77,7 +77,7 @@ $OPENTALK_CONTROLLER_CMD tariffs edit --help | codify text > "$CLI_DIR"/"$CMDNAM
 $OPENTALK_CONTROLLER_CMD jobs --help | codify text > "$CLI_DIR"/"$CMDNAME"-jobs-help.md
 $OPENTALK_CONTROLLER_CMD jobs execute --help | codify text > "$CLI_DIR"/"$CMDNAME"-jobs-execute-help.md
 $OPENTALK_CONTROLLER_CMD \
-  --config extra/example.toml \
+  --config example/controller.toml \
   jobs \
   execute \
   self-check \
@@ -89,16 +89,16 @@ $OPENTALK_CONTROLLER_CMD modules list --help | codify text > "$CLI_DIR"/"$CMDNAM
 $OPENTALK_CONTROLLER_CMD openapi --help | codify text > "$CLI_DIR"/"$CMDNAME"-openapi-help.md
 $OPENTALK_CONTROLLER_CMD openapi dump --help | codify text > "$CLI_DIR"/"$CMDNAME"-openapi-dump-help.md
 
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters self-check | codify json > "$JOBS_DIR"/parameters-self-check.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters event-cleanup | codify json > "$JOBS_DIR"/parameters-event-cleanup.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters user-cleanup | codify json > "$JOBS_DIR"/parameters-user-cleanup.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters adhoc-event-cleanup | codify json > "$JOBS_DIR"/parameters-adhoc-event-cleanup.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters invite-cleanup | codify json > "$JOBS_DIR"/parameters-invite-cleanup.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters sync-storage-files | codify json > "$JOBS_DIR"/parameters-sync-storage-files.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters room-cleanup | codify json > "$JOBS_DIR"/parameters-room-cleanup.json.md
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml jobs default-parameters keycloak-account-sync | codify json > "$JOBS_DIR"/parameters-keycloak-account-sync.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters self-check | codify json > "$JOBS_DIR"/parameters-self-check.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters event-cleanup | codify json > "$JOBS_DIR"/parameters-event-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters user-cleanup | codify json > "$JOBS_DIR"/parameters-user-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters adhoc-event-cleanup | codify json > "$JOBS_DIR"/parameters-adhoc-event-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters invite-cleanup | codify json > "$JOBS_DIR"/parameters-invite-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters sync-storage-files | codify json > "$JOBS_DIR"/parameters-sync-storage-files.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters room-cleanup | codify json > "$JOBS_DIR"/parameters-room-cleanup.json.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml jobs default-parameters keycloak-account-sync | codify json > "$JOBS_DIR"/parameters-keycloak-account-sync.json.md
 
-$OPENTALK_CONTROLLER_CMD --config extra/example.toml modules list | codify text > "$CLI_DIR"/"$CMDNAME"-modules-list.md
+$OPENTALK_CONTROLLER_CMD --config example/controller.toml modules list | codify text > "$CLI_DIR"/"$CMDNAME"-modules-list.md
 
 # Remove trailing spaces to prevent markdownlint from triggering *MD009 - Trailing spaces*
 # https://github.com/markdownlint/markdownlint/blob/main/docs/RULES.md#md009---trailing-spaces

@@ -28,7 +28,7 @@ use tracing_subscriber::{
 use crate::Result;
 
 // If these default values are adjusted, that change should be synchronized
-// into `extra/example.toml` for transparency towards administrators
+// into `example/controller.toml` for transparency towards administrators
 // and documentation purposes.
 const DEFAULT_LOGGING_DIRECTIVES: &str = "error,\
     opentalk=info,\

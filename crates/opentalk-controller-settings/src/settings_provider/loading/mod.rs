@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use std::path::Path;
+
 use snafu::ResultExt as _;
 use warning_source::WarningSource;
 
@@ -11,11 +13,11 @@ use crate::{settings_error::DeserializeConfigSnafu, Result, SettingsRaw};
 mod warning_source;
 
 impl SettingsProvider {
-    pub(super) fn load_raw(file_name: &str) -> Result<SettingsRaw> {
+    pub(super) fn load_raw(file_path: &Path) -> Result<SettingsRaw> {
         use config::{Config, Environment, File, FileFormat};
 
         let config = Config::builder()
-            .add_source(File::new(file_name, FileFormat::Toml))
+            .add_source(File::from(file_path).format(FileFormat::Toml))
             .add_source(WarningSource::new(
                 Environment::with_prefix("K3K_CTRL")
                     .prefix_separator("_")
@@ -30,7 +32,7 @@ impl SettingsProvider {
 
         let settings_raw: SettingsRaw =
             serde_path_to_error::deserialize(config).context(DeserializeConfigSnafu {
-                file_name: file_name.to_owned(),
+                file_path: file_path.to_owned(),
             })?;
         Self::warn_about_deprecated_items(&settings_raw);
 
@@ -101,7 +103,7 @@ mod tests {
         env::remove_var("OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
 
         // Sanity check
-        let settings = SettingsProvider::load_raw("../../extra/example.toml")?;
+        let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
 
         assert_eq!(
             settings.database.url,
@@ -120,7 +122,7 @@ mod tests {
             screen_share_requires_permission.to_string(),
         );
 
-        let settings = SettingsProvider::load_raw("../../extra/example.toml")?;
+        let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
 
         assert_eq!(settings.database.url, env_db_url);
         assert_eq!(settings.http.as_ref().unwrap().port, Some(env_http_port));

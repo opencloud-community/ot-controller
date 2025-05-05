@@ -11,16 +11,5 @@ use crate::{cli::Args, Result};
 ///
 /// The settings specified in the CLI-Arguments have a higher priority than the settings specified in the config file
 pub fn load_settings(args: &Args) -> Result<SettingsProvider, SettingsError> {
-    SettingsProvider::load(&args.config)
-}
-
-#[cfg(test)]
-mod tests {
-    use opentalk_controller_settings::{SettingsError, SettingsProvider};
-
-    #[test]
-    fn example_toml() -> Result<(), SettingsError> {
-        SettingsProvider::load("../../extra/example.toml")?;
-        Ok(())
-    }
+    SettingsProvider::load_from_path_or_standard_paths(args.config.as_deref())
 }

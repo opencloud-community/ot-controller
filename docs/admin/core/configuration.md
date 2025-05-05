@@ -78,9 +78,9 @@ OPENTALK_CTRL_TARIFFS__STATUS_MAPPING__DOWNGRADED_TARIFF_NAME=downgraded_tariff
 
 ## Example configuration file
 
-This file can be found in the source code distribution under `extra/example.toml`
+This file can be found in the source code distribution under `example/controller.toml`
 
-<!-- begin:fromfile:config/example.toml.md -->
+<!-- begin:fromfile:config/controller.toml.md -->
 
 ```toml
 # SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
@@ -427,4 +427,4 @@ urls = ["localhost:2379"]
 #downgraded = ["unpaid"]
 ```
 
-<!-- end:fromfile:config/example.toml.md -->
+<!-- end:fromfile:config/controller.toml.md -->

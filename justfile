@@ -44,7 +44,7 @@ set-version VERSION: _check_cargo_set_version
 # Update the version in the OpenAPI spec
 update-frontend-api:
     # Update OpenAPI specification (which contains the version number)
-    cargo run -- -c extra/example.toml openapi dump > api/controller/frontend_api.yaml
+    cargo run -- -c example/controller.toml openapi dump > api/controller/frontend_api.yaml
 
 # Update the changelog
 update-changelog VERSION: _check_git_cliff
