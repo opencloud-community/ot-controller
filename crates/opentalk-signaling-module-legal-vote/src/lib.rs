@@ -17,6 +17,7 @@ use std::{
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use chrono_tz::Tz;
 use either::Either;
 use error::LegalVoteError;
 use futures::{stream::once, FutureExt};
@@ -25,6 +26,7 @@ use opentalk_database::Db;
 use opentalk_db_storage::{
     module_resources::{Filter, ModuleResource, NewModuleResource},
     rooms::Room,
+    users::User,
 };
 use opentalk_signaling_core::{
     assets::{save_asset, NewAssetFileName},
@@ -1354,6 +1356,15 @@ impl LegalVote {
         msg_target: UserId,
         timezone: Option<chrono_tz::Tz>,
     ) -> Result<(), LegalVoteError> {
+        let timezone = match timezone {
+            Some(timezone) => Some(timezone),
+            None => {
+                let mut db_conn = self.db.get_conn().await?;
+                let moderator = User::get(&mut db_conn, self.user_id).await?;
+                moderator.timezone.map(Tz::from)
+            }
+        };
+
         let protocol = ctx
             .volatile
             .storage()
