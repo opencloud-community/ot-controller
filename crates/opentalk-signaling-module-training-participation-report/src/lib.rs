@@ -32,7 +32,7 @@ use chrono_tz::Tz;
 use either::Either;
 use futures::{stream::once, FutureExt as _};
 use opentalk_database::Db;
-use opentalk_db_storage::events::EventTrainingParticipationReportParameterSet;
+use opentalk_db_storage::{events::EventTrainingParticipationReportParameterSet, users::User};
 use opentalk_signaling_core::{
     assets::{save_asset, AssetError, NewAssetFileName},
     control::{
@@ -958,7 +958,8 @@ impl TrainingParticipationReport {
                 message: "Event for room not found".to_string(),
             })?;
 
-        let timezone = event.starts_at_tz.unwrap_or(TimeZone::from(Tz::UTC));
+        let event_creator = User::get(&mut conn, event.created_by).await?;
+        let timezone = event_creator.timezone.unwrap_or(TimeZone::from(Tz::UTC));
 
         let required_participants = Vec::from_iter(room_state.known_participants.clone());
 

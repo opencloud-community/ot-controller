@@ -155,10 +155,9 @@ impl MeetingReport {
         mut ctx: ModuleContext<'_, Self>,
         include_email_addresses: bool,
     ) -> Result<(), SignalingModuleError> {
-        let (participants, event) = self
+        let (participants, event, timezone) = self
             .collect_report_information(&mut ctx, include_email_addresses)
             .await?;
-        let timezone = event.starts_at_tz.unwrap_or(TimeZone::from(Tz::UTC));
 
         let report =
             Self::generate_pdf_report(DEFAULT_TEMPLATE.to_string(), event, participants, timezone)
@@ -176,7 +175,7 @@ impl MeetingReport {
         &mut self,
         ctx: &mut ModuleContext<'_, Self>,
         include_email_addresses: bool,
-    ) -> Result<(Vec<ReportParticipant>, DbEvent), SignalingModuleError> {
+    ) -> Result<(Vec<ReportParticipant>, DbEvent, TimeZone), SignalingModuleError> {
         const CONCURRENT_PARTICIPANT_QUERIES: usize = 10;
 
         let mut conn = self.db.get_conn().await?;
@@ -188,7 +187,9 @@ impl MeetingReport {
                 message: "Room not found".to_string(),
             })?;
 
-        let tz = event.starts_at_tz.map(Tz::from).unwrap_or(Tz::UTC);
+        let event_creator = User::get(&mut conn, event.created_by).await?;
+        let timezone = event_creator.timezone.unwrap_or(TimeZone::from(Tz::UTC));
+        let tz = Tz::from(timezone);
 
         // Query all participant IDs and create and concurrently fetch all participant information.
         let participants = storage.get_all_participants(self.room_id).await?;
@@ -208,7 +209,7 @@ impl MeetingReport {
                 source: Some(Box::new(e).into()),
             })?;
 
-        Ok((participants, event))
+        Ok((participants, event, timezone))
     }
 
     async fn generate_pdf_report(
