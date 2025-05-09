@@ -5657,9 +5657,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-keycloak-admin"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "132cbe24eb42d739903667a1d2c44392e235b290045a118b7f87aeb7bc9a00f5"
+checksum = "b9274afd786f413aa5d6e03a2961c64e7e63b937ee5dbc49bbcb3e2f777cf8fe"
 dependencies = [
  "log",
  "openidconnect",
