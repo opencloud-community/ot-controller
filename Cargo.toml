@@ -85,7 +85,7 @@ opentalk-diesel-newtype = "0.13"
 opentalk-etherpad-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-keycloak-admin = { version = "0.3.0", default-features = false, features = [
+opentalk-keycloak-admin = { version = "0.3.1", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
 opentalk-mail-worker-protocol = "0.32"
