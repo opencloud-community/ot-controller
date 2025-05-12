@@ -5004,7 +5004,7 @@ components:
             features: []
           core:
             features: []
-          media:
+          livekit:
             features: []
           moderation:
             features: []
