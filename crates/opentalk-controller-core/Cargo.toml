@@ -33,6 +33,7 @@ either.workspace = true
 fluent-langneg.workspace = true
 futures.workspace = true
 http.workspace = true
+humansize.workspace = true
 itertools.workspace = true
 kustos.workspace = true
 lapin-pool.workspace = true
@@ -79,6 +80,7 @@ opentelemetry_sdk = { workspace = true, features = [
   "rt-tokio-current-thread",
   "spec_unstable_metrics_views",
 ] }
+parse-size.workspace = true
 phonenumber.workspace = true
 prometheus.workspace = true
 rand.workspace = true
