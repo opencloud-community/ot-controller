@@ -4,13 +4,13 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet},
-    num::ParseIntError,
     str::FromStr,
 };
 
 use chrono::Utc;
 use clap::Subcommand;
 use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use humansize::{format_size, FormatSizeOptions, DECIMAL};
 use itertools::Itertools;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
@@ -19,6 +19,7 @@ use opentalk_db_storage::{
     utils::Jsonb,
 };
 use opentalk_types_common::{features::ModuleFeatureId, modules::ModuleId, tariffs::QuotaType};
+use parse_size::parse_size;
 use snafu::{OptionExt, ResultExt, Snafu};
 use tabled::{settings::Style, Table, Tabled};
 
@@ -96,13 +97,13 @@ pub enum Command {
 enum CliParameterError {
     /// Invalid key-value-pair, must be of form `key=value`
     KeyValuePair,
-    /// invalid quota value, expected 64-bit unsigned integer
-    QuotaValue { source: ParseIntError },
+    /// invalid quota value, expected 64-bit unsigned integer or size like 1M, 1MB, 1Mi, 1MiB, 1e3 or similar
+    QuotaValue { source: parse_size::Error },
 }
 
 fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
     let (name, value) = s.split_once('=').context(KeyValuePairSnafu)?;
-    let value = value.trim().parse().context(QuotaValueSnafu)?;
+    let value = parse_size(value.trim()).context(QuotaValueSnafu)?;
     Ok((QuotaType::from_str(name).expect("Infallible"), value))
 }
 
@@ -349,7 +350,15 @@ async fn print_tariffs(
             .quotas
             .0
             .into_iter()
-            .map(|(k, v)| format!("{k}: {v}"))
+            .map(|(k, v)| {
+                if matches!(k, QuotaType::MaxStorage) {
+                    let options = FormatSizeOptions::from(DECIMAL).decimal_zeroes(2);
+                    let hrv = format_size(v, options);
+                    format!("{k}: {v} ({hrv})")
+                } else {
+                    format!("{k}: {v}")
+                }
+            })
             .join("\n");
         if quotas.is_empty() {
             quotas = "-".into();
