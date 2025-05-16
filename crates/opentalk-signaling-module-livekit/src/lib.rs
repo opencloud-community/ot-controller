@@ -11,7 +11,10 @@ use futures::{
 };
 use livekit_api::{
     access_token::{AccessToken, VideoGrants},
-    services::room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
+    services::{
+        room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
+        ServiceError, TwirpError, TwirpErrorCode,
+    },
 };
 use livekit_protocol::{ParticipantPermission, TrackSource};
 use opentalk_controller_settings::{LiveKit, SettingsProvider};
@@ -625,13 +628,26 @@ impl Livekit {
     }
 
     async fn cleanup_room(&self, signaling_room_id: SignalingRoomId) {
-        if let Err(e) = self
+        match self
             .params
             .room_client
             .delete_room(&signaling_room_id.to_string())
             .await
         {
-            log::error!("Failed to destroy livekit room {e}");
+            Ok(_) => {
+                log::debug!("Destroyed livekit room with the id {}", self.room_id);
+            }
+            Err(ServiceError::Twirp(TwirpError::Twirp(code)))
+                if code.code == TwirpErrorCode::NOT_FOUND =>
+            {
+                log::debug!(
+                    "Livekit room with the id {} was already destroyed",
+                    self.room_id
+                );
+            }
+            Err(e) => {
+                log::error!("Failed to destroy livekit room {}: {}", self.room_id, e);
+            }
         }
     }
 
