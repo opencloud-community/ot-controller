@@ -46,19 +46,31 @@ pub enum ExecutorError {
     },
 
     #[snafu(transparent)]
-    EtcdError { source: crate::error::EtcdError },
+    EtcdError {
+        #[snafu(source(from(crate::error::EtcdError, Box::new)))]
+        source: Box<crate::error::EtcdError>,
+    },
 
     #[snafu(display("The watch stream threw an error: {source}"))]
-    WatchStream { source: etcd_client::Error },
+    WatchStream {
+        #[snafu(source(from(etcd_client::Error, Box::new)))]
+        source: Box<etcd_client::Error>,
+    },
 
     #[snafu(display("The watch stream closed unexpectedly"))]
     WatchStreamClosed,
 
     #[snafu(display("Failed to cleanup job keys: {source}"))]
-    ClearJobError { source: etcd_client::Error },
+    ClearJobError {
+        #[snafu(source(from(etcd_client::Error, Box::new)))]
+        source: Box<etcd_client::Error>,
+    },
 
     #[snafu(display("Failed to mark job as running: {source}"))]
-    MarkRunning { source: etcd_client::Error },
+    MarkRunning {
+        #[snafu(source(from(etcd_client::Error, Box::new)))]
+        source: Box<etcd_client::Error>,
+    },
 
     #[snafu(display("Failed to parse job id from {val}: {source}"))]
     ParseIntError {
