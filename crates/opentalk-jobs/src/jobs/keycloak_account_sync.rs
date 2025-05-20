@@ -25,6 +25,7 @@ use crate::{
 };
 
 const DEFAULT_KEYCLOAK_API_PAGE_SIZE: usize = 100;
+const DEFAULT_DUMP_FAILED_RESPONSES: bool = false;
 const MIN_KEYCLOAK_API_PAGE_SIZE: usize = 1;
 const MAX_KEYCLOAK_API_PAGE_SIZE: usize = 10000;
 
@@ -35,6 +36,8 @@ pub struct KeycloakAccountSync;
 pub struct KeycloakAccountSyncParameters {
     #[serde(default = "default_keycloak_api_page_size")]
     keycloak_api_page_size: usize,
+    #[serde(default = "default_dump_failed_responses")]
+    dump_failed_responses: bool,
 }
 
 impl JobParameters for KeycloakAccountSyncParameters {
@@ -63,6 +66,7 @@ impl Job for KeycloakAccountSync {
 
         let KeycloakAccountSyncParameters {
             keycloak_api_page_size,
+            dump_failed_responses,
         } = parameters;
 
         ensure!(
@@ -96,7 +100,11 @@ impl Job for KeycloakAccountSync {
             client_secret.secret().clone(),
         )?;
 
-        let kc_admin_client = KeycloakAdminClient::new(api_base_url.clone(), authorized_client)?;
+        let kc_admin_client = KeycloakAdminClient::with_dump_flag(
+            api_base_url.clone(),
+            authorized_client,
+            dump_failed_responses,
+        )?;
 
         let kc_users_count = kc_admin_client.get_users_count().await?;
 
@@ -134,4 +142,8 @@ impl Job for KeycloakAccountSync {
 
 fn default_keycloak_api_page_size() -> usize {
     DEFAULT_KEYCLOAK_API_PAGE_SIZE
+}
+
+fn default_dump_failed_responses() -> bool {
+    DEFAULT_DUMP_FAILED_RESPONSES
 }
