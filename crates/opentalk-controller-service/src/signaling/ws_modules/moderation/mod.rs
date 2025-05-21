@@ -524,13 +524,13 @@ impl SignalingModule for ModerationModule {
             Event::Exchange(exchange::Message::Banned(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(ModerationEvent::Banned);
-                    ctx.exit_normal();
+                    ctx.exit_normal(LeaveReason::Banned);
                 }
             }
             Event::Exchange(exchange::Message::Kicked(participant)) => {
                 if self.id == participant {
                     ctx.ws_send(ModerationEvent::Kicked);
-                    ctx.exit_normal();
+                    ctx.exit_normal(LeaveReason::Kicked);
                 }
             }
             Event::Exchange(exchange::Message::SentToWaitingRoom(participant)) => {
@@ -552,7 +552,7 @@ impl SignalingModule for ModerationModule {
             }) => {
                 if kick_scope.kicks_role(ctx.role()) {
                     ctx.ws_send(SessionEnded { issued_by });
-                    ctx.exit_normal();
+                    ctx.exit_normal(LeaveReason::Kicked);
                 } else {
                     ctx.ws_send(ModerationEvent::DebriefingStarted(DebriefingStarted {
                         issued_by,

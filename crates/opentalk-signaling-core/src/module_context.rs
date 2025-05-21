@@ -7,7 +7,7 @@ use std::{marker::PhantomData, sync::Arc};
 use actix_http::ws::CloseCode;
 use futures::{stream::SelectAll, Stream};
 use opentalk_types_common::{modules::ModuleId, time::Timestamp};
-use opentalk_types_signaling::{NamespacedEvent, Role};
+use opentalk_types_signaling::{LeaveReason, NamespacedEvent, Role};
 use serde::Serialize;
 
 use crate::{any_stream, AnyStream, SignalingMetrics, SignalingModule, VolatileStorage};
@@ -32,7 +32,7 @@ where
     pub volatile: &'ctx mut VolatileStorage,
     pub events: &'ctx mut SelectAll<AnyStream>,
     pub invalidate_data: &'ctx mut bool,
-    pub exit: &'ctx mut Option<CloseCode>,
+    pub exit: &'ctx mut Option<(CloseCode, LeaveReason)>,
     pub metrics: Option<Arc<SignalingMetrics>>,
     pub m: PhantomData<fn() -> M>,
 }
@@ -111,16 +111,16 @@ where
         *self.invalidate_data = true;
     }
 
-    pub fn exit(&mut self, code: Option<CloseCode>) {
-        *self.exit = Some(code.unwrap_or(CloseCode::Normal));
+    pub fn exit(&mut self, code: Option<(CloseCode, LeaveReason)>) {
+        *self.exit = Some(code.unwrap_or((CloseCode::Normal, LeaveReason::Quit)));
     }
 
-    pub fn exit_normal(&mut self) {
-        *self.exit = Some(CloseCode::Normal);
+    pub fn exit_normal(&mut self, reason: LeaveReason) {
+        *self.exit = Some((CloseCode::Normal, reason));
     }
 
     pub fn exit_error(&mut self) {
-        *self.exit = Some(CloseCode::Error);
+        *self.exit = Some((CloseCode::Error, LeaveReason::Quit));
     }
 
     pub fn metrics(&self) -> Option<&Arc<SignalingMetrics>> {
