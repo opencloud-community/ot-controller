@@ -97,6 +97,8 @@ pub enum Command {
 enum CliParameterError {
     /// Invalid key-value-pair, must be of form `key=value`
     KeyValuePair,
+    /// invalid quota type
+    QuotaType { source: strum::ParseError },
     /// invalid quota value, expected 64-bit unsigned integer or size like 1M, 1MB, 1Mi, 1MiB, 1e3 or similar
     QuotaValue { source: parse_size::Error },
 }
@@ -104,7 +106,7 @@ enum CliParameterError {
 fn parse_quota(s: &str) -> Result<(QuotaType, u64), CliParameterError> {
     let (name, value) = s.split_once('=').context(KeyValuePairSnafu)?;
     let value = parse_size(value.trim()).context(QuotaValueSnafu)?;
-    Ok((QuotaType::from_str(name).expect("Infallible"), value))
+    Ok((QuotaType::from_str(name).context(QuotaTypeSnafu)?, value))
 }
 
 pub async fn handle_command(settings: &Settings, command: Command) -> Result<(), DatabaseError> {
