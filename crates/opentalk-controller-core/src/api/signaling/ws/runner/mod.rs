@@ -1699,7 +1699,7 @@ impl Runner {
 
         self.ws_send_control(
             timestamp,
-            ControlEvent::JoinSuccess(JoinSuccess {
+            ControlEvent::JoinSuccess(Box::new(JoinSuccess {
                 id: self.id,
                 display_name: control_data.display_name.clone(),
                 avatar_url: control_data.avatar_url.clone(),
@@ -1711,7 +1711,7 @@ impl Runner {
                 event_info,
                 room_info,
                 is_room_owner: self.participant.user_id() == Some(self.room.created_by),
-            }),
+            })),
         )
         .await;
 

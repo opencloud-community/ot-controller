@@ -15,7 +15,7 @@ use opentalk_types_signaling_chat::{
     state::ChatState,
     Scope,
 };
-use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess, Left};
+use opentalk_types_signaling_control::event::{ControlEvent, Left};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 use serial_test::serial;
@@ -73,12 +73,9 @@ async fn last_seen_timestamps() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that last seen timestamps are not set
-                let chat_data = module_data.get::<ChatState>().unwrap();
+                let chat_data = join_success.module_data.get::<ChatState>().unwrap();
                 let json = serde_json::to_value(chat_data).unwrap();
                 assert_eq!(
                     json,
@@ -192,11 +189,9 @@ async fn last_seen_timestamps() {
 
     // verify that we receive the correct timestamp for group1
     match rejoin_success {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data, ..
-        })) => {
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
             // check own groups
-            let chat_data = module_data.get::<ChatState>().unwrap();
+            let chat_data = join_success.module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -284,15 +279,11 @@ async fn common_groups_on_join() {
         .unwrap();
 
     match join_success1 {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data,
-            participants,
-            ..
-        })) => {
-            assert!(participants.is_empty());
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
+            assert!(join_success.participants.is_empty());
 
             // check own groups
-            let chat_data = module_data.get::<ChatState>().unwrap();
+            let chat_data = join_success.module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -336,20 +327,19 @@ async fn common_groups_on_join() {
         .unwrap();
 
     match join_success2 {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data,
-            participants,
-            ..
-        })) => {
-            assert_eq!(participants.len(), 1);
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
+            assert_eq!(join_success.participants.len(), 1);
 
             // check common groups here
-            let peer_frontend_data = participants[0].module_data.get::<ChatPeerState>().unwrap();
+            let peer_frontend_data = join_success.participants[0]
+                .module_data
+                .get::<ChatPeerState>()
+                .unwrap();
             let json = serde_json::to_value(peer_frontend_data).unwrap();
             assert_eq!(json, json!({"groups":["group1"]}));
 
             // check own groups
-            let chat_data = module_data.get::<ChatState>().unwrap();
+            let chat_data = join_success.module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -427,15 +417,11 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_success1 {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data,
-            participants,
-            ..
-        })) => {
-            assert!(participants.is_empty());
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
+            assert!(join_success.participants.is_empty());
 
             // check own groups
-            let chat_data = module_data.get::<ChatState>().unwrap();
+            let chat_data = join_success.module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -470,20 +456,19 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_success2 {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data,
-            participants,
-            ..
-        })) => {
-            assert_eq!(participants.len(), 1);
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
+            assert_eq!(join_success.participants.len(), 1);
 
             // check common groups here
-            let peer_frontend_data = participants[0].module_data.get::<ChatPeerState>().unwrap();
+            let peer_frontend_data = join_success.participants[0]
+                .module_data
+                .get::<ChatPeerState>()
+                .unwrap();
             let json = serde_json::to_value(peer_frontend_data).unwrap();
             assert_eq!(json, json!({"groups":[]}));
 
             // check own groups
-            let chat_data = module_data.get::<ChatState>().unwrap();
+            let chat_data = join_success.module_data.get::<ChatState>().unwrap();
             let json = serde_json::to_value(chat_data).unwrap();
             assert_eq!(
                 json,
@@ -574,11 +559,9 @@ async fn private_chat_history_on_join() {
         .unwrap();
 
     match join_again_success {
-        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data, ..
-        })) => {
+        WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
             // check that last seen timestamps are not set
-            let chat_state = module_data.get::<ChatState>().unwrap();
+            let chat_state = join_success.module_data.get::<ChatState>().unwrap();
             let ChatState {
                 enabled: _,
                 room_history: _,

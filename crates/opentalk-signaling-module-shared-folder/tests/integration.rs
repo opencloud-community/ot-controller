@@ -23,7 +23,7 @@ use opentalk_types_common::{
     users::UserId,
 };
 use opentalk_types_signaling::Role;
-use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess};
+use opentalk_types_signaling_control::event::ControlEvent;
 use pretty_assertions::assert_eq;
 use serial_test::serial;
 
@@ -133,12 +133,9 @@ async fn room_without_event() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key(&MODULE_ID));
+                assert!(!join_success.module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -161,12 +158,9 @@ async fn room_without_event() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key(&MODULE_ID));
+                assert!(!join_success.module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -225,12 +219,9 @@ async fn room_with_event_but_no_shared_folder() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key(&MODULE_ID));
+                assert!(!join_success.module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -253,12 +244,9 @@ async fn room_with_event_but_no_shared_folder() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                assert!(!module_data.contains_key(&MODULE_ID));
+                assert!(!join_success.module_data.contains_key(&MODULE_ID));
             }
             _ => panic!(),
         }
@@ -331,12 +319,9 @@ async fn room_with_event_and_shared_folder() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                let shared_folder = module_data.get::<SharedFolder>().unwrap();
+                let shared_folder = join_success.module_data.get::<SharedFolder>().unwrap();
                 assert_eq!(shared_folder, Some(moderator_shared_folder));
             }
             _ => panic!(),
@@ -360,12 +345,9 @@ async fn room_with_event_and_shared_folder() {
             .await
             .unwrap();
         match join_success {
-            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-                module_data,
-                ..
-            })) => {
+            WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) => {
                 // check that no shared folder information is available
-                let shared_folder = module_data.get::<SharedFolder>().unwrap();
+                let shared_folder = join_success.module_data.get::<SharedFolder>().unwrap();
                 assert_eq!(shared_folder, Some(user_shared_folder));
             }
             _ => panic!(),
