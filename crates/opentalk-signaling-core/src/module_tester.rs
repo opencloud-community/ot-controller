@@ -693,7 +693,7 @@ where
                     },
                 };
 
-                let join_success = JoinSuccess {
+                let join_success = Box::new(JoinSuccess {
                     id: self.participant_id,
                     display_name: join.display_name.unwrap(),
                     avatar_url,
@@ -711,7 +711,7 @@ where
                     event_info: None,
                     room_info,
                     is_room_owner,
-                };
+                });
 
                 self.interface
                     .ws

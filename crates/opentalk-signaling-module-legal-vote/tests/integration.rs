@@ -23,7 +23,7 @@ use opentalk_test_util::{
 };
 use opentalk_types_common::users::DisplayName;
 use opentalk_types_signaling::{ParticipantId, Role};
-use opentalk_types_signaling_control::event::{ControlEvent, JoinSuccess};
+use opentalk_types_signaling_control::event::ControlEvent;
 use opentalk_types_signaling_legal_vote::{
     cancel::{CancelReason, CustomCancelReason},
     command::{Cancel, LegalVoteCommand, Stop, Vote},
@@ -2215,22 +2215,18 @@ async fn frontend_data(storage: TestContextVolatileStorage) {
             .await
             .unwrap();
 
-        if let WsMessageOutgoing::Control(ControlEvent::JoinSuccess(JoinSuccess {
-            module_data,
-            ..
-        })) = module_tester
+        let WsMessageOutgoing::Control(ControlEvent::JoinSuccess(join_success)) = module_tester
             .receive_ws_message(&USER_3.participant_id)
             .await
             .unwrap()
-        {
-            assert!(module_data.contains_key(&LegalVote::NAMESPACE));
-            assert_eq!(
-                module_data.get::<LegalVoteState>().unwrap(),
-                Some(frontend_data)
-            );
-        } else {
+        else {
             panic!("Expected JoinSuccess Message")
-        }
+        };
+        assert!(join_success.module_data.contains_key(&LegalVote::NAMESPACE));
+        assert_eq!(
+            join_success.module_data.get::<LegalVoteState>().unwrap(),
+            Some(frontend_data)
+        );
 
         module_tester.leave(&USER_3.participant_id).await.unwrap();
 
