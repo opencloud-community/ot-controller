@@ -162,6 +162,23 @@ impl ControlStorage for VolatileStaticMemoryStorage {
         state().write().remove_room_closes_at(room);
         Ok(())
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().set_room_alive(room);
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_room_alive(&mut self, room: RoomId) -> Result<bool, SignalingModuleError> {
+        Ok(state().read().is_room_alive(room))
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        state().write().remove_room_alive(room);
+        Ok(())
+    }
 }
 
 #[async_trait(?Send)]
