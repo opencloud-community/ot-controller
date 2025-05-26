@@ -180,9 +180,6 @@ api_secret = "your-livekit-api-secret"
 # Redis URL used to connect the redis server
 #url = "redis://localhost:6379/"
 
-#[stun]
-#uris = ["stun:127.0.0.1:3478"]
-
 #[authz]
 # Should the controller publish/receive ACL changes via RabbitMQ to/from other controllers
 #synchronize_controllers = true

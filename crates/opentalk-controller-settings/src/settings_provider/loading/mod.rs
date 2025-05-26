@@ -65,17 +65,6 @@ impl SettingsProvider {
             );
         }
 
-        if raw.turn.is_some() {
-            anstream::eprintln!(
-                "{}: Found an obsolete {turn} server configuration.\n\
-                 {}: The {turn} config section as well as the related {endpoint} endpoint will be removed in the future.",
-                "DEPRECATION WARNING".yellow().bold(),
-                "NOTE".green(),
-                turn = "turn".bold(),
-                endpoint = "/turn".bold()
-            );
-        }
-
         if raw.reports.is_some() {
             anstream::eprintln!(
                 "{}: Found an obsolete {reports} configuration section.\n\
