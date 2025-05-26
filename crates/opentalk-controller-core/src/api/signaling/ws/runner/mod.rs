@@ -271,6 +271,7 @@ impl Builder {
             resumption_keep_alive: self.resumption_keep_alive,
             shutdown_sig,
             exit: false,
+            leave_reason: LeaveReason::Quit,
             settings_provider,
             time_limit_future: Box::pin(future::pending()),
         })
@@ -337,6 +338,9 @@ pub struct Runner {
 
     /// When set to true the runner will gracefully exit on next loop
     exit: bool,
+
+    /// The reason why a user disconnected
+    leave_reason: LeaveReason,
 
     /// Shared settings of the running program
     settings_provider: SettingsProvider,
@@ -446,7 +450,7 @@ impl Runner {
 
     /// Destroys the runner and all associated resources
     #[tracing::instrument(skip(self), fields(id = %self.id))]
-    pub async fn destroy(mut self, close_ws: bool, reason: LeaveReason, grace_period: bool) {
+    pub async fn destroy(mut self, close_ws: bool, grace_period: bool) {
         let mut destroy_start_time = Instant::now();
         let mut encountered_error = false;
         let mut cleanup_scope = CleanupScope::None;
@@ -588,7 +592,7 @@ impl Runner {
                                 None,
                                 exchange::Message::Left {
                                     id: self.id,
-                                    reason,
+                                    reason: self.leave_reason,
                                 },
                             );
                         }
@@ -982,8 +986,6 @@ impl Runner {
             opentalk_signaling_core::control::storage::SKIP_WAITING_ROOM_KEY_REFRESH_INTERVAL,
         ));
 
-        let mut reason = LeaveReason::Quit;
-
         while matches!(self.ws.state, State::Open) {
             if self.exit && matches!(self.ws.state, State::Open) {
                 // This case handles exit on errors unrelated to websocket or controller shutdown
@@ -993,8 +995,9 @@ impl Runner {
             tokio::select! {
                 res = self.ws.receive() => {
                     match res {
-                        Some(RunnerMessage::Timeout) => reason = LeaveReason::Timeout,
+                        Some(RunnerMessage::Timeout) => self.leave_reason = LeaveReason::Timeout,
                         Some(RunnerMessage::Message(Message::Close(_))) => {
+                            self.leave_reason = LeaveReason::Quit;
                             // Received Close frame from ws actor, break to destroy the runner
                             manual_close_ws = true;
                             break;
@@ -1067,7 +1070,7 @@ impl Runner {
 
         log::debug!("Stopping ws-runner task for participant {}", self.id);
 
-        self.destroy(manual_close_ws, reason, grace_period).await;
+        self.destroy(manual_close_ws, grace_period).await;
     }
 
     #[tracing::instrument(skip(self, message), fields(id = %self.id))]
@@ -2360,8 +2363,9 @@ impl Runner {
             self.exchange_publish_control(timestamp, None, exchange::Message::Update(self.id));
         }
 
-        if let Some(exit) = exit {
-            self.ws.close(exit).await;
+        if let Some((close_code, reason)) = exit {
+            self.leave_reason = reason;
+            self.ws.close(close_code).await;
         }
     }
 
@@ -2600,7 +2604,7 @@ struct ModuleRequestedActions {
     ws_messages: Vec<Message>,
     exchange_publish: Vec<ExchangePublish>,
     invalidate_data: bool,
-    exit: Option<CloseCode>,
+    exit: Option<(CloseCode, LeaveReason)>,
 }
 
 struct Ws {

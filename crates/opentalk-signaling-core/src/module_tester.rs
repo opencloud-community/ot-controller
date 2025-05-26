@@ -956,7 +956,7 @@ where
         exchange_publish: Vec<ExchangePublish>,
         invalidate_data: bool,
         events: SelectAll<AnyStream>,
-        exit: Option<CloseCode>,
+        exit: Option<(CloseCode, LeaveReason)>,
     ) {
         for ws_message in ws_messages {
             self.interface
