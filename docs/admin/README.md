@@ -20,7 +20,6 @@ title: Controller
 - [Endpoints](core/endpoints.md)
 - [Logging](core/logging/log_output.md)
 - [Metrics](core/logging/metrics.md)
-- [STUN and TURN](core/stun_turn.md)
 - [Personal Data Storage](personal_data_storage.md)
 
 ## Interaction between OpenTalk Controller and other services

@@ -2343,28 +2343,15 @@ paths:
     get:
       tags:
         - "api::v1::turn"
-      summary: Get a TURN server and corresponding credentials
+      summary: "Deprecated endpoint, only available for backwards compatibility."
       description: |-
-        The returned TURN server can be used with the credentials to circumvent
-        NAT restrictions.
+        This endpoint is deprecated and will be removed in the future.
+        It returns an empty answer regardless any configuration.
       operationId: get_turn
       responses:
-        "200":
-          description: TURN server and corresponding credentials
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetTurnResponseBody"
         "204":
           description: No TURN servers have been configured
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
       deprecated: true
-      security:
-        - BearerAuth: []
-        - InviteCode: []
   /users/find:
     get:
       tags:
@@ -3825,11 +3812,6 @@ components:
       items:
         $ref: "#/components/schemas/RoomResource"
       description: "The JSON body returned by the `/rooms` `GET` endpoint"
-    GetTurnResponseBody:
-      type: array
-      items:
-        $ref: "#/components/schemas/IceServer"
-      description: Response body to the *GET /turn* endpoint request
     GetUserAssetsResponseBody:
       type: object
       description: "Response body for the `GET /v1/users/me/assets` endpoint"
@@ -3851,13 +3833,6 @@ components:
             namespace: recording
             room_id: 00000000-0000-0000-0000-0000abadcafe
             size: 98765432
-    IceServer:
-      oneOf:
-        - $ref: "#/components/schemas/TurnServer"
-          description: TURN ICE server type
-        - $ref: "#/components/schemas/StunServer"
-          description: STUN ICE server type
-      description: Description of an ICE server
     InstanceId:
       type: string
       description: An event instance id
@@ -4925,17 +4900,6 @@ components:
         public_url: "https://streaming.example.com/livestream123"
         streaming_endpoint: "https://ingress.streaming.example.com/"
         streaming_key: aabbccddeeff
-    StunServer:
-      type: object
-      description: STUN Server for users.
-      required:
-        - uris
-      properties:
-        uris:
-          type: array
-          items:
-            type: string
-          description: STUN URIs for this TURN server following rfc7065
     TariffId:
       type: string
       format: uuid
@@ -5081,29 +5045,6 @@ components:
         initial_checkpoint_delay:
           after: 100
           within: 200
-    TurnServer:
-      type: object
-      description: TURN access credentials for users.
-      required:
-        - username
-        - password
-        - ttl
-        - uris
-      properties:
-        password:
-          type: string
-          description: The TURN access username
-        ttl:
-          type: string
-          description: Time to live of the TURN service
-        uris:
-          type: array
-          items:
-            type: string
-          description: URIs of the TURN service
-        username:
-          type: string
-          description: The TURN access username
     UnregisteredUser:
       type: object
       description: Representation of a unregistered user

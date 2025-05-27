@@ -43,15 +43,12 @@ mod redis;
 pub(crate) mod settings;
 mod shared_folder;
 mod spacedeck;
-mod stun;
 mod subroom_audio;
 mod tariff_assignment;
 mod tariff_status_mapping;
 mod tariffs;
 mod tenant_assignment;
 mod tenants;
-mod turn;
-mod turn_server;
 mod user_search_backend;
 mod user_search_backend_keycloak;
 
@@ -79,7 +76,6 @@ pub use redis::Redis;
 pub use settings::Settings;
 pub use shared_folder::SharedFolder;
 pub use spacedeck::Spacedeck;
-pub use stun::Stun;
 pub use subroom_audio::SubroomAudio;
 pub use tariff_assignment::{TariffAssignment, DEFAULT_STATIC_TARIFF_NAME};
 pub use tariff_status_mapping::TariffStatusMapping;
@@ -88,7 +84,5 @@ pub use tenant_assignment::{
     TenantAssignment, DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TENANT_ID,
 };
 pub use tenants::Tenants;
-pub use turn::Turn;
-pub use turn_server::TurnServer;
 pub use user_search_backend::UserSearchBackend;
 pub use user_search_backend_keycloak::UserSearchBackendKeycloak;

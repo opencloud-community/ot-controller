@@ -34,7 +34,6 @@ Functionality that can be configured through the configuration file:
 - [Room server](room_server.md)
 - [Shared folders on external storage systems](../advanced/additional_services/shared_folder.md)
 - [SpaceDeck](../advanced/additional_services/spacedeck.md)
-- [STUN and TURN](stun_turn.md)
 - [Subroom Audio](subroom_audio.md)
 - [Tariffs](../advanced/tariffs.md)
 - [Tenants](../advanced/tenants.md)
@@ -264,9 +263,6 @@ api_secret = "your-livekit-api-secret"
 #
 # Redis URL used to connect the redis server
 #url = "redis://localhost:6379/"
-
-#[stun]
-#uris = ["stun:127.0.0.1:3478"]
 
 #[authz]
 # Should the controller publish/receive ACL changes via RabbitMQ to/from other controllers

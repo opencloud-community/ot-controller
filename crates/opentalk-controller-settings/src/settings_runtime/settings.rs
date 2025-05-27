@@ -5,8 +5,7 @@
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
     Defaults, Endpoints, Etcd, Etherpad, Http, LiveKit, Logging, Metrics, MinIO, Monitoring, Oidc,
-    RabbitMq, Redis, SharedFolder, Spacedeck, Stun, SubroomAudio, Tariffs, Tenants, Turn,
-    UserSearchBackend,
+    RabbitMq, Redis, SharedFolder, Spacedeck, SubroomAudio, Tariffs, Tenants, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
@@ -27,12 +26,6 @@ pub struct Settings {
 
     /// The database connection settings.
     pub database: Database,
-
-    /// The TURN server settings
-    pub turn: Option<Turn>,
-
-    /// The STUN settings.
-    pub stun: Option<Stun>,
 
     /// The redis connection settings.
     pub redis: Option<Redis>,
@@ -96,9 +89,6 @@ impl Settings {
     pub(crate) fn try_reload_from(&mut self, new_raw: SettingsRaw) -> Result<()> {
         let new = Settings::try_from(new_raw)?;
 
-        // reload turn settings
-        self.turn = new.turn;
-
         // reload metrics
         self.metrics = new.metrics;
 
@@ -124,8 +114,6 @@ impl TryFrom<SettingsRaw> for Settings {
 
         let http = raw.http.clone().into();
         let database = raw.database.clone().into();
-        let turn = raw.turn.clone().map(Into::into);
-        let stun = raw.stun.clone().map(Into::into);
         let redis = raw.redis.clone().map(Into::into);
         let rabbit_mq = raw.rabbit_mq.clone().map(Into::into);
         let authz = Authz::from_settings_file(raw.authz.clone(), rabbit_mq.is_some());
@@ -156,8 +144,6 @@ impl TryFrom<SettingsRaw> for Settings {
             users_find_behavior,
             http,
             database,
-            turn,
-            stun,
             redis,
             rabbit_mq,
             authz,
@@ -231,8 +217,6 @@ pub(crate) fn minimal_example() -> Settings {
             url: "postgres://postgres:password123@localhost:5432/opentalk".to_string(),
             max_connections: DEFAULT_DATABASE_MAX_CONNECTIONS,
         },
-        turn: None,
-        stun: None,
         redis: None,
         rabbit_mq: None,
         authz: Authz {
