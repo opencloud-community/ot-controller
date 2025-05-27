@@ -288,6 +288,8 @@ skip = [
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
   { name = "bincode", version = "1" },
+  { name = "cargo-platform", version = "0.1" },
+  { name = "cargo_metadata", version = "0.19" },
   { name = "cookie", version = "0.16" },
   { name = "crypto-bigint", version = "0.4" },
   { name = "der", version = "0.6" },
