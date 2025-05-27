@@ -16,11 +16,9 @@ workspace = true
 
 [dependencies]
 actix-web.workspace = true
-anstream.workspace = true
 opentalk-controller-core.workspace = true
 opentalk-controller-service.workspace = true
 opentalk-signaling-modules.workspace = true
-owo-colors.workspace = true
 
 [features]
 default = ["swagger"]
