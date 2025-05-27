@@ -10,7 +10,7 @@ exclude: target/|.*\.snap|.*.sql
 repos:
   # These are "general" hooks provided by the pre-commit devs
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -49,6 +49,12 @@ repos:
           - --deny
           - advisory-not-detected
           - --hide-inclusion-graph
+  - repo: https://github.com/bnjbvr/cargo-machete
+    rev: 6ddd489
+    hooks:
+      - id: cargo-machete
+        args:
+          - --with-metadata
   # There currently is no official taplo hook, but this one got recommended in the corresponding issue
   - repo: https://github.com/ComPWA/taplo-pre-commit
     rev: v0.9.3
