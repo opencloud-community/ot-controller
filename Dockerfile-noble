@@ -25,7 +25,6 @@ RUN mkdir /controller
 WORKDIR /controller
 
 COPY --from=builder /controller/target/release/opentalk-controller .
-RUN ln -s /controller/opentalk-controller /controller/k3k-controller
 COPY example/controller.toml /controller/controller.toml
 
 USER $USERID:$GROUPID

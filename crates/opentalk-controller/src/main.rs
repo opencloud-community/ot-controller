@@ -12,18 +12,6 @@ async fn main() {
 }
 
 async fn run() -> Result<(), Whatever> {
-    match std::env::args().next() {
-        Some(s) if s.ends_with("k3k-controller") => {
-            use owo_colors::OwoColorize as _;
-            anstream::eprintln!(
-                "{}: It appears you're using the deprecated `k3k-controller` executable, \
-                you should be using the `opentalk-controller` executable instead. \
-                The `k3k-controller` executable will be removed in a future release.",
-                "DEPRECATION WARNING".yellow().bold(),
-            );
-        }
-        _ => {}
-    }
     if let Some(controller) = Controller::create::<Modules>("OpenTalk Controller").await? {
         controller.run().await?;
     }

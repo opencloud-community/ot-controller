@@ -5,12 +5,9 @@
 use std::path::Path;
 
 use snafu::ResultExt as _;
-use warning_source::WarningSource;
 
 use super::SettingsProvider;
 use crate::{settings_error::DeserializeConfigSnafu, Result, SettingsRaw};
-
-mod warning_source;
 
 impl SettingsProvider {
     pub(super) fn load_raw(file_path: &Path) -> Result<SettingsRaw> {
@@ -18,11 +15,6 @@ impl SettingsProvider {
 
         let config = Config::builder()
             .add_source(File::from(file_path).format(FileFormat::Toml))
-            .add_source(WarningSource::new(
-                Environment::with_prefix("K3K_CTRL")
-                    .prefix_separator("_")
-                    .separator("__"),
-            ))
             .add_source(
                 Environment::with_prefix("OPENTALK_CTRL")
                     .prefix_separator("_")
