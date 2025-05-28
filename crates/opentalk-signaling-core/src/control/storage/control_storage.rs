@@ -304,6 +304,12 @@ pub trait ControlStorage:
         &mut self,
         room: SignalingRoomId,
     ) -> Result<(), SignalingModuleError>;
+
+    async fn set_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
+
+    async fn is_room_alive(&mut self, room: RoomId) -> Result<bool, SignalingModuleError>;
+
+    async fn delete_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError>;
 }
 
 #[async_trait(?Send)]

@@ -31,6 +31,9 @@ pub const USER_ID: LocalAttributeId = LocalAttributeId("user_id");
 pub const IS_PRESENT: GlobalAttributeId = GlobalAttributeId("is_present");
 pub const BREAKOUT_ROOM: GlobalAttributeId = GlobalAttributeId("breakout_room");
 
+/// A key to track if the room is alive to avoid cleaning up data multiple times
+pub const IS_ROOM_ALIVE: GlobalAttributeId = GlobalAttributeId("is_room_alive");
+
 #[cfg(test)]
 mod test_common {
     use std::collections::{BTreeMap, BTreeSet};

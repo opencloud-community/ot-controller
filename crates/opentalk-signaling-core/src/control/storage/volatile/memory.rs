@@ -4,7 +4,7 @@
 
 use core::hash;
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeSet, HashMap, HashSet},
     time::Duration,
 };
 
@@ -37,6 +37,7 @@ pub(super) struct MemoryControlState {
     room_creators: HashMap<RoomId, UserInfo>,
     participant_count: HashMap<RoomId, isize>,
     rooms_close_at: HashMap<SignalingRoomId, Timestamp>,
+    room_alive: HashSet<RoomId>,
     participants_skip_waiting_room: ExpiringDataHashMap<ParticipantId, bool>,
 }
 
@@ -280,6 +281,18 @@ impl MemoryControlState {
 
     pub(super) fn remove_room_closes_at(&mut self, room: SignalingRoomId) {
         self.rooms_close_at.remove(&room);
+    }
+
+    pub(super) fn set_room_alive(&mut self, room: RoomId) {
+        self.room_alive.insert(room);
+    }
+
+    pub(super) fn is_room_alive(&self, room: RoomId) -> bool {
+        self.room_alive.contains(&room)
+    }
+
+    pub(super) fn remove_room_alive(&mut self, room: RoomId) {
+        self.room_alive.remove(&room);
     }
 
     pub(super) fn set_skip_waiting_room_with_expiry(

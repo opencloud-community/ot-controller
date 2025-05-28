@@ -152,6 +152,14 @@ impl CombinedMetrics {
                 .u64_counter("signaling.destroyed_rooms_count")
                 .with_description("Number of destroyed rooms")
                 .build(),
+            created_breakout_rooms_count: meter
+                .u64_counter("signaling.created_breakout_rooms_count")
+                .with_description("Number of created breakout rooms")
+                .build(),
+            destroyed_breakout_rooms_count: meter
+                .u64_counter("signaling.destroyed_breakout_rooms_count")
+                .with_description("Number of destroyed breakout rooms")
+                .build(),
             participants_count: meter
                 .i64_up_down_counter("signaling.participants_count")
                 .with_description("Number of participants")

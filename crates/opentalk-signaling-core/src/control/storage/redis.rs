@@ -233,6 +233,29 @@ impl ControlStorage for RedisConnection {
             message: "Failed to DEL the point in time the room closes",
         })
     }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn set_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.set(RoomAlive { room }, true)
+            .await
+            .context(RedisSnafu {
+                message: "Failed to SET room alive key",
+            })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn is_room_alive(&mut self, room: RoomId) -> Result<bool, SignalingModuleError> {
+        self.exists(RoomAlive { room }).await.context(RedisSnafu {
+            message: "Failed to check if room alive key exists",
+        })
+    }
+
+    #[tracing::instrument(level = "debug", skip(self))]
+    async fn delete_room_alive(&mut self, room: RoomId) -> Result<(), SignalingModuleError> {
+        self.del(RoomAlive { room }).await.context(RedisSnafu {
+            message: "Failed to DEL room alive key",
+        })
+    }
 }
 
 #[async_trait(?Send)]
@@ -434,6 +457,13 @@ pub struct RoomTariff {
 #[to_redis_args(fmt = "opentalk-signaling:room={room}:closes_at")]
 struct RoomClosesAt {
     room: SignalingRoomId,
+}
+
+/// The key to check if the room was cleaned up
+#[derive(ToRedisArgs)]
+#[to_redis_args(fmt = "opentalk-signaling:room={room}:room_alive")]
+struct RoomAlive {
+    room: RoomId,
 }
 
 /// Key used for setting the `skip_waiting_room` attribute for a participant

@@ -758,6 +758,8 @@ impl Runner {
 
                     *encountered_error = true;
                 }
+
+                self.metrics.increment_destroyed_breakout_rooms_count();
             }
             CleanupScope::Global => {
                 log::debug!("Destroying conference room");
@@ -772,16 +774,9 @@ impl Runner {
                     *encountered_error = true;
                 }
 
-                if let Err(e) = self.cleanup_redis_for_global_room().await {
-                    log::error!(
-                        "failed to cleanup conference room, {}",
-                        Report::from_error(e)
-                    );
-
-                    *encountered_error = true;
-                }
-
                 if self.room_id.breakout_room_id().is_some() {
+                    self.metrics.increment_destroyed_breakout_rooms_count();
+
                     // Cleanup the signaling room keys for the main room
                     if let Err(e) = cleanup_redis_keys_for_signaling_room(
                         &mut self.volatile,
@@ -793,6 +788,26 @@ impl Runner {
 
                         *encountered_error = true;
                     }
+                }
+
+                if !self
+                    .volatile
+                    .control_storage()
+                    .is_room_alive(self.room_id.room_id())
+                    .await
+                    // Continue with cleanup if we receive an error on the redis call
+                    .unwrap_or(true)
+                {
+                    return;
+                }
+
+                if let Err(e) = self.cleanup_redis_for_global_room().await {
+                    log::error!(
+                        "failed to cleanup conference room, {}",
+                        Report::from_error(e)
+                    );
+
+                    *encountered_error = true;
                 }
 
                 self.metrics.increment_destroyed_rooms_count();
@@ -966,6 +981,10 @@ impl Runner {
         self.volatile
             .control_storage()
             .delete_creator(self.room.id)
+            .await?;
+        self.volatile
+            .control_storage()
+            .delete_room_alive(self.room.id)
             .await?;
 
         Ok(())
@@ -1737,8 +1756,19 @@ impl Runner {
 
         if !participant_set_exists {
             self.set_room_time_limit().await?;
-            self.metrics.increment_created_rooms_count();
+
+            if self.room_id.breakout_room_id().is_some() {
+                self.metrics.increment_created_breakout_rooms_count();
+            } else {
+                self.metrics.increment_created_rooms_count();
+            }
+
+            self.volatile
+                .control_storage()
+                .set_room_alive(self.room_id.room_id())
+                .await?;
         }
+
         self.activate_room_time_limit().await?;
 
         let participants = self

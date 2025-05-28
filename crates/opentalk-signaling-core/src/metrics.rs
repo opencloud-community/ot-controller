@@ -19,6 +19,10 @@ pub struct SignalingMetrics {
     pub runner_destroy_time: Histogram<f64>,
     pub created_rooms_count: Counter<u64>,
     pub destroyed_rooms_count: Counter<u64>,
+
+    pub created_breakout_rooms_count: Counter<u64>,
+    pub destroyed_breakout_rooms_count: Counter<u64>,
+
     pub participants_count: UpDownCounter<i64>,
     pub participants_with_audio_count: UpDownCounter<i64>,
     pub participants_with_video_count: UpDownCounter<i64>,
@@ -41,6 +45,14 @@ impl SignalingMetrics {
 
     pub fn increment_destroyed_rooms_count(&self) {
         self.destroyed_rooms_count.add(1, &[]);
+    }
+
+    pub fn increment_created_breakout_rooms_count(&self) {
+        self.created_breakout_rooms_count.add(1, &[]);
+    }
+
+    pub fn increment_destroyed_breakout_rooms_count(&self) {
+        self.destroyed_breakout_rooms_count.add(1, &[]);
     }
 
     pub fn increment_participants_count<U>(&self, participant: &Participant<U>) {
