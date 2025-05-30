@@ -35,4 +35,7 @@ pub enum SettingsError {
 
     #[snafu(display("Missing OIDC configuration. Either an [oidc] or a deprecated [keycloak] section must be present in the configuration"))]
     OidcConfigurationMissing,
+
+    #[snafu(display("Found `user_search.users_find_behavior` value `from_user_search_backend`, but no user search backend is configured"))]
+    UsersFindBehaviorBackendMissing,
 }
