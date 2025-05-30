@@ -8,7 +8,10 @@ use url::Url;
 
 use super::{Oidc, OidcController, OidcFrontend};
 use crate::{
-    settings_error::{OidcConfigurationMissingSnafu, OidcInvalidConfigurationSnafu},
+    settings_error::{
+        OidcConfigurationMissingSnafu, OidcInvalidConfigurationSnafu,
+        UsersFindBehaviorBackendMissingSnafu,
+    },
     settings_file::{self, UsersFindBehavior},
     settings_runtime::{UserSearchBackend, UserSearchBackendKeycloak},
     Result, SettingsError, SettingsRaw,
@@ -86,23 +89,36 @@ impl OidcAndUserSearchBuilder {
             users_find_behavior,
         }) = user_search
         {
-            let backend = match backend {
-                settings_file::UserSearchBackend::KeycloakWebapi(
+            let backend = backend.map(
+                |settings_file::UserSearchBackend::KeycloakWebapi(
                     settings_file::UserSearchBackendKeycloakWebapi {
                         api_base_url,
                         client_id,
                         client_secret,
                         external_id_user_attribute_name,
                     },
-                ) => UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
-                    api_base_url,
-                    client_id: client_id.unwrap_or_else(|| controller.client_id.clone()),
-                    client_secret: client_secret
-                        .unwrap_or_else(|| controller.client_secret.clone()),
-                    external_id_user_attribute_name,
-                }),
+                )| {
+                    UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
+                        api_base_url,
+                        client_id: client_id.unwrap_or_else(|| controller.client_id.clone()),
+                        client_secret: client_secret
+                            .unwrap_or_else(|| controller.client_secret.clone()),
+                        external_id_user_attribute_name,
+                    })
+                },
+            );
+            let users_find_behavior = if backend.is_some() {
+                users_find_behavior.unwrap_or(UsersFindBehavior::FromUserSearchBackend)
+            } else {
+                let users_find_behavior =
+                    users_find_behavior.unwrap_or(UsersFindBehavior::Disabled);
+                ensure!(
+                    users_find_behavior != UsersFindBehavior::FromUserSearchBackend,
+                    UsersFindBehaviorBackendMissingSnafu
+                );
+                users_find_behavior
             };
-            (Some(backend), users_find_behavior)
+            (backend, users_find_behavior)
         } else {
             (None, UsersFindBehavior::Disabled)
         };
@@ -224,14 +240,7 @@ mod tests {
                         client_id: ClientId::new("Webapp".to_string()),
                     }
                 },
-                user_search_backend: Some(UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
-                    api_base_url: "http://localhost:8080/admin/realms/opentalk"
-                        .parse()
-                        .expect("must be a valid url"),
-                    client_id: ClientId::new("Controller".to_string()),
-                    client_secret: ClientSecret::new("mysecret".to_string()),
-                    external_id_user_attribute_name: None
-                })),
+                user_search_backend: None,
                 users_find_behavior: UsersFindBehavior::Disabled,
             }
         );

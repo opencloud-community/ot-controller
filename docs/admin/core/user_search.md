@@ -6,17 +6,49 @@ depending on the use case.
 
 The HTTP endpoint that is used by frontend to query users is `GET /users/find`.
 
-Currently the search configuration is not yet consolidated under a specific
-configuration section, but instead spread over multiple sections. This is likely
-to change in the future.
+When inviting users by their E-Mail address, the user search backend is
+also used to determine whether a user is known. This happens in the `POST
+/events/{event_id}/invites` endpoint.
 
-## Disabling the search endpoint entirely
+## User search configuration
 
-The `/users/find` HTTP endpoint can be disabled entirely by setting
-`disable_users_find = true` in the [`[endpoints]` section](endpoints.md).
-The endpoint is enabled by default.
+| Field                 | Type     | Required | Default value                                                                      | Description                                                                                                                |
+| --------------------- | -------- | -------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `users_find_behavior` | `enum`   | no       | `"from_user_search_backend"` if `backend` field is present, `"disabled"` otherwise | Sets the behaviour of the `/users/find` endpoint. See [Users find endpoint behavior](#users-find-endpoint-behavior) below. |
+| `backend`             | `enum`   | no       | -                                                                                  | Defines which backend to use for user search. See [User search backends](#user-search-backends) below.                     |
 
-## Allow inviting users by email address
+The whole `[user_search]` section is optional. If it is absent, then user search
+is disabled entriely (equivalent to `users_find_behavior = "disabled"` and
+`backend` field absent.
+
+### Users find endpoint behavior
+
+The `/users/find` endpoint can be configured with `users_find_behavior`.
+
+Available values:
+
+- `"disabled"`: Don't use user search at all in this endpoint. The `/users/find`
+  endpoint will return a `404 NOT FOUND` HTTP status code.
+  This is equivalent to what used to be `disable_users_find = true` in the
+  [`[endpoints]` section](endpoints.md).
+- `"from_database"`: Use the OpenTalk database to search for user accounts,
+  but don't request any information from the user search backend, even if it is
+  configured in the `backend` field.
+- `"from_user_search_backend"`: Use the OpenTalk database to search for user
+  accounts first, and request information from the user search backend configured
+  in the `backend` field in addition. Search results may include users that were
+  never registered on the OpenTalk Controller.
+
+#### Default value
+
+If the `backend` field is present, each endpoint for which no
+`*_behavior` field has been configured will behave as if the value was
+`"from_user_search_backend"`.
+
+If no `backend` field is present, each endpoint for which no `*_behavior` field
+has been configured will behave as if the value was `"disabled"`.
+
+#### Event invite endpoint
 
 OpenTalk can be configured to allow inviting guests through external email
 addresses, even if they can not register, e.g. because the instance is limited
@@ -27,18 +59,74 @@ This behavior can be enabled by setting
 `endpoints.event_invite_external_email_address` to `true` in the
 [HTTP endpoints configuration](endpoints.md).
 
-## Searching for users on Keycloak
+Because not all potential users might have logged in to OpenTalk, these cannot
+be found in its database. So if invitation of external E-Mail addresses
+is disabled, a method is necessary to determine whether these users can be
+considered as known, and therefore invited by E-Mail. The user search backend
+configured in the `backend` field will be queried for that.
+
+## User search backends
+
+The `backend` field is optional. If a backend is selected by setting one of
+the values described below, then additional fields may be required or allowed
+depending on the backend.
+
+### Not using any search backend
+
+If the `backend` field is absent, no search backend will be queried for user information.
+
+In this case, the `users_find_behavior` field must:
+
+- either be absent
+- or be set to `"disabled"` (equivalent to being absent)
+- or be set to `"from_database`"
+
+Setting `users_find_behavior` to `"from_user_search_backend"` is an error if the
+`backend` field is absent.
+
+#### Example
+
+Searching for users in the database:
+
+```toml
+[user_search]
+users_find_behavior = "from_database"
+```
+
+Disabling search entirely (equivalent to not having a `[user_search]` section at all:
+
+```toml
+[user_search]
+users_find_behavior = "disabled"
+```
+
+### Keycloak user search backend
 
 The OpenTalk Controller can search on a Keycloak instance if configured
-correctly. This does not happen through OIDC, but instead logs in to the
-Keycloak web api and calls endpoints there.
+correctly. This does not happen through OIDC, but instead uses the Keycloak web
+api to call endpoints there.
 
-If search on Keycloak is not configured, but the search HTTP endpoint is
-enabled, then the OpenTalk Controller will search in its own
-[database](database.md), where it only finds users that logged in to OpenTalk at
-least once.
+When setting `backend = "keycloak_webapi"`, these additional fields can be configured
+in the `[user_search]` section:
 
-### Configuring Keycloak for user search
+| Field                             | Type     | Required | Default value                        | Description                                                                                                |
+| --------------------------------- | -------- | -------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `api_base_url`                    | `string` | yes      | -                                    | Base URL of the Keycloak web api                                                                           |
+| `client_id`                       | `string` | no       | From `oidc.controller.client_id`     | Client id that is used to authenticate against the user search API                                         |
+| `client_secret`                   | `string` | no       | From `oidc.controller.client_secret` | Client secret that is used to authenticate against the user search API                                     |
+| `external_id_user_attribute_name` | `string` | no       | See below                            | The attribute by which Keycloak and OpenTalk users are assigned to each other. See below for more details. |
+
+The `external_id_user_attribute_name` setting is used to configure how Keycloak users resulting from a search and registered
+Opentalk users are assigned to each other.
+
+The following assignment strategies are available:
+
+- by Keycloak id (default): This is used if `external_id_user_attribute_name` is not set. Keycloak users are assigned to
+  Opentalk users using Keycloak's id field.
+- by user attribute: Keycloak must provide a user attribute holding the user IDs. The name of this user attribute must be
+  set here in `external_id_user_attribute_name`.
+
+#### Configuring Keycloak for user search
 
 :::note
 
@@ -52,59 +140,51 @@ and find the corresponding section there.
 :::
 
 1. Configure a client which will be used to access the Keycloak web api. Details
-   about that can be found in the [Keycloak section](keycloak.md).
+    about that can be found in the [Keycloak section](keycloak.md).
 2. For the [OpenID Connect client](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#proc-creating-oidc-client_server_administration_guide)
-   enable **Service account roles** in the [Capability Config](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#capability-config).
-3. In the [Service account](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#_service_accounts)
-   add these service account roles:
-   - `realm-management` *query-users*
-   - `realm-management` *view-users*
+    enable **Service account roles** in the [Capability Config](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#capability-config).
+3. In the [Service account](https://www.keycloak.org/docs/25.0.0/server_admin/index.html#_service_accounts) add these service account roles:
+    - `realm-management` *query-users*
+    - `realm-management` *view-users*
 
-### Configuring OpenTalk Controller for user search on Keycloak
+#### Example
 
-1. Perform general [OIDC configuration](oidc.md#configuration).
-2. Perform [user search configuration](#user-search-configuration), see below.
-3. When attempting to invite users to a meeting, the suggestions should now
-   contain Keycloak users that have not yet logged in to OpenTalk.
-
-### User search configuration
-
-In the past, configuration of OIDC and user search was done together within the [`keycloak`](keycloak_deprecated.md#deprecated-keycloak-configuration) section.
-This is deprecated and should be replaced with the separate [`oidc`](oidc.md#configuration) and [`user_search`](#user-search-configuration) sections.
-
-The section in the [configuration file](configuration.md) is called `user_search`.
-
-| Field                             | Type     | Required | Default value                        | Description                                                                                                              |
-| --------------------------------- | -------- | -------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `backend`                         | `enum`   | yes      | -                                    | Defines which backend to use for user search. Must be `"keycloak_webapi"`                                                |
-| `api_base_url`                    | `string` | yes      | -                                    | Base URL of the Keycloak web api                                                                                         |
-| `client_id`                       | `string` | no       | From `oidc.controller.client_id`     | Client id that is used to authenticate against the user search API                                                       |
-| `client_secret`                   | `string` | no       | From `oidc.controller.client_secret` | Client secret that is used to authenticate against the user search API                                                   |
-| `external_id_user_attribute_name` | `string` | no       | See below                            | The attribute by which Keycloak and OpenTalk users are assigned to each other. See below for more details.               |
-| `users_find_behavior`             | `enum`   | yes      | -                                    | Sets the behaviour of the `/users/find` endpoint. Either `"disabled"`, `"from_database"` or `"from_user_search_backend"` |
-
-The `external_id_user_attribute_name` setting is used to configure how Keycloak users resulting from a search and registered
-Opentalk users are assigned to each other.
-The following assignment strategies are available:
-
-- by Keycloak id (default): This is used if `external_id_user_attribute_name` is not set. Keycloak users are assigned to
-  Opentalk users using Keycloak's id field.
-- by user attribute: Keycloak must provide a user attribute holding the user IDs. The name of this user attribute must be
-  set here in `external_id_user_attribute_name`.
-
-The `users_find_behavior` setting configures the behaviour of the `/users/find` endpoint. This allows searching for users who have
-not yet logged into the controller.
-You can choose where to search for users or disable the endpoint completely for performance or privacy reasons.
-
-### Examples
-
-#### Default Setup
+Configure searching through the Keycloak web api, using the same OIDC client as configured in `[oidc.controller]`:
 
 ```toml
 [user_search]
 backend = "keycloak_webapi"
 api_base_url = "https://localhost:8080/auth/admin/realms/OPENTALK"
-client_id = "Controller"
+users_find_behavior = "from_user_search_backend"
+```
+
+Configure searching through the Keycloak web api, with a different OIDC client than what is configured in `[oidc.controller]`:
+
+```toml
+[user_search]
+backend = "keycloak_webapi"
+api_base_url = "https://localhost:8080/auth/admin/realms/OPENTALK"
+client_id = "ControllerUserSearch"
 client_secret = "v3rys3cr3t"
 users_find_behavior = "from_user_search_backend"
+```
+
+Configure searching only in the database, but use the Keycloak web api for
+resolving allowed users in the `POST /events/{event_id}/invites` endpoint:
+
+```toml
+[user_search]
+backend = "keycloak_webapi"
+api_base_url = "https://localhost:8080/auth/admin/realms/OPENTALK"
+users_find_behavior = "from_database"
+```
+
+Disable search suggestions, but use the Keycloak web api for resolving allowed
+users in the `POST /events/{event_id}/invites` endpoint:
+
+```toml
+[user_search]
+backend = "keycloak_webapi"
+api_base_url = "https://localhost:8080/auth/admin/realms/OPENTALK"
+users_find_behavior = "disabled"
 ```

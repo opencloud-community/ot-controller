@@ -92,7 +92,7 @@ pub struct SettingsRaw {
 pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
     use openidconnect::{ClientId, ClientSecret};
 
-    use super::{OidcController, OidcFrontend, UserSearchBackend, UsersFindBehavior};
+    use super::{OidcController, OidcFrontend};
 
     SettingsRaw {
         database: Database {
@@ -115,17 +115,8 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             },
         }),
         user_search: Some(UserSearch {
-            backend: UserSearchBackend::KeycloakWebapi(
-                crate::settings_file::UserSearchBackendKeycloakWebapi {
-                    api_base_url: "http://localhost:8080/admin/realms/opentalk"
-                        .parse()
-                        .expect("must be a valid url"),
-                    client_id: None,
-                    client_secret: None,
-                    external_id_user_attribute_name: None,
-                },
-            ),
-            users_find_behavior: UsersFindBehavior::Disabled,
+            backend: None,
+            users_find_behavior: None,
         }),
         http: None,
         redis: None,
@@ -190,9 +181,4 @@ pub(crate) const SETTINGS_RAW_MINIMAL_CONFIG_TOML: &str = r#"
         [oidc.controller]
         client_id = "Controller"
         client_secret = "mysecret"
-
-        [user_search]
-        backend = "keycloak_webapi"
-        api_base_url = "http://localhost:8080/admin/realms/opentalk"
-        users_find_behavior = "disabled"
         "#;
