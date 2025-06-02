@@ -34,6 +34,8 @@ use crate::api::{
     v1::ApiResponse,
 };
 
+pub(crate) mod roomserver;
+
 /// Get a list of rooms accessible by the requesting user
 ///
 /// All rooms accessible to the requesting user are returned in a list. If no
@@ -407,17 +409,18 @@ pub async fn get_room_event(
             headers(
                 (
                     "www-authenticate",
-                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                    description = "Will contain 'session expired' to distinguish between an invalid and an expired token"
                 ),
             ),
         ),
         (
             status = StatusCode::BAD_REQUEST,
-            description = "Either no breakout rooms were found for this room, or the breakout room id is invalid",
+            description = "Either no breakout rooms were found for this room, the breakout room id is invalid or legacy signaling is disabled for this controller",
             body = ErrorBody,
             examples(
                 ("NoBreakoutRooms" = (summary = "No breakout rooms", value = json!(ApiError::from(StartRoomError::NoBreakoutRooms).body))),
                 ("InvalidBreakoutRoomId" = (summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body))),
+                ("LegacySignalingDisabled" = (summary = "Legacy signaling is disabled", value = json!(ApiError::from(StartRoomError::LegacySignalingDisabled).body))) 
             ),
         ),
         (
@@ -487,11 +490,11 @@ pub async fn start(
             status = StatusCode::BAD_REQUEST,
             description = r"The provided ID token is malformed or contains
                 invalid claims,  no breakout rooms were found for this room, the
-                breakout room id is invalid, the room doesn't exist or the guest
-                does not have a valid invite for this room. Guests shall not be
-                able to distinguish between existing rooms and rooms they don't
-                have permission to enter, therefore the response is the same in
-                these cases",
+                breakout room id is invalid, the room doesn't exist, the guest
+                does not have a valid invite for this room or legacy signaling has been
+                disabled for this controller. Guests shall not be able to distinguish
+                between existing rooms and rooms they don't have permission to enter,
+                therefore the response is the same in these cases",
             body = ErrorBody,
             examples(
                 (
@@ -502,6 +505,11 @@ pub async fn start(
                 (
                     "InvalidBreakoutRoomId" = (
                         summary = "Invalid breakout room id", value = json!(ApiError::from(StartRoomError::InvalidBreakoutRoomId).body)
+                    )
+                ),
+                (
+                    "LegacySignalingDisabled" = (
+                        summary = "Legacy signaling is disabled", value = json!(ApiError::from(StartRoomError::LegacySignalingDisabled).body)
                     )
                 ),
                 (
@@ -531,7 +539,7 @@ pub async fn start(
             headers(
                 (
                     "www-authenticate",
-                    description = "will contain 'session expired' to distinguish between an invalid and an expired token"
+                    description = "Will contain 'session expired' to distinguish between an invalid and an expired token"
                 ),
             ),
             examples(

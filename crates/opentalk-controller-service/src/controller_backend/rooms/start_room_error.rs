@@ -23,6 +23,12 @@ pub enum StartRoomError {
 
     /// The user requesting to start the room is banned from the room
     BannedFromRoom,
+
+    /// The legacy signaling is disabled on this controller
+    LegacySignalingDisabled,
+
+    /// The roomserver is not configured on this controller
+    RoomserverSignalingDisabled,
 }
 
 impl From<StartRoomError> for ApiError {
@@ -31,18 +37,25 @@ impl From<StartRoomError> for ApiError {
             StartRoomError::WrongRoomPassword => Self::unauthorized()
                 .with_code(StartRoomError::WrongRoomPassword.as_ref())
                 .with_message("The provided password does not match the room password"),
-
             StartRoomError::NoBreakoutRooms => Self::bad_request()
                 .with_code(StartRoomError::NoBreakoutRooms.as_ref())
                 .with_message("The requested room has no breakout rooms"),
-
             StartRoomError::InvalidBreakoutRoomId => Self::bad_request()
                 .with_code(StartRoomError::InvalidBreakoutRoomId.as_ref())
                 .with_message("The provided breakout room ID is invalid"),
-
             StartRoomError::BannedFromRoom => Self::forbidden()
                 .with_code(StartRoomError::BannedFromRoom.as_ref())
                 .with_message("This user has been banned from entering this room"),
+            StartRoomError::LegacySignalingDisabled => Self::bad_request()
+                .with_code(StartRoomError::LegacySignalingDisabled.as_ref())
+                .with_message(
+                    "Legacy signaling has been disabled on this controller, use roomserver signaling instead",
+                ),
+            StartRoomError::RoomserverSignalingDisabled => ApiError::bad_request()
+            .with_code(StartRoomError::RoomserverSignalingDisabled.as_ref())
+            .with_message(
+                "The roomserver is not configured on this controller, use legacy signaling instead",
+            ),
         }
     }
 }

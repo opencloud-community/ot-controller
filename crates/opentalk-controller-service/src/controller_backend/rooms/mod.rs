@@ -53,6 +53,7 @@ use crate::{
     },
 };
 
+pub mod roomserver;
 pub mod start_room_error;
 
 impl ControllerBackend {
@@ -287,6 +288,10 @@ impl ControllerBackend {
         room_id: RoomId,
         request: PostRoomsStartRequestBody,
     ) -> Result<RoomsStartResponseBody, CaptureApiError> {
+        if self.settings_provider.get().roomserver.is_some() {
+            return Err(StartRoomError::LegacySignalingDisabled.into());
+        }
+
         let mut conn = self.db.get_conn().await?;
         let mut volatile = self.volatile.clone();
 
@@ -335,9 +340,50 @@ impl ControllerBackend {
         room_id: RoomId,
         request: PostRoomsStartInvitedRequestBody,
     ) -> Result<RoomsStartResponseBody, CaptureApiError> {
+        if self.settings_provider.get().roomserver.is_some() {
+            return Err(StartRoomError::LegacySignalingDisabled.into());
+        }
+
+        self.authenticate_guest(&room_id, &request.invite_code, &request.password)
+            .await?;
+
         let mut volatile = self.volatile.clone();
 
-        let invite_code_as_uuid = uuid::Uuid::from_str(&request.invite_code).map_err(|_| {
+        let Some(breakout_room) = request.breakout_room else {
+            return Err(StartRoomError::NoBreakoutRooms.into());
+        };
+
+        let config = volatile
+            .breakout_storage()
+            .get_breakout_config(room_id)
+            .await
+            .map_err(Into::<ApiError>::into)?;
+
+        if let Some(config) = config {
+            if !config.is_valid_id(breakout_room) {
+                return Err(StartRoomError::InvalidBreakoutRoomId.into());
+            }
+        }
+
+        let (ticket, resumption) = start_or_continue_signaling_session(
+            &mut volatile,
+            Participant::Guest,
+            room_id,
+            request.breakout_room,
+            request.resumption,
+        )
+        .await?;
+
+        Ok(RoomsStartResponseBody { ticket, resumption })
+    }
+
+    pub(crate) async fn authenticate_guest(
+        &self,
+        room_id: &RoomId,
+        invite_code: &str,
+        password: &Option<RoomPassword>,
+    ) -> Result<(), CaptureApiError> {
+        let invite_code_as_uuid = uuid::Uuid::from_str(invite_code).map_err(|_| {
             ApiError::unprocessable_entities([ValidationErrorEntry::new(
                 "invite_code",
                 ERROR_CODE_INVALID_VALUE,
@@ -353,7 +399,7 @@ impl ControllerBackend {
             return Err(ApiError::not_found().into());
         }
 
-        if invite.room != room_id {
+        if invite.room != *room_id {
             return Err(ApiError::bad_request()
                 .with_message("Room id mismatch")
                 .into());
@@ -363,42 +409,14 @@ impl ControllerBackend {
 
         drop(conn);
 
-        if let Some(password) = &room.password {
-            if let Some(pw) = &request.password {
-                if pw != password {
-                    return Err(StartRoomError::WrongRoomPassword.into());
-                }
-            } else {
-                return Err(StartRoomError::WrongRoomPassword.into());
-            }
+        if let Some(room_password) = &room.password
+            && let Some(password) = &password
+            && password != room_password
+        {
+            return Err(StartRoomError::WrongRoomPassword.into());
         }
 
-        if let Some(breakout_room) = request.breakout_room {
-            let config = volatile
-                .breakout_storage()
-                .get_breakout_config(room.id)
-                .await
-                .map_err(Into::<ApiError>::into)?;
-
-            if let Some(config) = config {
-                if !config.is_valid_id(breakout_room) {
-                    return Err(StartRoomError::InvalidBreakoutRoomId.into());
-                }
-            } else {
-                return Err(StartRoomError::NoBreakoutRooms.into());
-            }
-        }
-
-        let (ticket, resumption) = start_or_continue_signaling_session(
-            &mut volatile,
-            Participant::Guest,
-            room_id,
-            request.breakout_room,
-            request.resumption,
-        )
-        .await?;
-
-        Ok(RoomsStartResponseBody { ticket, resumption })
+        Ok(())
     }
 }
 
@@ -458,6 +476,10 @@ where
                 room_id.resource_id().with_suffix("/assets/*"),
                 [AccessMethod::Get],
             )
+            .add_resource(
+                room_id.resource_id().with_suffix("/roomserver/start"),
+                [AccessMethod::Post],
+            )
     }
 
     fn room_write_access(self, room_id: RoomId) -> Self {
@@ -488,6 +510,10 @@ where
         .add_resource(
             room_id.resource_id().with_suffix("/assets/*"),
             [AccessMethod::Delete],
+        )
+        .add_resource(
+            room_id.resource_id().with_suffix("/roomserver/*"),
+            [AccessMethod::Post],
         )
     }
 }

@@ -7,7 +7,7 @@ use serde::Deserialize;
 use super::{
     Authz, Avatar, CallIn, Database, Defaults, Endpoints, Etcd, Etherpad, Extensions, Frontend,
     Http, Keycloak, LiveKitSettings, Logging, Metrics, MinIO, MonitoringSettings, Oidc,
-    OperatorInformation, RabbitMqConfig, RedisConfig, Reports, SharedFolder, Spacedeck,
+    OperatorInformation, RabbitMqConfig, RedisConfig, Reports, RoomServer, SharedFolder, Spacedeck,
     SubroomAudio, Tariffs, Tenants, UserSearch,
 };
 
@@ -87,6 +87,9 @@ pub struct SettingsRaw {
 
     pub(crate) livekit: LiveKitSettings,
 
+    #[serde(default)]
+    pub(crate) roomserver: Option<RoomServer>,
+
     #[serde(flatten)]
     pub(crate) extensions: Extensions,
 
@@ -161,6 +164,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             api_key: "devkey".to_string(),
             api_secret: "secret".to_string(),
         },
+        roomserver: None,
         extensions: Extensions::default(),
         operator_information: None,
     }

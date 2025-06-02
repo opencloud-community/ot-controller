@@ -194,6 +194,20 @@ api_secret = "your-livekit-api-secret"
 # Redis URL used to connect the redis server
 #url = "redis://localhost:6379/"
 
+#[roomserver]
+# Configure a roomserver for this controller.
+#
+# When enabled, the controllers built in signaling endpoints (`rooms/<room-id>/start` & `rooms/<room-id>/start_invited`)
+# are be disabled and roomserver signaling endpoints (`rooms/roomserver/<room-id>/start` &
+# `rooms/roomserver/<room-id>/start_invited`) have to be used instead.
+#
+# The deployed frontend client has to be compatible with the roomservers signaling implementation.
+#
+# The URL of the roomserver. Needs to be reachable by clients
+#url = "http://localhost:11333"
+# The roomservers API key
+#api_token = "secret"
+
 #[authz]
 # Should the controller publish/receive ACL changes via RabbitMQ to/from other controllers
 #synchronize_controllers = true

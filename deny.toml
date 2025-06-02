@@ -155,6 +155,30 @@ exceptions = [
   ], name = "opentalk-report-generation" },
   { allow = [
     "EUPL-1.2",
+  ], name = "opentalk-roomserver-client" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-common" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-signaling" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-types" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-types-chat" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-types-e2ee" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-types-livekit" },
+  { allow = [
+    "EUPL-1.2",
+  ], name = "opentalk-roomserver-types-ping" },
+  { allow = [
+    "EUPL-1.2",
   ], name = "opentalk-types-api-v1" },
   { allow = [
     "EUPL-1.2",
@@ -284,6 +308,8 @@ skip = [
   { name = "async-lock", version = "2" },
   { name = "aws-smithy-http", version = "0.60" },
   { name = "aws-smithy-http", version = "0.61" },
+  { name = "axum", version = "0.7" },
+  { name = "axum-core", version = "0.4" },
   { name = "base16ct", version = "0.1" },
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
@@ -317,6 +343,7 @@ skip = [
   { name = "itertools", version = "0.11" },
   { name = "jiff", version = "0.1" },
   { name = "linux-raw-sys", version = "0.4" },
+  { name = "matchit", version = "0.7" },
   { name = "p256", version = "0.11" },
   { name = "petgraph", version = "0.6" },
   { name = "pkcs8", version = "0.9" },

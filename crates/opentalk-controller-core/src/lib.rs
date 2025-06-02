@@ -61,6 +61,7 @@ use opentalk_controller_settings::{
 use opentalk_database::Db;
 use opentalk_jobs::job_runner::JobRunner;
 use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
+use opentalk_roomserver_client::Client as RoomServerClient;
 use opentalk_signaling_core::{
     ExchangeHandle, ExchangeTask, ModulesRegistrar, ObjectStorage, RedisConnection,
     RegisterModules, SignalingModule, SignalingModuleInitData, VolatileStaticMemoryStorage,
@@ -422,6 +423,18 @@ impl Controller {
             .await
             .whatever_context("Failed to register modules")?;
 
+        let roomserver_client = if let Some(roomserver_config) = &settings.roomserver {
+            Some(
+                RoomServerClient::new(
+                    roomserver_config.url.clone(),
+                    roomserver_config.api_token.clone(),
+                )
+                .whatever_context("Failed to create roomserver client")?,
+            )
+        } else {
+            None
+        };
+
         let backend = {
             let oidc_provider = OidcProvider {
                 name: oidc_frontend.client_id.to_string(),
@@ -439,6 +452,7 @@ impl Controller {
                 mail_service.clone(),
                 user_search_client.clone(),
                 initializer.signaling_modules.get_module_features(),
+                roomserver_client,
             )
         };
         let service = OpenTalkControllerService::new(backend);
@@ -1000,6 +1014,7 @@ fn v1_scope(
         .service(api::v1::auth::post_login)
         .service(api::v1::auth::get_login)
         .service(api::v1::rooms::start_invited)
+        .service(api::v1::rooms::roomserver::start_invited)
         .service(api::v1::invites::verify_invite_code)
         .service(api::v1::turn::get)
         .service(
@@ -1033,6 +1048,7 @@ fn v1_scope(
                 .service(api::v1::rooms::get_room_event)
                 .service(api::v1::rooms::get_room_tariff)
                 .service(api::v1::rooms::start)
+                .service(api::v1::rooms::roomserver::start)
                 .service(api::v1::rooms::delete)
                 .service(api::v1::events::new_event)
                 .service(api::v1::events::get_events)

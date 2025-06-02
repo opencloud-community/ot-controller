@@ -101,8 +101,10 @@ opentalk-mail-worker-protocol = "0.36.0"
 opentalk-nextcloud-client = { version = "0.2.0", default-features = false, features = [
   "rustls-tls-native-roots",
 ] }
-opentalk-types-api-v1 = "0.39.0"
-opentalk-types-common = "0.35.0"
+opentalk-roomserver-client = "0.0.2"
+opentalk-roomserver-types = "0.0.2"
+opentalk-types-api-v1 = "0.39.1"
+opentalk-types-common = "0.35.2"
 opentalk-types-signaling = "0.36.0"
 opentalk-types-signaling-automod = "0.6.0"
 opentalk-types-signaling-breakout = "0.36.0"
