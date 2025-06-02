@@ -179,8 +179,8 @@ pub(crate) fn minimal_example() -> Settings {
             database::DEFAULT_DATABASE_MAX_CONNECTIONS, defaults::default_user_language,
             http::DEFAULT_HTTP_PORT,
         },
-        OidcFrontend, TariffAssignment, TenantAssignment, UserSearchBackendKeycloak,
-        DEFAULT_LIBRAVATAR_URL, DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID,
+        OidcFrontend, TariffAssignment, TenantAssignment, DEFAULT_LIBRAVATAR_URL,
+        DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID,
     };
 
     Settings {
@@ -199,14 +199,7 @@ pub(crate) fn minimal_example() -> Settings {
                 client_id: ClientId::new("Webapp".to_string()),
             },
         },
-        user_search_backend: Some(UserSearchBackend::Keycloak(UserSearchBackendKeycloak {
-            api_base_url: "http://localhost:8080/admin/realms/opentalk"
-                .parse()
-                .expect("must be a valid url"),
-            client_id: ClientId::new("Controller".to_string()),
-            client_secret: ClientSecret::new("mysecret".to_string()),
-            external_id_user_attribute_name: None,
-        })),
+        user_search_backend: None,
         users_find_behavior: UsersFindBehavior::Disabled,
         http: Http {
             addr: None,

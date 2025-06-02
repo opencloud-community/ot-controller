@@ -9,7 +9,8 @@ use super::{UserSearchBackend, UsersFindBehavior};
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub struct UserSearch {
     #[serde(flatten)]
-    pub backend: UserSearchBackend,
-    #[serde(flatten)]
-    pub users_find_behavior: UsersFindBehavior,
+    pub backend: Option<UserSearchBackend>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub users_find_behavior: Option<UsersFindBehavior>,
 }
