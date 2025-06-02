@@ -25,7 +25,7 @@ RUN mkdir /controller
 WORKDIR /controller
 
 COPY --from=builder /controller/target/release/opentalk-controller .
-COPY example/controller.toml /controller/controller.toml
+COPY example/controller.toml /etc/opentalk/controller.toml
 
 USER $USERID:$GROUPID
 
