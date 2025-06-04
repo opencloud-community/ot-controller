@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use actix_http::{body::BoxBody, StatusCode};
 use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse, HttpResponseBuilder};
+use itertools::Itertools as _;
 use kustos::metrics::KustosMetrics;
 use opentalk_controller_service::metrics::EndpointMetrics;
 use opentalk_controller_settings::SettingsProvider;
@@ -234,13 +235,18 @@ pub async fn metrics(
 ) -> HttpResponse {
     let settings = settings.get();
 
-    let allowed = &settings
-        .metrics
-        .allowlist
+    let allowlist = &settings.metrics.allowlist;
+    let allowed = allowlist
         .iter()
         .any(|allowed_net| allowed_net.contains(&peer_addr.ip()));
 
     if !allowed {
+        if allowlist.is_empty() {
+            log::debug!("An attempt to access the metrics endpoint from IP address {peer_addr} was denied. Access to the metrics endpoint has not been configured.");
+        } else {
+            let allowed_nets = allowlist.iter().map(|net| format!("\"{net}\"")).join(", ");
+            log::debug!("An attempt to access the metrics endpoint from IP address {peer_addr} was denied. Access allowed from: {allowed_nets}.");
+        }
         return HttpResponse::new(StatusCode::FORBIDDEN);
     }
 
