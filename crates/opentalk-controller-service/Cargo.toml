@@ -58,6 +58,7 @@ opentalk-types-signaling-recording-service = { workspace = true, features = [
   "backend",
 ] }
 opentelemetry = { workspace = true, features = ["metrics", "trace"] }
+opentelemetry_sdk.workspace = true
 parking_lot.workspace = true
 phonenumber.workspace = true
 redis = { workspace = true, features = ["connection-manager", "tokio-comp"] }

@@ -126,7 +126,11 @@ opentelemetry = { version = "0.29.1", default-features = false, features = [
 ] }
 opentelemetry-otlp = "0.29.0"
 opentelemetry-prometheus = "0.29.1"
-opentelemetry_sdk = "0.29.0"
+opentelemetry_sdk = { version = "0.29.0", features = [
+  "metrics",
+  "rt-tokio-current-thread",
+  "spec_unstable_metrics_views",
+] }
 owo-colors = "4"
 parking_lot = "0.12"
 parse-size = "1.1.0"

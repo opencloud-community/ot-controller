@@ -4,13 +4,43 @@
 
 use std::{sync::Arc, time::Instant};
 
-use opentelemetry::{metrics::Histogram, Key, KeyValue};
+use opentelemetry::{
+    metrics::{Histogram, Meter},
+    Key, KeyValue,
+};
+use opentelemetry_sdk::metrics::{
+    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
+};
 use redis::{aio::ConnectionLike, Arg, RedisFuture};
 
 const COMMAND_KEY: Key = Key::from_static_str("command");
-
+const EXEC_TIME: &str = "redis.command_execution_time_seconds";
 pub struct RedisMetrics {
     pub command_execution_time: Histogram<f64>,
+}
+
+impl RedisMetrics {
+    pub fn append_views(
+        provider_builder: MeterProviderBuilder,
+    ) -> Result<MeterProviderBuilder, MetricError> {
+        Ok(provider_builder.with_view(new_view(
+            Instrument::new().name(EXEC_TIME),
+            Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                boundaries: vec![0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
+                record_min_max: false,
+            }),
+        )?))
+    }
+
+    pub fn new(meter: &Meter) -> Self {
+        Self {
+            command_execution_time: meter
+                .f64_histogram(EXEC_TIME)
+                .with_description("Execution time of redis commands in seconds")
+                .with_unit("seconds")
+                .build(),
+        }
+    }
 }
 
 #[derive(Clone)]
