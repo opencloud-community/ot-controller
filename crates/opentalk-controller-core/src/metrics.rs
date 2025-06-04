@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use actix_http::{body::BoxBody, StatusCode};
-use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse};
+use actix_web::{dev::PeerAddr, get, web::Data, HttpResponse, HttpResponseBuilder};
 use kustos::metrics::KustosMetrics;
 use opentalk_controller_service::metrics::EndpointMetrics;
 use opentalk_controller_settings::SettingsProvider;
@@ -254,5 +254,7 @@ pub async fn metrics(
 
     let response = String::from_utf8(buf).unwrap_or_default();
 
-    HttpResponse::with_body(StatusCode::OK, BoxBody::new(response))
+    HttpResponseBuilder::new(StatusCode::OK)
+        .content_type("text/plain")
+        .body(BoxBody::new(response))
 }
