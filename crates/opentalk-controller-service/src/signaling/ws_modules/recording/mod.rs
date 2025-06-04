@@ -273,7 +273,7 @@ impl SignalingModule for Recording {
                         .set_streams(self.room, &streams)
                         .await?;
 
-                    log::warn!("Recorder ran into a timeout!");
+                    log::warn!("Recording task was not picked up in time by a recording instance!");
                     ctx.ws_send(RecorderError::Timeout);
                 }
             },
@@ -446,7 +446,7 @@ impl Recording {
                         breakout: self.room.breakout_room_id(),
                     })
                     .with_whatever_context::<_, _, SignalingModuleError>(
-                        |_| "failed to initialize streaming".to_string(),
+                        |_| "failed to serialize InitializeRecorder struct".to_string(),
                     )?,
                     Default::default(),
                 )
