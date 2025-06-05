@@ -810,7 +810,8 @@ impl Runner {
                     *encountered_error = true;
                 }
 
-                self.metrics.increment_destroyed_rooms_count();
+                self.metrics
+                    .record_room_destroyed_metrics(self.room_id.room_id());
             }
         }
     }
@@ -1760,7 +1761,8 @@ impl Runner {
             if self.room_id.breakout_room_id().is_some() {
                 self.metrics.increment_created_breakout_rooms_count();
             } else {
-                self.metrics.increment_created_rooms_count();
+                self.metrics
+                    .record_room_creation_metrics(self.room_id.room_id());
             }
 
             self.volatile
