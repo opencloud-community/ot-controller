@@ -32,6 +32,9 @@ const PARTICIPANT_COUNT: &str = "signaling.participants_count";
 const PARTICIPANT_WITH_AUDIO_COUNT: &str = "signaling.participants_with_audio_count";
 const PARTICIPANT_WITH_VIDEO_COUNT: &str = "signaling.participants_with_video_count";
 const PARTICIPANT_MEETING_TIME: &str = "signaling.participant_meeting_time";
+const PARTICIPANTS_PER_ROOM: &str = "signaling.participants_per_room";
+const PARTICIPANTS_PER_ROOM_BUCKETS: [i64; 7] = [2, 10, 25, 50, 100, 200, 300];
+const BUCKET_LABEL: &str = "bucket";
 
 pub struct SignalingMetrics {
     pub runner_startup_time: Histogram<f64>,
@@ -47,9 +50,24 @@ pub struct SignalingMetrics {
     pub participants_with_audio_count: UpDownCounter<i64>,
     pub participants_with_video_count: UpDownCounter<i64>,
     pub participant_meeting_time: Histogram<u64>,
+    pub participants_per_room: UpDownCounter<i64>,
 
-    rooms: Mutex<HashMap<RoomId, Instant>>,
+    rooms: Mutex<HashMap<RoomId, RoomMetrics>>,
     participants: Mutex<HashMap<ParticipantId, Instant>>,
+}
+
+struct RoomMetrics {
+    pub created_at: Instant,
+    pub participant_count: u64,
+}
+
+impl RoomMetrics {
+    pub fn new() -> Self {
+        Self {
+            created_at: Instant::now(),
+            participant_count: 0,
+        }
+    }
 }
 
 impl SignalingMetrics {
@@ -102,7 +120,7 @@ impl SignalingMetrics {
     }
 
     pub fn new(meter: &Meter) -> Self {
-        Self {
+        let this = Self {
             runner_startup_time: meter
                 .f64_histogram(RUNNER_STARTUP_TIME)
                 .with_description("Time the runner takes to initialize")
@@ -150,9 +168,18 @@ impl SignalingMetrics {
                 .u64_histogram(PARTICIPANT_MEETING_TIME)
                 .with_description("Time a participant spent in a meeting room")
                 .build(),
+            participants_per_room: meter
+                .i64_up_down_counter(PARTICIPANTS_PER_ROOM)
+                .with_description("Participants per room")
+                .build(),
             rooms: Mutex::new(HashMap::new()),
             participants: Mutex::new(HashMap::new()),
+        };
+        for bucket in PARTICIPANTS_PER_ROOM_BUCKETS {
+            this.participants_per_room
+                .add(0, &[KeyValue::new("bucket", bucket)]);
         }
+        this
     }
 
     pub fn record_startup_time(&self, secs: f64, success: bool) {
@@ -167,20 +194,17 @@ impl SignalingMetrics {
 
     pub fn record_room_creation_metrics(&self, room_id: RoomId) {
         let mut rooms = self.rooms.lock();
-        if rooms.insert(room_id, Instant::now()).is_some() {
-            log::warn!("room creation metrics invoked twice for room {room_id}. Skipping.");
-            return;
-        }
+        rooms.entry(room_id).or_insert(RoomMetrics::new());
         self.created_rooms_count.add(1, &[]);
     }
 
     pub fn record_room_destroyed_metrics(&self, room_id: RoomId) {
         let mut rooms = self.rooms.lock();
-        let Some(created_at) = rooms.remove(&room_id) else {
+        let Some(room_metrics) = rooms.remove(&room_id) else {
             log::warn!("room destroy metrics invoked for room {room_id}, that does not exist.");
             return;
         };
-        let life_time = Instant::now().duration_since(created_at);
+        let life_time = Instant::now().duration_since(room_metrics.created_at);
         self.room_life_time.record(life_time.as_secs(), &[]);
         self.destroyed_rooms_count.add(1, &[]);
     }
@@ -195,6 +219,7 @@ impl SignalingMetrics {
 
     pub fn record_participant_joined<U>(
         &self,
+        room_id: RoomId,
         participant: &Participant<U>,
         participant_id: ParticipantId,
     ) {
@@ -214,10 +239,41 @@ impl SignalingMetrics {
             1,
             &[KeyValue::new(PARTICIPATION_KIND, participant.as_kind_str())],
         );
+
+        let mut rooms = self.rooms.lock();
+        let room = rooms.entry(room_id).or_insert(RoomMetrics::new());
+
+        let previous_bucket = Self::participant_count_bucket(room.participant_count);
+        // Only decrease the participant count when this is not the first one.
+        // This prevents the participant count going to a negative number.
+        if room.participant_count > 0 {
+            // Decrease the participant count in the previous bucket
+            self.participants_per_room
+                .add(-1, &[KeyValue::new(BUCKET_LABEL, previous_bucket)]);
+        }
+        // Increase the participant count in the new bucket
+        room.participant_count += 1;
+        self.participants_per_room.add(
+            1,
+            &[KeyValue::new(
+                BUCKET_LABEL,
+                Self::participant_count_bucket(room.participant_count),
+            )],
+        );
+    }
+
+    fn participant_count_bucket(count: u64) -> i64 {
+        for bucket in PARTICIPANTS_PER_ROOM_BUCKETS {
+            if count <= bucket as u64 {
+                return bucket;
+            }
+        }
+        *PARTICIPANTS_PER_ROOM_BUCKETS.last().unwrap()
     }
 
     pub fn record_participant_left<U>(
         &self,
+        room_id: RoomId,
         participant: &Participant<U>,
         participant_id: ParticipantId,
     ) {
@@ -237,6 +293,22 @@ impl SignalingMetrics {
             -1,
             &[KeyValue::new(PARTICIPATION_KIND, participant.as_kind_str())],
         );
+
+        let mut rooms = self.rooms.lock();
+        let room = rooms.entry(room_id).or_insert(RoomMetrics::new());
+        let previous_bucket = Self::participant_count_bucket(room.participant_count);
+        room.participant_count -= 1;
+        self.participants_per_room
+            .add(-1, &[KeyValue::new(BUCKET_LABEL, previous_bucket)]);
+        if room.participant_count > 0 {
+            self.participants_per_room.add(
+                1,
+                &[KeyValue::new(
+                    BUCKET_LABEL,
+                    Self::participant_count_bucket(room.participant_count),
+                )],
+            );
+        }
     }
 
     pub fn increment_participants_with_audio_count(&self, session_type: &str) {
