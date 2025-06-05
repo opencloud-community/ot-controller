@@ -559,7 +559,8 @@ impl Runner {
                 }
             };
 
-            self.metrics.decrement_participants_count(&self.participant);
+            self.metrics
+                .record_participant_left(&self.participant, self.id);
 
             if let Err(e) = self.volatile.room_locking().unlock_room(room_guard).await {
                 log::error!("Failed to unlock room , {}", Report::from_error(e));
@@ -1190,7 +1191,8 @@ impl Runner {
                     other => other,
                 }?;
 
-                self.metrics.increment_participants_count(&self.participant);
+                self.metrics
+                    .record_participant_joined(&self.participant, self.id);
 
                 // Allow moderators, invisible services, and already accepted participants to skip the waiting room
                 let can_skip_waiting_room: bool = self
