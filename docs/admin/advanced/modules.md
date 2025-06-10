@@ -20,7 +20,7 @@ the features that can be enabled or disabled:
 opentalk-controller modules list
 ```
 
-Example output for the community edition:
+Example output:
 
 <!-- begin:fromfile:cli-usage/opentalk-controller-modules-list.md -->
 

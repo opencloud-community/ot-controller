@@ -49,3 +49,4 @@ title: Controller
 
 - [OIDC Authentication Flow](under_the_hood/oidc_auth.md)
 - [Handling of WebAPI requests](under_the_hood/http_requests.md)
+- [Participant Lifecycle and States](under_the_hood/participant_states.md)
