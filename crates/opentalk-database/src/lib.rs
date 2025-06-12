@@ -120,33 +120,36 @@ pub struct Paginated<T> {
     offset: i64,
 }
 
-impl<T> Paginated<T> {
+impl<T: Query> Paginated<T> {
     pub fn per_page(self, per_page: i64) -> Self {
         Paginated { per_page, ..self }
     }
 
-    pub async fn load_and_count<'query, U, Conn>(
+    pub fn load_and_count<'query, U, Conn>(
         self,
-        conn: &mut Conn,
-    ) -> QueryResult<(Vec<U>, i64)>
+        conn: &'query mut Conn,
+    ) -> impl std::future::Future<Output = QueryResult<(Vec<U>, i64)>> + Send + 'query
     where
         Self: LoadQuery<'query, Conn, (U, i64)>,
-        Conn: AsyncConnection,
-        U: Send + 'static,
+        Conn: AsyncConnection + 'static,
+        U: Send + 'query,
         T: 'query,
     {
-        let results: Vec<(U, i64)> = {
+        let results = {
             // When `diesel_async::RunQueryDsl` is imported globally, the call
             // to `results.first()` below will cause compiler errors because the
             // compiler mistakes it for `diesel_async::RunQueryDsl::first(…)`
             // and fails finding a trait implementation of `results` that
             // matches, so we restrict the import scope.
             use diesel_async::RunQueryDsl;
-            self.load::<(U, i64)>(conn).await?
+            self.load::<(U, i64)>(conn)
         };
-        let total = results.first().map(|x: &(U, i64)| x.1).unwrap_or(0);
-        let records = results.into_iter().map(|x| x.0).collect();
-        Ok((records, total))
+        async move {
+            let results = results.await?;
+            let total = results.first().map(|x: &(U, i64)| x.1).unwrap_or(0);
+            let records = results.into_iter().map(|x| x.0).collect();
+            Ok((records, total))
+        }
     }
 }
 
