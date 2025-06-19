@@ -6,11 +6,17 @@
 
 use opentalk_mail_worker_protocol::MailTask;
 use opentelemetry::{
-    metrics::{Counter, Histogram},
+    metrics::{Counter, Histogram, Meter},
     Key, KeyValue,
+};
+use opentelemetry_sdk::metrics::{
+    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
 };
 
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");
+const REQ_DURATION_SECS: &str = "web.request_duration_seconds";
+const RESP_SIZE_BYTES: &str = "web.response_sizes_bytes";
+const ISSUED_EMAIL_TASK_COUNT: &str = "web.issued_email_tasks_count";
 
 /// Metrics belonging to endpoints
 #[derive(Debug)]
@@ -24,6 +30,50 @@ pub struct EndpointMetrics {
 }
 
 impl EndpointMetrics {
+    /// Appends [`View`](opentelemetry_sdk::metrics::View)s to the meter provider builder
+    pub fn append_views(
+        provider_builder: MeterProviderBuilder,
+    ) -> Result<MeterProviderBuilder, MetricError> {
+        Ok(provider_builder
+            .with_view(new_view(
+                Instrument::new().name(REQ_DURATION_SECS),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.005, 0.01, 0.25, 0.5, 1.0, 2.0],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                Instrument::new().name(RESP_SIZE_BYTES),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![100.0, 1_000.0, 10_000.0, 100_000.0],
+                    record_min_max: false,
+                }),
+            )?))
+    }
+
+    /// Creates new [`EndpointMetrics`]
+    pub fn new(meter: &Meter) -> Self {
+        Self {
+            request_durations: meter
+                .f64_histogram(REQ_DURATION_SECS)
+                .with_description("HTTP response time measured in actix-web middleware")
+                .with_unit("seconds")
+                .with_boundaries(vec![0.005, 0.01, 0.25, 0.5, 1.0, 2.0])
+                .build(),
+            response_sizes: meter
+                .u64_histogram(RESP_SIZE_BYTES)
+                .with_description(
+                    "HTTP response size for sized responses measured in actix-web middleware",
+                )
+                .with_unit("bytes")
+                .build(),
+            issued_email_tasks_count: meter
+                .u64_counter(ISSUED_EMAIL_TASK_COUNT)
+                .with_description("Number of issued email tasks")
+                .build(),
+        }
+    }
+
     /// Increment the number of issued email tasks
     pub fn increment_issued_email_tasks_count(&self, mail_task: &MailTask) {
         self.issued_email_tasks_count

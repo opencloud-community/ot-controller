@@ -559,7 +559,11 @@ impl Runner {
                 }
             };
 
-            self.metrics.decrement_participants_count(&self.participant);
+            self.metrics.record_participant_left(
+                self.room_id.room_id(),
+                &self.participant,
+                self.id,
+            );
 
             if let Err(e) = self.volatile.room_locking().unlock_room(room_guard).await {
                 log::error!("Failed to unlock room , {}", Report::from_error(e));
@@ -810,7 +814,8 @@ impl Runner {
                     *encountered_error = true;
                 }
 
-                self.metrics.increment_destroyed_rooms_count();
+                self.metrics
+                    .record_room_destroyed_metrics(self.room_id.room_id());
             }
         }
     }
@@ -1189,7 +1194,11 @@ impl Runner {
                     other => other,
                 }?;
 
-                self.metrics.increment_participants_count(&self.participant);
+                self.metrics.record_participant_joined(
+                    self.room_id.room_id(),
+                    &self.participant,
+                    self.id,
+                );
 
                 // Allow moderators, invisible services, and already accepted participants to skip the waiting room
                 let can_skip_waiting_room: bool = self
@@ -1760,7 +1769,8 @@ impl Runner {
             if self.room_id.breakout_room_id().is_some() {
                 self.metrics.increment_created_breakout_rooms_count();
             } else {
-                self.metrics.increment_created_rooms_count();
+                self.metrics
+                    .record_room_creation_metrics(self.room_id.room_id());
             }
 
             self.volatile

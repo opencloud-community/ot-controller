@@ -54,6 +54,7 @@ actix-web.workspace = true
 
 ### Opentelementry metrics
 opentelemetry.workspace = true
+opentelemetry_sdk.workspace = true
 
 [dependencies.casbin]
 features = ["incremental", "runtime-tokio", "watcher"]

@@ -23,19 +23,71 @@ use diesel_async::{
 };
 use futures_core::{future::BoxFuture, stream::BoxStream};
 use opentelemetry::{
-    metrics::{Counter, Histogram},
+    metrics::{Counter, Histogram, Meter},
     Key, KeyValue,
+};
+use opentelemetry_sdk::metrics::{
+    new_view, Aggregation, Instrument as OtlInstrument, MeterProviderBuilder, MetricError, Stream,
 };
 
 type Parent = Object<AsyncPgConnection>;
 
 const ERROR_KEY: Key = Key::from_static_str("error");
+const EXEC_TIME: &str = "sql.execution_time_seconds";
+const POOL_CONNECTIONS: &str = "sql.dbpool_connections";
+const POOL_CONNECTIONS_IDLE: &str = "sql.dbpool_connections_idle";
+const ERRORS_TOTAL: &str = "sql.errors_total";
 
 pub struct DatabaseMetrics {
     pub sql_execution_time: Histogram<f64>,
     pub sql_error: Counter<u64>,
     pub dbpool_connections: Histogram<u64>,
     pub dbpool_connections_idle: Histogram<u64>,
+}
+
+impl DatabaseMetrics {
+    pub fn append_views(
+        provider_builder: MeterProviderBuilder,
+    ) -> Result<MeterProviderBuilder, MetricError> {
+        Ok(provider_builder
+            .with_view(new_view(
+                OtlInstrument::new().name(EXEC_TIME),
+                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
+                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
+                    record_min_max: false,
+                }),
+            )?)
+            .with_view(new_view(
+                OtlInstrument::new().name(POOL_CONNECTIONS),
+                Stream::new().aggregation(Aggregation::Default),
+            )?)
+            .with_view(new_view(
+                OtlInstrument::new().name(POOL_CONNECTIONS_IDLE),
+                Stream::new().aggregation(Aggregation::Default),
+            )?))
+    }
+
+    pub fn new(meter: &Meter) -> Self {
+        Self {
+            sql_execution_time: meter
+                .f64_histogram(EXEC_TIME)
+                .with_description("SQL execution time for a single diesel query")
+                .with_unit("seconds")
+                .build(),
+            sql_error: meter
+                .u64_counter(ERRORS_TOTAL)
+                .with_description("Counter for total SQL query errors")
+                .build(),
+            dbpool_connections: meter
+                .u64_histogram(POOL_CONNECTIONS)
+                .with_description("Number of currently non-idling db connections")
+                .build(),
+            dbpool_connections_idle: meter
+                .u64_histogram(POOL_CONNECTIONS_IDLE)
+                .with_description("Number of currently idling db connections")
+                .build(),
+        }
+    }
 }
 
 pub struct MetricsConnection<Conn> {

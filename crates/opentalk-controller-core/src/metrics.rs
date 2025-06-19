@@ -13,9 +13,7 @@ use opentalk_controller_settings::SettingsProvider;
 use opentalk_database::DatabaseMetrics;
 use opentalk_signaling_core::{RedisMetrics, SignalingMetrics};
 use opentelemetry::{global, otel_error};
-use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument, MetricError, SdkMeterProvider, Stream,
-};
+use opentelemetry_sdk::metrics::{MetricError, SdkMeterProvider};
 use prometheus::{Encoder, Registry, TextEncoder};
 use snafu::{Backtrace, Snafu};
 
@@ -44,177 +42,21 @@ impl CombinedMetrics {
             .with_registry(registry.clone())
             .build()?;
 
-        let provider = SdkMeterProvider::builder()
-            .with_reader(exporter)
-            .with_view(new_view(
-                Instrument::new().name("web.request_duration_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.005, 0.01, 0.25, 0.5, 1.0, 2.0],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("web.response_sizes_bytes"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![100.0, 1_000.0, 10_000.0, 100_000.0],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("signaling.runner_startup_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.01, 0.25, 0.5, 1.0, 2.0, 5.0],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("signaling.runner_destroy_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.01, 0.25, 0.5, 1.0, 2.0, 5.0],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("sql.execution_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("sql.dbpool_connections"),
-                Stream::new().aggregation(Aggregation::Default),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("sql.dbpool_connections_idle"),
-                Stream::new().aggregation(Aggregation::Default),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("kustos.enforce_execution_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("kustos.load_policy_execution_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.01, 0.05, 0.1, 0.25, 0.5],
-                    record_min_max: false,
-                }),
-            )?)
-            .with_view(new_view(
-                Instrument::new().name("redis.command_execution_time_seconds"),
-                Stream::new().aggregation(Aggregation::ExplicitBucketHistogram {
-                    boundaries: vec![0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
-                    record_min_max: false,
-                }),
-            )?)
-            .build();
+        let provider_builder = SdkMeterProvider::builder().with_reader(exporter);
+        let provider_builder = EndpointMetrics::append_views(provider_builder)?;
+        let provider_builder = SignalingMetrics::append_views(provider_builder)?;
+        let provider_builder = DatabaseMetrics::append_views(provider_builder)?;
+        let provider_builder = KustosMetrics::append_views(provider_builder)?;
+        let provider_builder = RedisMetrics::append_views(provider_builder)?;
 
-        global::set_meter_provider(provider);
+        global::set_meter_provider(provider_builder.build());
         let meter = global::meter("ot-controller");
 
-        let endpoint = Arc::new(EndpointMetrics {
-            request_durations: meter
-                .f64_histogram("web.request_duration_seconds")
-                .with_description("HTTP response time measured in actix-web middleware")
-                .with_unit("seconds")
-                .build(),
-            response_sizes: meter
-                .u64_histogram("web.response_sizes_bytes")
-                .with_description(
-                    "HTTP response size for sized responses measured in actix-web middleware",
-                )
-                .with_unit("bytes")
-                .build(),
-            issued_email_tasks_count: meter
-                .u64_counter("web.issued_email_tasks_count")
-                .with_description("Number of issued email tasks")
-                .build(),
-        });
-
-        let signaling = Arc::new(SignalingMetrics {
-            runner_startup_time: meter
-                .f64_histogram("signaling.runner_startup_time_seconds")
-                .with_description("Time the runner takes to initialize")
-                .with_unit("seconds")
-                .build(),
-            runner_destroy_time: meter
-                .f64_histogram("signaling.runner_destroy_time_seconds")
-                .with_description("Time the runner takes to stop")
-                .with_unit("seconds")
-                .build(),
-            created_rooms_count: meter
-                .u64_counter("signaling.created_rooms_count")
-                .with_description("Number of created rooms")
-                .build(),
-            destroyed_rooms_count: meter
-                .u64_counter("signaling.destroyed_rooms_count")
-                .with_description("Number of destroyed rooms")
-                .build(),
-            created_breakout_rooms_count: meter
-                .u64_counter("signaling.created_breakout_rooms_count")
-                .with_description("Number of created breakout rooms")
-                .build(),
-            destroyed_breakout_rooms_count: meter
-                .u64_counter("signaling.destroyed_breakout_rooms_count")
-                .with_description("Number of destroyed breakout rooms")
-                .build(),
-            participants_count: meter
-                .i64_up_down_counter("signaling.participants_count")
-                .with_description("Number of participants")
-                .build(),
-            participants_with_audio_count: meter
-                .i64_up_down_counter("signaling.participants_with_audio_count")
-                .with_description("Number of participants with audio unmuted")
-                .build(),
-            participants_with_video_count: meter
-                .i64_up_down_counter("signaling.participants_with_video_count")
-                .with_description("Number of participants with video unmuted")
-                .build(),
-        });
-
-        let database = Arc::new(DatabaseMetrics {
-            sql_execution_time: meter
-                .f64_histogram("sql.execution_time_seconds")
-                .with_description("SQL execution time for a single diesel query")
-                .with_unit("seconds")
-                .build(),
-            sql_error: meter
-                .u64_counter("sql.errors_total")
-                .with_description("Counter for total SQL query errors")
-                .build(),
-            dbpool_connections: meter
-                .u64_histogram("sql.dbpool_connections")
-                .with_description("Number of currently non-idling db connections")
-                .build(),
-            dbpool_connections_idle: meter
-                .u64_histogram("sql.dbpool_connections_idle")
-                .with_description("Number of currently idling db connections")
-                .build(),
-        });
-
-        let kustos = Arc::new(KustosMetrics {
-            enforce_execution_time: meter
-                .f64_histogram("kustos.enforce_execution_time_seconds")
-                .with_description("Execution time of kustos enforce")
-                .with_unit("seconds")
-                .build(),
-            load_policy_execution_time: meter
-                .f64_histogram("kustos.load_policy_execution_time_seconds")
-                .with_description("Execution time of kustos load_policy")
-                .with_unit("seconds")
-                .build(),
-        });
-
-        let redis = Arc::new(RedisMetrics {
-            command_execution_time: meter
-                .f64_histogram("redis.command_execution_time_seconds")
-                .with_description("Execution time of redis commands in seconds")
-                .with_unit("seconds")
-                .build(),
-        });
+        let endpoint = Arc::new(EndpointMetrics::new(&meter));
+        let signaling = Arc::new(SignalingMetrics::new(&meter));
+        let database = Arc::new(DatabaseMetrics::new(&meter));
+        let kustos = Arc::new(KustosMetrics::new(&meter));
+        let redis = Arc::new(RedisMetrics::new(&meter));
 
         Ok(Self {
             registry,
