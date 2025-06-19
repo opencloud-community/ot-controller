@@ -89,6 +89,9 @@ pub struct SettingsRaw {
 
     #[serde(flatten)]
     pub(crate) extensions: Extensions,
+
+    #[serde(default)]
+    pub(crate) operator_information: Option<OperatorInformation>,
 }
 
 #[cfg(test)]
@@ -159,6 +162,7 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
             api_secret: "secret".to_string(),
         },
         extensions: Extensions::default(),
+        operator_information: None,
     }
 }
 
