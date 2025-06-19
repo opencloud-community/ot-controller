@@ -2,6 +2,20 @@
 #
 # SPDX-License-Identifier: EUPL-1.2
 
+[frontend]
+# The base URL of the frontend.
+base_url = "https://example.com"
+
+# Information regarding the operator that is responsible for user-facing communication and legal
+# disclosure.
+#[operator_information]
+# The URL where users can find the data protection or privacy policy.
+#data_protection_url = "https://example.com/data-protection"
+# The phone number users can call for support.
+#support_phone_number = "+493012345678"
+# The email address users can contact for support.
+#support_email_address = "support@example.com"
+
 [logging]
 # Default tracing directives that will always be applied after RUST_LOG's directives.
 # Each array entry may contain a single directive.
