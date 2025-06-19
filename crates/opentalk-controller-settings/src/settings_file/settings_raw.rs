@@ -5,13 +5,16 @@
 use serde::Deserialize;
 
 use super::{
-    Authz, Avatar, CallIn, Database, Defaults, Endpoints, Etcd, Etherpad, Extensions, Http,
-    Keycloak, LiveKitSettings, Logging, Metrics, MinIO, MonitoringSettings, Oidc, RabbitMqConfig,
-    RedisConfig, Reports, SharedFolder, Spacedeck, SubroomAudio, Tariffs, Tenants, UserSearch,
+    Authz, Avatar, CallIn, Database, Defaults, Endpoints, Etcd, Etherpad, Extensions, Frontend,
+    Http, Keycloak, LiveKitSettings, Logging, Metrics, MinIO, MonitoringSettings, Oidc,
+    OperatorInformation, RabbitMqConfig, RedisConfig, Reports, SharedFolder, Spacedeck,
+    SubroomAudio, Tariffs, Tenants, UserSearch,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct SettingsRaw {
+    pub(crate) frontend: Frontend,
+
     pub(crate) database: Database,
 
     #[serde(default)]
@@ -91,10 +94,14 @@ pub struct SettingsRaw {
 #[cfg(test)]
 pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
     use openidconnect::{ClientId, ClientSecret};
+    use url::Url;
 
     use super::{OidcController, OidcFrontend};
 
     SettingsRaw {
+        frontend: Frontend {
+            base_url: Url::parse("https://example.com").unwrap(),
+        },
         database: Database {
             url: "postgres://postgres:password123@localhost:5432/opentalk".to_string(),
             max_connections: None,
@@ -157,6 +164,9 @@ pub(crate) fn settings_raw_minimal_example() -> SettingsRaw {
 
 #[cfg(test)]
 pub(crate) const SETTINGS_RAW_MINIMAL_CONFIG_TOML: &str = r#"
+        [frontend]
+        base_url = "https://example.com"
+
         [database]
         url = "postgres://postgres:password123@localhost:5432/opentalk"
 
