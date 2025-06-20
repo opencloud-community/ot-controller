@@ -324,20 +324,8 @@ check:docs-generated-parts:
       artifacts: true
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-  variables:
-    # Set ENV vars for services
-    RABBITMQ_DEFAULT_USER: guest
-    RABBITMQ_DEFAULT_PASS: guest
-    RABBITMQ_HOST: rabbitmq
-    RABBITMQ_PORT: '5672'
-    OPENTALK_CTRL_RABBIT_MQ__URL: amqp://guest:guest@rabbitmq:5672
-  services:
-    - name: rabbitmq:4.1
-      alias: rabbitmq
   before_script:
     - apt-get update && apt-get install -y git
-    # lowkey replacement for a rabbitmq health check
-    - sleep 10
   script:
     - ci/docs-update-generated-parts.sh
     - |
