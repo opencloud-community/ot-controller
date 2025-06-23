@@ -73,11 +73,6 @@ ignore = [
   # Dependency chain:
   # opentelemetry-prometheus v0.27.0 -> protobuf v2.28.0
   "RUSTSEC-2024-0437",
-
-  # | gitoxide uses SHA-1 hash implementations without any collision detection, leaving it vulnerable to hash collision attacks.
-  # Dependency chain:
-  # opentalk-version v0.1.1 -> vergen-gix v1.0.6 -> gix v0.69.1 -> gix-features v0.39.1
-  "RUSTSEC-2025-0021",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -290,8 +285,6 @@ skip = [
   { name = "ahash", version = "0.7" },
   { name = "async-io", version = "1" },
   { name = "async-lock", version = "2" },
-  { name = "aws-smithy-http", version = "0.60" },
-  { name = "aws-smithy-http", version = "0.61" },
   { name = "base16ct", version = "0.1" },
   { name = "base64", version = "0.13" },
   { name = "base64", version = "0.21" },
@@ -306,11 +299,17 @@ skip = [
   { name = "ecdsa", version = "0.14" },
   { name = "elliptic-curve", version = "0.12" },
   { name = "event-listener", version = "2" },
+  { name = "faster-hex", version = "0.9" },
   { name = "fastrand", version = "1" },
   { name = "ff", version = "0.12" },
   { name = "fixedbitset", version = "0.4" },
   { name = "futures-lite", version = "1" },
   { name = "getrandom", version = "0.2" },
+  { name = "gix-features", version = "0.41" },
+  { name = "gix-fs", version = "0.14" },
+  { name = "gix-hash", version = "0.17" },
+  { name = "gix-utils", version = "0.3" },
+  { name = "gix-validate", version = "0.9" },
   { name = "group", version = "0.12" },
   { name = "h2", version = "0.3" },
   { name = "hashbrown", version = "0.11" },
@@ -321,11 +320,15 @@ skip = [
   { name = "http-body", version = "0.4" },
   { name = "hyper", version = "0.14" },
   { name = "hyper-rustls", version = "0.24" },
+  { name = "icu_collections", version = "1" },
+  { name = "icu_properties", version = "1" },
+  { name = "icu_properties_data", version = "1" },
+  { name = "icu_provider", version = "1" },
   { name = "indexmap", version = "1" },
   { name = "itertools", version = "0.10" },
   { name = "itertools", version = "0.11" },
-  { name = "jiff", version = "0.1" },
   { name = "linux-raw-sys", version = "0.4" },
+  { name = "litemap", version = "0.7" },
   { name = "p256", version = "0.11" },
   { name = "petgraph", version = "0.6" },
   { name = "pkcs8", version = "0.9" },
@@ -334,7 +337,6 @@ skip = [
   { name = "prost-build", version = "0.12" },
   { name = "prost-derive", version = "0.12" },
   { name = "prost-types", version = "0.12" },
-  { name = "quick-xml", version = "0.32" },
   { name = "quick-xml", version = "0.36" },
   { name = "rand", version = "0.8" },
   { name = "rand_chacha", version = "0.3" },
@@ -351,17 +353,21 @@ skip = [
   { name = "sec1", version = "0.3" },
   { name = "signature", version = "1.6" },
   { name = "socket2", version = "0.4" },
-  { name = "spin", version = "0.5" },
   { name = "spki", version = "0.6" },
   { name = "strum", version = "0.26" },
   { name = "strum_macros", version = "0.26" },
   { name = "sync_wrapper", version = "0.1" },
   { name = "thiserror", version = "1" },
   { name = "thiserror-impl", version = "1" },
+  { name = "tinystr", version = "0.7" },
   { name = "tokio-rustls", version = "0.24" },
   { name = "tower", version = "0.4" },
-  { name = "winnow", version = "0.6" },
-  { name = "zerocopy", version = "0.8" },
+  { name = "writeable", version = "0.5" },
+  { name = "yoke", version = "0.7" },
+  { name = "yoke-derive", version = "0.7" },
+  { name = "zerotrie", version = "0.1" },
+  { name = "zerovec", version = "0.10" },
+  { name = "zerovec-derive", version = "0.10" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive

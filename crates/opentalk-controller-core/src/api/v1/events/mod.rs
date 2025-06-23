@@ -1277,7 +1277,9 @@ async fn patch_event_inner(
         }
         Some(false) => {
             if let Some(folder) = EventSharedFolder::get_for_event(&mut conn, event_id).await? {
-                delete_shared_folders(settings, &[folder]).await?;
+                let shared_folders = std::slice::from_ref(&folder);
+                delete_shared_folders(settings, shared_folders).await?;
+                folder.delete(&mut conn).await?;
             }
         }
         None => {}
