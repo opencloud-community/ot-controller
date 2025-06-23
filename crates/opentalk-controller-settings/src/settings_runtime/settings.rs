@@ -4,14 +4,18 @@
 
 use super::{
     oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
-    Defaults, Endpoints, Etcd, Etherpad, Http, LiveKit, Logging, Metrics, MinIO, Monitoring, Oidc,
-    RabbitMq, Redis, SharedFolder, Spacedeck, SubroomAudio, Tariffs, Tenants, UserSearchBackend,
+    Defaults, Endpoints, Etcd, Etherpad, Frontend, Http, LiveKit, Logging, Metrics, MinIO,
+    Monitoring, Oidc, OperatorInformation, RabbitMq, Redis, SharedFolder, Spacedeck, SubroomAudio,
+    Tariffs, Tenants, UserSearchBackend,
 };
 use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
 
 /// The settings used for the OpenTalk controller at runtime
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
+    /// The frontend information.
+    pub frontend: Frontend,
+
     /// The OIDC configuration for OpenTalk.
     pub oidc: Oidc,
 
@@ -66,10 +70,10 @@ pub struct Settings {
     /// The minio settings.
     pub minio: MinIO,
 
-    /// The monitoring settings
+    /// The monitoring settings.
     pub monitoring: Option<Monitoring>,
 
-    /// The call-in settings
+    /// The call-in settings.
     pub call_in: Option<CallIn>,
 
     /// The tenant configuration.
@@ -83,6 +87,9 @@ pub struct Settings {
 
     /// The livekit settings.
     pub livekit: LiveKit,
+
+    /// Information about the operator.
+    pub operator_information: Option<OperatorInformation>,
 }
 
 impl Settings {
@@ -112,6 +119,7 @@ impl TryFrom<SettingsRaw> for Settings {
             users_find_behavior,
         } = OidcAndUserSearchBuilder::load_from_settings_raw(&raw)?;
 
+        let frontend = raw.frontend.clone().into();
         let http = raw.http.clone().into();
         let database = raw.database.clone().into();
         let redis = raw.redis.clone().map(Into::into);
@@ -137,8 +145,10 @@ impl TryFrom<SettingsRaw> for Settings {
         let tariffs = raw.tariffs.clone().map(Into::into).unwrap_or_default();
         let defaults = raw.defaults.clone().map(Into::into).unwrap_or_default();
         let livekit = raw.livekit.clone().into();
+        let operator_information = raw.operator_information.clone().map(Into::into);
 
         Ok(Settings {
+            frontend,
             oidc,
             user_search_backend,
             users_find_behavior,
@@ -163,6 +173,7 @@ impl TryFrom<SettingsRaw> for Settings {
             tariffs,
             defaults,
             livekit,
+            operator_information,
         })
     }
 }
@@ -172,6 +183,7 @@ pub(crate) fn minimal_example() -> Settings {
     use std::collections::BTreeSet;
 
     use openidconnect::{ClientId, ClientSecret};
+    use url::Url;
 
     use super::OidcController;
     use crate::{
@@ -179,11 +191,14 @@ pub(crate) fn minimal_example() -> Settings {
             database::DEFAULT_DATABASE_MAX_CONNECTIONS, defaults::default_user_language,
             http::DEFAULT_HTTP_PORT,
         },
-        OidcFrontend, TariffAssignment, TenantAssignment, DEFAULT_LIBRAVATAR_URL,
+        Frontend, OidcFrontend, TariffAssignment, TenantAssignment, DEFAULT_LIBRAVATAR_URL,
         DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID,
     };
 
     Settings {
+        frontend: Frontend {
+            base_url: Url::parse("https://example.com").unwrap(),
+        },
         oidc: Oidc {
             controller: OidcController {
                 authority: "http://localhost:8080/realms/opentalk"
@@ -266,5 +281,6 @@ pub(crate) fn minimal_example() -> Settings {
             api_key: "devkey".to_string(),
             api_secret: "secret".to_string(),
         },
+        operator_information: None,
     }
 }
