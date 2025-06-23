@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.6] - 2025-06-23
+
+[0.29.6]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.29.5...v0.29.6
+
+### 🚀 New features
+
+- (keycloak-account-sync) Add option to dump failed responses ([!1588](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1588), [#841](https://git.opentalk.dev/opentalk/backend/services/controller/-/issues/841))
+
+### 🐛 Bug fixes
+
+- Remove shared folder from database when deleted while patching event ([!1597](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1597))
+
+### 📦 Dependencies
+
+- (deps) Lockfile maintenance ([!1629](https://git.opentalk.dev/opentalk/backend/services/controller/-/merge_requests/1629))
+
 ## [0.29.5] - 2025-05-07
 
 [0.29.5]: https://git.opentalk.dev/opentalk/backend/services/controller/-/compare/v0.29.4...v0.29.5
