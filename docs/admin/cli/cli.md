@@ -64,6 +64,9 @@ Options:
   -V, --version
           Print version information
 
+  -l, --license
+          Print license information
+
   -h, --help
           Print help (see a summary with '-h')
 ```
