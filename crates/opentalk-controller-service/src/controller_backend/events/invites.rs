@@ -217,7 +217,7 @@ impl ControllerBackend {
         };
 
         _ = changeset
-            .apply(&mut conn, update_invite.email.to_string(), event_id)
+            .apply(&mut conn, update_invite.email.as_ref(), event_id)
             .await?;
 
         Ok(())

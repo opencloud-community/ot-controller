@@ -22,6 +22,8 @@ opentalk-controller-settings = { path = "crates/opentalk-controller-settings", v
 opentalk-controller-utils = { path = "crates/opentalk-controller-utils", version = "0.30.0" }
 opentalk-database = { path = "crates/opentalk-database", version = "0.30.0" }
 opentalk-db-storage = { path = "crates/opentalk-db-storage", version = "0.30.0" }
+opentalk-inventory = { path = "crates/opentalk-inventory", version = "0.30.0" }
+opentalk-inventory-database = { path = "crates/opentalk-inventory-database", version = "0.30.0" }
 opentalk-jobs = { path = "crates/opentalk-jobs", version = "0.30.0" }
 opentalk-log = { path = "crates/opentalk-log", version = "0.30.0" }
 opentalk-r3dlock = { path = "crates/opentalk-r3dlock", version = "0.30.0" }
@@ -147,6 +149,7 @@ reqwest11 = { package = "reqwest", version = "0.11", default-features = false }
 ring = "0.17"
 rrule = "0.14"
 rustc-hash = "2.0"
+scoped-futures = "0.1.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serial_test = "3"
