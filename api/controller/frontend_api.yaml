@@ -3615,7 +3615,7 @@ components:
         - myfeature
       maxLength: 255
       minLength: 1
-      pattern: "^[-_0-9a-zA-Z]*$"
+      pattern: "^[_0-9a-z]*$"
     FileExtension:
       type: string
       description: An extension for a file path
@@ -3951,7 +3951,7 @@ components:
             - mymodule
           maxLength: 255
           minLength: 1
-          pattern: "^[-_0-9a-zA-Z]*$"
+          pattern: "^[_0-9a-z]*$"
       default: core
       example: mymodule
     NumericId:
@@ -4941,7 +4941,7 @@ components:
                   - mymodule
                 maxLength: 255
                 minLength: 1
-                pattern: "^[-_0-9a-zA-Z]*$"
+                pattern: "^[_0-9a-z]*$"
             default: core
             example: mymodule
         name:
