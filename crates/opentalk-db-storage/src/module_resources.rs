@@ -285,7 +285,7 @@ impl ModuleResource {
         conn: &mut DbConnection,
         filter: Filter,
         operations: Vec<Operation>,
-    ) -> Result<ModuleResource, JsonOperationError> {
+    ) -> Result<Vec<ModuleResource>, JsonOperationError> {
         let filter = filter
             .into_diesel_filter()
             .ok_or_else(|| JsonOperationError::Database {
@@ -301,9 +301,9 @@ impl ModuleResource {
             serde_json::to_value(operations).unwrap(),
         )));
 
-        let module_resource = query.get_result(conn).await?;
+        let module_resources = query.get_results(conn).await?;
 
-        Ok(module_resource)
+        Ok(module_resources)
     }
 }
 
@@ -407,18 +407,21 @@ mod tests {
             value: Value::String("bar".into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": "bar"
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": "bar"
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -491,7 +494,7 @@ mod tests {
             }
         }
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
@@ -499,7 +502,9 @@ mod tests {
         .await
         .unwrap();
 
-        assert_eq_json!(updated.data, json_compare);
+        assert_eq!(updated.len(), 1);
+
+        assert_eq!(json!(updated.remove(0).data), json_compare);
     }
 
     #[actix_rt::test]
@@ -512,15 +517,16 @@ mod tests {
             value: Value::String("bar".into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data, "bar");
+        assert_eq!(json!(updated.remove(0).data), json!("bar"));
     }
 
     #[actix_rt::test]
@@ -539,20 +545,23 @@ mod tests {
             },
         ];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": {
-                "bar": 42
-            }
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": {
+                    "bar": 42
+                }
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -569,18 +578,21 @@ mod tests {
             value: Value::String("b".into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": ["a", "b", "c"]
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": ["a", "b", "c"]
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -593,18 +605,21 @@ mod tests {
             value: Value::Array(vec![1.into(), 2.into(), 3.into()]),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": [1, 2 ,3]
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": [1, 2 ,3]
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -623,19 +638,22 @@ mod tests {
             },
         ];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": 1,
-            "bar": 2,
-        });
+        assert_eq!(
+            updated.remove(0).data,
+            json!({
+                "foo": 1,
+                "bar": 2,
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -658,19 +676,22 @@ mod tests {
             },
         ];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": 42,
-            "bar": 2,
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": 42,
+                "bar": 2,
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -687,18 +708,21 @@ mod tests {
             path: "/foo".into(),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "bar": 2
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "bar": 2
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -723,21 +747,24 @@ mod tests {
             },
         ];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": ["b", "c"],
-            "bar": {
-                "qux": "biz"
-            },
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": ["b", "c"],
+                "bar": {
+                    "qux": "biz"
+                },
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -766,22 +793,25 @@ mod tests {
             },
         ];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": ["b", "c"],
-            "bar": {
-                "0": 42,
-                "qux": "biz"
-            },
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": ["b", "c"],
+                "bar": {
+                    "0": 42,
+                    "qux": "biz"
+                },
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -801,22 +831,25 @@ mod tests {
             path: "/bar/qux".into(),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": { },
-            "bar": {
-                "baz": 2,
-                "qux": 1
-            },
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": { },
+                "bar": {
+                    "baz": 2,
+                    "qux": 1
+                },
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -894,16 +927,18 @@ mod tests {
             path: "/foo/3".into(),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-            { "foo": [ "all", "cows", "eat", "grass" ] }
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({ "foo": [ "all", "cows", "eat", "grass" ] })
         );
     }
 
@@ -925,22 +960,25 @@ mod tests {
             path: "/bar/baz/1".into(),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": ["b", "c"],
-            "bar": {
-                "baz": ["d", "a"],
-                "qux": 1,
-            },
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": ["b", "c"],
+                "bar": {
+                    "baz": ["d", "a"],
+                    "qux": 1,
+                },
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -960,22 +998,25 @@ mod tests {
             path: "/bar/qux".into(),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": { "qux": 1 },
-            "bar": {
-                "baz": 2,
-                "qux": 1,
-            },
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": { "qux": 1 },
+                "bar": {
+                    "baz": 2,
+                    "qux": 1,
+                },
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -993,19 +1034,22 @@ mod tests {
             value: Value::Number(1.into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": 1,
-            "bar": 2,
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": 1,
+                "bar": 2,
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -1102,21 +1146,24 @@ mod tests {
             }),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": {
-                "baz": 1,
-                "bar": 2,
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": {
+                    "baz": 1,
+                    "bar": 2,
+                }
             }
-        }
+            )
         );
     }
 
@@ -1135,19 +1182,22 @@ mod tests {
             value: Value::Number(99.into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": 1,
-            "bar": 99,
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": 1,
+                "bar": 99,
+            })
+        );
     }
 
     #[actix_rt::test]
@@ -1164,18 +1214,21 @@ mod tests {
             value: Value::String("a".into()),
         }];
 
-        let updated = ModuleResource::patch(
+        let mut updated = ModuleResource::patch(
             &mut db_conn,
             Filter::new().with_namespace("test".into()),
             operations,
         )
         .await
         .unwrap();
+        assert_eq!(updated.len(), 1);
 
-        assert_eq_json!(updated.data,
-        {
-            "foo": ["a", "b", "c"],
-        });
+        assert_eq!(
+            json!(updated.remove(0).data),
+            json!({
+                "foo": ["a", "b", "c"],
+            })
+        );
     }
 
     #[actix_rt::test]
