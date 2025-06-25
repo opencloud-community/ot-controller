@@ -321,7 +321,8 @@ impl Livekit {
                     .await
             }
             command::LiveKitCommand::DisableMicrophoneRestrictions => {
-                self.set_microphone_permissions(ctx, vec![], false).await
+                self.set_microphone_permissions(ctx, BTreeSet::new(), false)
+                    .await
             }
             command::LiveKitCommand::RequestPopoutStreamAccessToken => {
                 self.create_popout_stream_access_token(&mut ctx).await
@@ -352,7 +353,7 @@ impl Livekit {
     async fn set_screenshare_permissions(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        participants: Vec<ParticipantId>,
+        participants: BTreeSet<ParticipantId>,
         grant: bool,
     ) -> Result<(), SignalingModuleError> {
         if !self.role.is_moderator() {
@@ -396,7 +397,7 @@ impl Livekit {
     async fn set_microphone_permissions(
         &mut self,
         mut ctx: ModuleContext<'_, Self>,
-        unrestricted_participants: Vec<ParticipantId>,
+        unrestricted_participants: BTreeSet<ParticipantId>,
         restrict: bool,
     ) -> Result<(), SignalingModuleError> {
         if !self.role.is_moderator() {
@@ -421,7 +422,7 @@ impl Livekit {
                 .storage()
                 .set_microphone_restriction_allow_list(
                     self.room_id.room_id(),
-                    &unrestricted_participants[..],
+                    &Vec::from_iter(unrestricted_participants.iter().cloned()),
                 )
                 .await?;
 

@@ -6298,9 +6298,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common"
-version = "0.35.0"
+version = "0.35.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f24efa7aaa62625984f3c008c87c07a5c7f27b6b0410f0eb75b150089d2a4e85"
+checksum = "92d0a412e922b818b6160c988a8953d28db7d298070ea2492f6f6af1f229b2c5"
 dependencies = [
  "actix-http",
  "actix-web-httpauth",
@@ -6333,9 +6333,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common-identifiers"
-version = "0.31.1"
+version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab029b9f30fe933d46d389b2e1914d84a43a8810603c6373210758f87b5588d9"
+checksum = "80484edfb74f38dd9dcfdbb962d3c5e38417ea919649346b779733a5d6e4edc1"
 dependencies = [
  "derive_more 2.0.1",
  "diesel",
@@ -6349,9 +6349,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-common-macros"
-version = "0.31.1"
+version = "0.31.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cf474b94ae906484ca2b5617e64229fe343eee7d263b90e6ffab988ca6e9785"
+checksum = "3245dab4b984bccfd1fa21b588c359ad5a53458844cf78acbb08090e827ed4df"
 dependencies = [
  "opentalk-types-common-identifiers",
  "proc-macro-crate",
@@ -6457,9 +6457,9 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-signaling-livekit"
-version = "0.36.0"
+version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4aad571fa63468a334319dc657ccc96c8aa1e6788bd5c2533a62a1ac6caf7fe9"
+checksum = "15e7b83083acd3e5e0ae66980221ae5140f1b539b426a6c8da6f5cae6f0e83b7"
 dependencies = [
  "opentalk-types-common",
  "opentalk-types-signaling",
