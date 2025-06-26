@@ -5673,6 +5673,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-inventory"
+version = "0.30.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-types-common",
+ "scoped-futures",
+ "snafu",
+]
+
+[[package]]
+name = "opentalk-inventory-database"
+version = "0.30.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "diesel-async",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-inventory",
+ "opentalk-types-common",
+ "snafu",
+ "tracing",
+]
+
+[[package]]
 name = "opentalk-jobs"
 version = "0.30.0"
 dependencies = [

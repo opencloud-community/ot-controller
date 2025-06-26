@@ -38,6 +38,7 @@ const POOL_CONNECTIONS: &str = "sql.dbpool_connections";
 const POOL_CONNECTIONS_IDLE: &str = "sql.dbpool_connections_idle";
 const ERRORS_TOTAL: &str = "sql.errors_total";
 
+#[derive(Debug)]
 pub struct DatabaseMetrics {
     pub sql_execution_time: Histogram<f64>,
     pub sql_error: Counter<u64>,
@@ -94,6 +95,16 @@ pub struct MetricsConnection<Conn> {
     pub(crate) metrics: Option<Arc<DatabaseMetrics>>,
     pub(crate) conn: Conn,
     pub(crate) instrumentation: Arc<Mutex<Option<Box<dyn Instrumentation>>>>,
+}
+
+impl<Conn> std::fmt::Debug for MetricsConnection<Conn> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MetricsConnection")
+            .field("metrics", &())
+            .field("conn", &())
+            .field("instrumentation", &())
+            .finish()
+    }
 }
 
 fn get_metrics_label_for_error(error: &diesel::result::Error) -> &'static str {

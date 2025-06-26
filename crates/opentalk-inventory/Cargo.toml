@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-inventory"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+bigdecimal.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-types-common.workspace = true
+scoped-futures.workspace = true
+snafu.workspace = true

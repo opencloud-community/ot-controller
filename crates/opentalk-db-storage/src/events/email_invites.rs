@@ -139,7 +139,7 @@ impl EventEmailInvite {
     pub async fn delete(
         conn: &mut DbConnection,
         event_id: &EventId,
-        email: &String,
+        email: &str,
     ) -> Result<EventEmailInvite> {
         let query = diesel::delete(event_email_invites::table)
             .filter(
@@ -186,7 +186,7 @@ impl UpdateEventEmailInvite {
     pub async fn apply(
         self,
         conn: &mut DbConnection,
-        email: String,
+        email: &str,
         event_id: EventId,
     ) -> Result<EventEmailInvite> {
         // TODO: Check if the update actually applied a change (see comments in fn `apply` of `UpdateEventInvite`)
