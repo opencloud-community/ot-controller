@@ -274,8 +274,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
         .await
         .with_context(|_| RedisSnafu {
             message: format!(
-                "Failed to set skip_waiting_room key to {} for participant {}",
-                value, participant,
+                "Failed to set skip_waiting_room key to {value} for participant {participant}",
             ),
         })?;
 
@@ -299,8 +298,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
             .await
             .with_context(|_| RedisSnafu {
                 message: format!(
-                    "Failed to set SkipWaitingRoom key to {} for participant {}",
-                    value, participant,
+                    "Failed to set SkipWaitingRoom key to {value} for participant {participant}",
                 ),
             })?;
 
@@ -319,8 +317,7 @@ impl ControlStorageSkipWaitingRoom for RedisConnection {
         .await
         .with_context(|_| RedisSnafu {
             message: format!(
-                "Failed to extend skip_waiting_room key expiry for participant {}",
-                participant,
+                "Failed to extend skip_waiting_room key expiry for participant {participant}",
             ),
         })?;
 
@@ -498,7 +495,7 @@ impl FromRedisValue for WrappedAttributeValueJson {
                     redis::RedisError::from((
                         redis::ErrorKind::ParseError,
                         "Could not deserialize JSON value",
-                        format!("{:?}", e),
+                        format!("{e:?}"),
                     ))
                 })?;
                 Ok(Self(Some(value)))
@@ -526,7 +523,7 @@ impl FromRedisValue for WrappedAttributeValueJson {
             | redis::Value::Push { .. }) => Err(redis::RedisError::from((
                 redis::ErrorKind::TypeError,
                 "Response was of incompatible type",
-                format!("response was {:?}", v),
+                format!("response was {v:?}"),
             ))),
         }
     }
@@ -555,7 +552,7 @@ impl<T: DeserializeOwned> FromRedisValue for WrappedAttributeValue<T> {
             redis::RedisError::from((
                 redis::ErrorKind::ParseError,
                 "Could not deserialize JSON value",
-                format!("{:?}", e),
+                format!("{e:?}"),
             ))
         })?;
         Ok(Self(Some(value)))

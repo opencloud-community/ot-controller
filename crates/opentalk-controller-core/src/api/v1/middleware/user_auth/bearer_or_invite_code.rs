@@ -64,7 +64,7 @@ mod tests {
     fn test_parse_invite_code() {
         let uuid = uuid::uuid!("c7fe02dd-ba7b-4fc5-a8ba-a9c778f348dc");
         let code = InviteCode::from(uuid);
-        let value = HeaderValue::from_str(&format!("InviteCode {}", code)).unwrap();
+        let value = HeaderValue::from_str(&format!("InviteCode {code}")).unwrap();
         let scheme = BearerOrInviteCode::parse(&value);
 
         assert!(scheme.is_ok());

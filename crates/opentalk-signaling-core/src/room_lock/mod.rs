@@ -66,7 +66,7 @@ impl From<Error> for LockError {
             },
             Error::CouldNotAcquireLock => Self::Locked,
             Error::Redis { ref source } => Self::Internal {
-                message: format!("{}: {}", value, source),
+                message: format!("{value}: {source}"),
             },
         }
     }

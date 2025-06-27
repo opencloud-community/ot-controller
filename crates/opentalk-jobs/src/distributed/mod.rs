@@ -33,9 +33,9 @@ pub const JOB_QUEUE_PREFIX: &str = "opentalk/jobs/queue/";
 pub const JOB_RUNNING_PREFIX: &str = "opentalk/jobs/running/";
 
 pub fn build_queue_key(job_id: i64) -> String {
-    format!("{JOB_QUEUE_PREFIX}job_{}", job_id)
+    format!("{JOB_QUEUE_PREFIX}job_{job_id}")
 }
 
 pub fn build_running_key(job_id: i64) -> String {
-    format!("{JOB_RUNNING_PREFIX}job_{}", job_id)
+    format!("{JOB_RUNNING_PREFIX}job_{job_id}")
 }

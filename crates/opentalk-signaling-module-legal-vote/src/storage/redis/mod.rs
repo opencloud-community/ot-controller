@@ -99,8 +99,7 @@ impl LegalVoteStorage for RedisConnection {
             .await
             .with_context(|_| RedisSnafu {
                 message: format!(
-                    "Failed to cleanup vote room_id:{} legal_vote_id:{}",
-                    room_id, legal_vote_id
+                    "Failed to cleanup vote room_id:{room_id} legal_vote_id:{legal_vote_id}"
                 ),
             })
     }

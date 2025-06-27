@@ -32,8 +32,8 @@ async fn grant_revoke_grant_two_resources() -> Result<(), Box<dyn std::error::Er
     let event = uuid::Uuid::from_u128(0x5f81c3cd_16b3_4d6b_9853_b3bf926401b1);
     let room = uuid::Uuid::from_u128(0xddab0058_9c8b_44c9_a704_6d50c3a496c6);
 
-    let event_resource = format!("/events/{}", event);
-    let room_resource = format!("/rooms/{}", room);
+    let event_resource = format!("/events/{event}");
+    let room_resource = format!("/rooms/{room}");
 
     let policies = PoliciesBuilder::new()
         .grant_user_access(invitee)

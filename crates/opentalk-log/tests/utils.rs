@@ -39,7 +39,7 @@ impl log::Log for DummyLogger {
     }
 
     fn log(&self, record: &log::Record) {
-        println!("LOGGING: {:#?}", record);
+        println!("LOGGING: {record:#?}");
         self.entries
             .write()
             .unwrap()

@@ -444,7 +444,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid_path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid_path error, got {unexpected:?}"),
         }
     }
 
@@ -468,7 +468,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid_path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid_path error, got {unexpected:?}"),
         }
     }
 
@@ -482,10 +482,10 @@ mod tests {
         let mut operations = vec![];
 
         for i in 0..100 {
-            let field = format!("foo{}", i);
+            let field = format!("foo{i}");
 
             operations.push(Operation::Add {
-                path: format!("/{}", field),
+                path: format!("/{field}"),
                 value: Value::String("bar".into()),
             });
 
@@ -879,7 +879,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidFromPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid_from_path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid_from_path error, got {unexpected:?}"),
         }
     }
 
@@ -911,7 +911,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidFromPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid_source_path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid_source_path error, got {unexpected:?}"),
         }
     }
 
@@ -1077,7 +1077,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::ValueNotEqual, source.error_code)
             }
-            unexpected => panic!("Expected failed compare error, got {:?}", unexpected),
+            unexpected => panic!("Expected failed compare error, got {unexpected:?}"),
         }
     }
 
@@ -1115,7 +1115,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::ValueNotEqual, source.error_code)
             }
-            unexpected => panic!("Expected failed compare error, got {:?}", unexpected),
+            unexpected => panic!("Expected failed compare error, got {unexpected:?}"),
         }
 
         let resource = ModuleResource::get(&mut db_conn, Filter::new().with_id(id))
@@ -1255,7 +1255,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid path error, got {unexpected:?}"),
         }
     }
 
@@ -1283,7 +1283,7 @@ mod tests {
             Err(JsonOperationError::JsonPatch { source }) => {
                 assert_eq!(JsonPatchErrorCode::InvalidPath, source.error_code)
             }
-            unexpected => panic!("Expected invalid path error, got {:?}", unexpected),
+            unexpected => panic!("Expected invalid path error, got {unexpected:?}"),
         }
     }
 
