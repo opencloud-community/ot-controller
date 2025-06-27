@@ -579,7 +579,7 @@ impl Controller {
         };
 
         let http_server = http_server.with_whatever_context(|_| {
-            format!("Failed to bind http server to {:?}", socket_address)
+            format!("Failed to bind http server to {socket_address:?}")
         })?;
 
         set_service_state(ServiceState::Ready);

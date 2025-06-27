@@ -341,8 +341,7 @@ impl SignalingModule for Chat {
                 *frontend_data = Some(module_frontend_data);
 
                 // ==== Find other participant in our group ====
-                let participant_ids: Vec<ParticipantId> =
-                    participants.iter().map(|(id, _)| *id).collect();
+                let participant_ids: Vec<ParticipantId> = participants.keys().copied().collect();
 
                 // Get all user_ids for each participant in the room
                 let user_ids: Vec<Option<UserId>> = ctx

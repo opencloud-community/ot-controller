@@ -404,7 +404,7 @@ async fn auto_append(selection_strategy: SelectionStrategy) {
         started1,
         WsMessageOutgoing::Module(AutomodEvent::Started(_))
     ) {
-        panic!("expected start message, got {:?}", started1);
+        panic!("expected start message, got {started1:?}");
     }
 
     let started2 = module_tester
@@ -557,7 +557,7 @@ async fn full_run_playlist() {
         started1,
         WsMessageOutgoing::Module(AutomodEvent::Started(_))
     ) {
-        panic!("expected start message, got {:?}", started1);
+        panic!("expected start message, got {started1:?}");
     }
 
     let started2 = module_tester
@@ -750,7 +750,7 @@ async fn on_leaving_sends_remaning_update() {
         started1,
         WsMessageOutgoing::Module(AutomodEvent::Started(_))
     ) {
-        panic!("expected start message, got {:?}", started1);
+        panic!("expected start message, got {started1:?}");
     }
 
     let started2 = module_tester
@@ -821,7 +821,7 @@ async fn skipping_last_speaker_finishes_the_session() {
         started1,
         WsMessageOutgoing::Module(AutomodEvent::Started(_))
     ) {
-        panic!("expected start message, got {:?}", started1);
+        panic!("expected start message, got {started1:?}");
     }
 
     let started2 = module_tester

@@ -48,8 +48,7 @@ impl LegalVoteCountStorage for RedisConnection {
             .await
             .with_context(|_| RedisSnafu {
                 message: format!(
-                    "Failed to get the vote count for room_id:{} legal_vote_id:{}",
-                    room_id, legal_vote_id
+                    "Failed to get the vote count for room_id:{room_id} legal_vote_id:{legal_vote_id}"
                 ),
             })?;
 

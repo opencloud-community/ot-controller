@@ -30,8 +30,7 @@ impl LegalVoteAllowTokenStorage for RedisConnection {
         .await
         .with_context(|_| RedisSnafu {
             message: format!(
-                "Failed to set the allowed tokens for room_id:{} legal_vote_id:{}",
-                room_id, legal_vote_id
+                "Failed to set the allowed tokens for room_id:{room_id} legal_vote_id:{legal_vote_id}"
             ),
         })
     }

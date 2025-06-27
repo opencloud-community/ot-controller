@@ -615,7 +615,7 @@ where
                         Ok(participant) => participants.push(participant),
                         Err(e) => {
                             return Err(e)
-                                .whatever_context(format!("Failed to build participant {}", id));
+                                .whatever_context(format!("Failed to build participant {id}"));
                         }
                     };
                 }
