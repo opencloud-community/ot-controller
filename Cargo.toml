@@ -39,6 +39,7 @@ opentalk-signaling-module-livekit = { path = "crates/opentalk-signaling-module-l
 opentalk-signaling-module-meeting-notes = { path = "crates/opentalk-signaling-module-meeting-notes", version = "0.30.0" }
 opentalk-signaling-module-meeting-report = { path = "crates/opentalk-signaling-module-meeting-report", version = "0.30.0" }
 opentalk-signaling-module-polls = { path = "crates/opentalk-signaling-module-polls", version = "0.30.0" }
+opentalk-signaling-module-recording = { path = "crates/opentalk-signaling-module-recording", version = "0.30.0" }
 opentalk-signaling-module-shared-folder = { path = "crates/opentalk-signaling-module-shared-folder", version = "0.30.0" }
 opentalk-signaling-module-subroom-audio = { path = "crates/opentalk-signaling-module-subroom-audio", version = "0.30.0" }
 opentalk-signaling-module-timer = { path = "crates/opentalk-signaling-module-timer", version = "0.30.0" }

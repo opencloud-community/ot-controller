@@ -33,11 +33,13 @@ use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;
 
 use self::storage::RecordingStorage;
-use super::recording_service::{self, RecordingService};
 
-pub(crate) mod exchange;
+mod exchange;
 mod rabbitmq;
-pub(crate) mod storage;
+mod service;
+mod storage;
+
+pub use service::RecordingService;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum RecordingFeature {
@@ -110,7 +112,7 @@ pub enum RecorderExtEvent {
     Timeout(BTreeSet<StreamingTargetId>),
 }
 
-pub(super) trait RecordingStorageProvider {
+trait RecordingStorageProvider {
     fn storage(&mut self) -> &mut dyn RecordingStorage;
 }
 
@@ -464,7 +466,7 @@ impl Recording {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
             RecordingService::NAMESPACE,
-            recording_service::exchange::Message::StartStreams { target_ids },
+            service::exchange::Message::StartStreams { target_ids },
         );
 
         Ok(())
@@ -491,7 +493,7 @@ impl Recording {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
             RecordingService::NAMESPACE,
-            recording_service::exchange::Message::PauseStreams { target_ids },
+            service::exchange::Message::PauseStreams { target_ids },
         );
 
         Ok(())
@@ -536,7 +538,7 @@ impl Recording {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
             RecordingService::NAMESPACE,
-            recording_service::exchange::Message::StopStreams { target_ids },
+            service::exchange::Message::StopStreams { target_ids },
         );
 
         Ok(())
