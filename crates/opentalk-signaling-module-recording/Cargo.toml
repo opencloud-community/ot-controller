@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: OpenTalk GmbH <mail@opentalk.eu>
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+authors.workspace = true
+edition = "2021"
+license = "EUPL-1.2"
+name = "opentalk-signaling-module-recording"
+publish = false
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+either.workspace = true
+futures.workspace = true
+lapin-pool.workspace = true
+log.workspace = true
+opentalk-database.workspace = true
+opentalk-db-storage.workspace = true
+opentalk-signaling-core.workspace = true
+opentalk-types-common = { workspace = true, features = ["backend"] }
+opentalk-types-signaling = { workspace = true, features = ["backend"] }
+opentalk-types-signaling-recording = { workspace = true, features = [
+  "backend",
+] }
+opentalk-types-signaling-recording-service = { workspace = true, features = [
+  "backend",
+] }
+parking_lot.workspace = true
+redis.workspace = true
+redis-args.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+snafu.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+serial_test.workspace = true

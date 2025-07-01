@@ -5488,8 +5488,6 @@ dependencies = [
  "opentalk-types-signaling-breakout",
  "opentalk-types-signaling-control",
  "opentalk-types-signaling-moderation",
- "opentalk-types-signaling-recording",
- "opentalk-types-signaling-recording-service",
  "opentelemetry",
  "opentelemetry_sdk",
  "parking_lot",
@@ -6117,6 +6115,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentalk-signaling-module-recording"
+version = "0.30.0"
+dependencies = [
+ "async-trait",
+ "either",
+ "futures",
+ "lapin-pool",
+ "log",
+ "opentalk-database",
+ "opentalk-db-storage",
+ "opentalk-signaling-core",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "opentalk-types-signaling-recording",
+ "opentalk-types-signaling-recording-service",
+ "parking_lot",
+ "redis",
+ "redis-args",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "snafu",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "opentalk-signaling-module-shared-folder"
 version = "0.30.0"
 dependencies = [
@@ -6271,6 +6296,7 @@ dependencies = [
  "opentalk-signaling-module-meeting-notes",
  "opentalk-signaling-module-meeting-report",
  "opentalk-signaling-module-polls",
+ "opentalk-signaling-module-recording",
  "opentalk-signaling-module-shared-folder",
  "opentalk-signaling-module-subroom-audio",
  "opentalk-signaling-module-timer",

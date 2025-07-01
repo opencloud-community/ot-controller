@@ -13,6 +13,7 @@ use opentalk_signaling_module_livekit::Livekit;
 use opentalk_signaling_module_meeting_notes::MeetingNotes;
 use opentalk_signaling_module_meeting_report::MeetingReport;
 use opentalk_signaling_module_polls::Polls;
+use opentalk_signaling_module_recording::{Recording, RecordingService};
 use opentalk_signaling_module_shared_folder::SharedFolder;
 use opentalk_signaling_module_subroom_audio::SubroomAudio;
 use opentalk_signaling_module_timer::Timer;
@@ -25,6 +26,8 @@ pub struct Modules;
 impl RegisterModules for Modules {
     async fn register<E>(registrar: &mut impl ModulesRegistrar<Error = E>) -> Result<(), E> {
         registrar.register::<Core>().await?;
+        registrar.register::<Recording>().await?;
+        registrar.register::<RecordingService>().await?;
         registrar.register::<Chat>().await?;
         registrar.register::<LegalVote>().await?;
         registrar.register::<Automod>().await?;

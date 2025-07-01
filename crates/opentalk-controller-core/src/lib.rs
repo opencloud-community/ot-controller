@@ -44,14 +44,15 @@ use std::{
 
 use actix_cors::Cors;
 use actix_web::{web, web::Data, App, HttpServer, Scope};
-use api::signaling::{
-    echo::Echo, recording::Recording, recording_service::RecordingService, SignalingModules,
-};
+use api::signaling::SignalingModules;
 use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_service::{
-    oidc::OidcContext, services::MailService, ControllerBackend, Whatever,
+    oidc::OidcContext,
+    services::MailService,
+    signaling::ws_modules::{breakout::BreakoutRooms, echo::Echo, moderation::ModerationModule},
+    ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
@@ -84,7 +85,7 @@ use tracing_actix_web::TracingLogger;
 use crate::{
     acl::check_or_create_kustos_default_permissions,
     api::{
-        signaling::{breakout::BreakoutRooms, moderation::ModerationModule, SignalingProtocols},
+        signaling::SignalingProtocols,
         v1::{middleware::metrics::RequestMetrics, response::error::json_error_handler},
     },
     trace::ReducedSpanBuilder,
@@ -175,8 +176,6 @@ impl<M: RegisterModules> RegisterModules for ControllerModules<M> {
         registrar.register::<Echo>().await?;
         registrar.register::<BreakoutRooms>().await?;
         registrar.register::<ModerationModule>().await?;
-        registrar.register::<Recording>().await?;
-        registrar.register::<RecordingService>().await?;
         M::register(registrar).await
     }
 }

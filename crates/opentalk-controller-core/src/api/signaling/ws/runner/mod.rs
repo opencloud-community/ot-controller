@@ -23,6 +23,11 @@ use opentalk_controller_service::{
     signaling::{
         resumption::ResumptionTokenKeepAlive,
         storage::{SignalingStorageError, SignalingStorageProvider},
+        ws_modules::{
+            breakout,
+            echo::Echo,
+            moderation::{self, ModerationStorageProvider},
+        },
     },
 };
 use opentalk_controller_settings::SettingsProvider;
@@ -80,12 +85,7 @@ use super::{
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
     CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
 };
-use crate::api::signaling::{
-    breakout::{self},
-    echo::Echo,
-    moderation::{self, ModerationStorageProvider},
-    ws::actor::WsCommand,
-};
+use crate::api::signaling::ws::actor::WsCommand;
 
 mod call_in;
 

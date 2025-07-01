@@ -8,8 +8,6 @@ use opentalk_types_signaling::NamespacedEvent;
 pub mod breakout;
 pub mod echo;
 pub mod moderation;
-pub mod recording;
-pub mod recording_service;
 
 pub trait ModuleContextExt {
     fn exchange_publish_control(

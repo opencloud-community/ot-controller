@@ -17,7 +17,7 @@ use opentalk_types_signaling_recording_service::{
     MODULE_ID,
 };
 
-use super::recording::{self, Recording, RecordingStorageProvider as _};
+use crate::{Recording, RecordingStorageProvider};
 
 pub(crate) mod exchange;
 
@@ -132,7 +132,7 @@ impl RecordingService {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_participants(self.room),
             Recording::NAMESPACE,
-            recording::exchange::Message::StreamUpdated(stream_updated),
+            crate::exchange::Message::StreamUpdated(stream_updated),
         );
         Ok(())
     }
@@ -145,7 +145,7 @@ impl RecordingService {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
             Recording::NAMESPACE,
-            recording::exchange::Message::RecorderStopping,
+            crate::exchange::Message::RecorderStopping,
         );
 
         let targets = ctx.volatile.storage().get_streams(self.room).await?;
@@ -174,7 +174,7 @@ impl RecordingService {
             ctx.exchange_publish_to_namespace(
                 control::exchange::current_room_all_participants(self.room),
                 Recording::NAMESPACE,
-                recording::exchange::Message::StreamUpdated(stream_updated),
+                crate::exchange::Message::StreamUpdated(stream_updated),
             );
         }
 
@@ -190,7 +190,7 @@ impl RecordingService {
         ctx.exchange_publish_to_namespace(
             control::exchange::current_room_all_recorders(self.room),
             Recording::NAMESPACE,
-            recording::exchange::Message::RecorderStarting,
+            crate::exchange::Message::RecorderStarting,
         );
 
         let streams = ctx

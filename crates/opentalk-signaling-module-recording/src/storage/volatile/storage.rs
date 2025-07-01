@@ -17,7 +17,7 @@ use parking_lot::RwLock;
 use snafu::OptionExt as _;
 
 use super::memory::MemoryRecordingState;
-use crate::signaling::ws_modules::recording::storage::RecordingStorage;
+use crate::storage::RecordingStorage;
 
 static STATE: OnceLock<Arc<RwLock<MemoryRecordingState>>> = OnceLock::new();
 
