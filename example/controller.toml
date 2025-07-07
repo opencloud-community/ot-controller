@@ -166,7 +166,7 @@ api_secret = "your-livekit-api-secret"
 
 [rabbit_mq]
 # The URL to use to connect to the rabbit mq broker
-#url = "amqp://username:password@host/%2F"
+#url = "amqp://guest:guest@localhost:5672"
 
 # The rabbitmq queue name for the mail worker,
 # mailing is disabled when this is not set.
@@ -257,7 +257,7 @@ urls = ["localhost:2379"]
 # Default language of a new user
 #user_language = "en-US"
 # Default presenter role for all users (defaults to false if not set)
-#screen_share_requires_permission = true
+#screen_share_requires_permission = false
 # A list of disabled features in the controller. By default all features are enabled.
 # Format: <module>::<feature>. A missing module defaults to "core".
 # Currently supported features:
