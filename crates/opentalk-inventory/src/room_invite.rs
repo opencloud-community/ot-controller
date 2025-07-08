@@ -20,15 +20,15 @@ pub trait RoomInviteInventory {
     /// Get a room invite by the invite code.
     async fn get_room_invite(&mut self, invite_code: InviteCode) -> Result<Invite>;
 
-    /// Get the first invite for a room.
-    async fn get_first_invite_for_room(&mut self, room_id: RoomId) -> Result<Option<Invite>>;
+    /// Get a valid invite for a room.
+    async fn get_valid_invite_for_room(&mut self, room_id: RoomId) -> Result<Option<Invite>>;
 
-    /// Get the first invite for a room, or create one if none exists.
+    /// Get a valid invite for a room, or create one if none exists.
     ///
     /// If no invite is found for the room, a new invite will be created.
     /// The caller of this function must take care to create access rules
     /// because this crate does not have access to that functionality.
-    async fn get_or_create_first_invite_for_room(
+    async fn get_or_create_valid_invite_for_room(
         &mut self,
         room_id: RoomId,
         user_id: UserId,

@@ -126,6 +126,32 @@ impl Invite {
         Ok(invites_with_total)
     }
 
+    /// Returns a valid invite for a given room, if there is any.
+    #[tracing::instrument(err, skip_all)]
+    pub async fn get_valid_for_room(
+        conn: &mut DbConnection,
+        room_id: RoomId,
+        now: DateTime<Utc>,
+    ) -> Result<Option<Invite>> {
+        let query = invites::table
+            .filter(
+                invites::room.eq(room_id).and(invites::active.eq(true)).and(
+                    invites::expiration
+                        .is_null()
+                        .or(invites::expiration.lt(now)),
+                ),
+            )
+            .order(invites::updated_at.desc());
+
+        let invite: Result<Invite, diesel::result::Error> = query.first::<Invite>(conn).await;
+        let res = match invite {
+            Ok(invite) => Ok(Some(invite)),
+            Err(diesel::result::Error::NotFound) => Ok(None),
+            Err(e) => Err(e),
+        }?;
+        Ok(res)
+    }
+
     /// Returns a paginated view on invites for the given room
     ///
     /// Returns:
@@ -181,29 +207,17 @@ impl Invite {
         ))
     }
 
-    /// Get the first invite for a room.
-    pub async fn get_first_for_room(
-        conn: &mut DbConnection,
-        room_id: RoomId,
-    ) -> Result<Option<Invite>> {
-        let (invites_for_room, _) = Invite::get_all_for_room_paginated(conn, room_id, 1, 1).await?;
-        let invite_for_room = invites_for_room.into_iter().next();
-
-        Ok(invite_for_room)
-    }
-
     /// Get the first invite for a room or create one.
     ///
     /// If no invite is found for the room, a new invite will be created.
     /// The caller of this function must take care to create access rules
     /// because this crate does not have access to that functionality.
-    pub async fn get_first_or_create_for_room(
+    pub async fn get_valid_or_create_for_room(
         conn: &mut DbConnection,
         room_id: RoomId,
         user_id: UserId,
     ) -> Result<Invite> {
-        let (invites_for_room, _) = Invite::get_all_for_room_paginated(conn, room_id, 1, 1).await?;
-        let invite_for_room = invites_for_room.into_iter().next();
+        let invite_for_room = Invite::get_valid_for_room(conn, room_id, Utc::now()).await?;
 
         let invite_for_room = if let Some(invite) = invite_for_room {
             invite
