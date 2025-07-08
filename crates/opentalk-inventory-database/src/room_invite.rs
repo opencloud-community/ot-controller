@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
+use chrono::Utc;
 use opentalk_db_storage::invites::{Invite, InviteWithUsers, NewInvite, UpdateInvite};
 use opentalk_inventory::{RoomInviteInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
@@ -31,19 +32,19 @@ impl RoomInviteInventory for DatabaseConnection {
     }
 
     #[tracing::instrument(err, skip_all)]
-    async fn get_first_invite_for_room(&mut self, room_id: RoomId) -> Result<Option<Invite>> {
-        Invite::get_first_for_room(&mut self.inner, room_id)
+    async fn get_valid_invite_for_room(&mut self, room_id: RoomId) -> Result<Option<Invite>> {
+        Invite::get_valid_for_room(&mut self.inner, room_id, Utc::now())
             .await
             .context(StorageBackendSnafu)
     }
 
     #[tracing::instrument(err, skip_all)]
-    async fn get_or_create_first_invite_for_room(
+    async fn get_or_create_valid_invite_for_room(
         &mut self,
         room_id: RoomId,
         user_id: UserId,
     ) -> Result<Invite> {
-        Invite::get_first_or_create_for_room(&mut self.inner, room_id, user_id)
+        Invite::get_valid_or_create_for_room(&mut self.inner, room_id, user_id)
             .await
             .context(StorageBackendSnafu)
     }

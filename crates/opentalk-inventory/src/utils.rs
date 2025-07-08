@@ -28,7 +28,7 @@ pub async fn build_event_info(
     tariff: &Tariff,
 ) -> Result<EventInfo> {
     let event_info = if event.show_meeting_details {
-        let invite = inventory.get_first_invite_for_room(room_id).await?;
+        let invite = inventory.get_valid_invite_for_room(room_id).await?;
 
         let call_in = if let Some(call_in_tel) = call_in_tel {
             if e2e_encryption || tariff.is_feature_disabled(&features::CALL_IN_MODULE_FEATURE_ID) {

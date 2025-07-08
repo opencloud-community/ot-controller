@@ -16,6 +16,7 @@ workspace = true
 [dependencies]
 async-trait.workspace = true
 bigdecimal.workspace = true
+chrono.workspace = true
 diesel-async.workspace = true
 opentalk-database.workspace = true
 opentalk-db-storage.workspace = true

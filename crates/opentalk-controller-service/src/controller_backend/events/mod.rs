@@ -664,7 +664,7 @@ impl ControllerBackend {
             .chain(std::iter::once(current_user_mail_recipient))
             .collect::<Vec<_>>();
         let invite_for_room =
-            Invite::get_first_or_create_for_room(&mut conn, room.id, current_user.id).await?;
+            Invite::get_valid_or_create_for_room(&mut conn, room.id, current_user.id).await?;
 
         // Add the access policy for the invite code, just in case it has been created by
         // the `Invite::get_first_for_room(…)` call above. That function is not able to
