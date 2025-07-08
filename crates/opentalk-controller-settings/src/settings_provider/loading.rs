@@ -74,14 +74,41 @@ mod tests {
     use std::env;
 
     use pretty_assertions::assert_eq;
+    use serial_test::serial;
 
     use super::*;
+    use crate::settings_provider::tests::{backup_env_variables, restore_env_variables};
 
+    /// Test whether settings are properly overwritten by environment variables.
+    ///
+    /// This test sets and reads environment variables which is inherently unsafe.
+    /// Therefore it is marked as `#[serial]` so that it doesn't interfere with any other
+    /// tests that might run in parallel.
+    ///
+    /// Once the test is finished, all variables are restored.
     #[test]
+    #[serial]
     fn settings_env_vars_overwrite_config() -> Result<()> {
-        env::remove_var("OPENTALK_CTRL_DATABASE__URL");
-        env::remove_var("OPENTALK_CTRL_HTTP__PORT");
-        env::remove_var("OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+        // backup current environment variables
+        let backup_vars = backup_env_variables();
+
+        // perform the test which modifies the env variables
+        let result = settings_env_ars_overwrite_config_inner();
+
+        // restore the environment variables from the backup
+        unsafe {
+            restore_env_variables(backup_vars);
+        }
+
+        result
+    }
+
+    fn settings_env_ars_overwrite_config_inner() -> Result<()> {
+        unsafe {
+            env::remove_var("OPENTALK_CTRL_DATABASE__URL");
+            env::remove_var("OPENTALK_CTRL_HTTP__PORT");
+            env::remove_var("OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+        }
 
         // Sanity check
         let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
@@ -96,12 +123,15 @@ mod tests {
         let env_db_url = "postgres://envtest:password@localhost:5432/opentalk".to_string();
         let env_http_port: u16 = 8000;
         let screen_share_requires_permission = true;
-        env::set_var("OPENTALK_CTRL_DATABASE__URL", &env_db_url);
-        env::set_var("OPENTALK_CTRL_HTTP__PORT", env_http_port.to_string());
-        env::set_var(
-            "OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION",
-            screen_share_requires_permission.to_string(),
-        );
+
+        unsafe {
+            env::set_var("OPENTALK_CTRL_DATABASE__URL", &env_db_url);
+            env::set_var("OPENTALK_CTRL_HTTP__PORT", env_http_port.to_string());
+            env::set_var(
+                "OPENTALK_CTRL_DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION",
+                screen_share_requires_permission.to_string(),
+            );
+        }
 
         let settings = SettingsProvider::load_raw(Path::new("../../example/controller.toml"))?;
 

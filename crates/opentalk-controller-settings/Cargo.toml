@@ -6,7 +6,7 @@
 authors.workspace = true
 description = "Settings for opentalk-controller"
 documentation = "https://docs.rs/opentalk-controller-settings"
-edition = "2021"
+edition = "2024"
 homepage.workspace = true
 license = "EUPL-1.2"
 name = "opentalk-controller-settings"
@@ -43,5 +43,6 @@ pretty_assertions = { workspace = true, features = [
   "unstable",
 ] }
 serde_json.workspace = true
+serial_test.workspace = true
 tempfile.workspace = true
 toml.workspace = true

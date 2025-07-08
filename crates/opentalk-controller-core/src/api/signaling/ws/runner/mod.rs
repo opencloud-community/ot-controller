@@ -1855,7 +1855,7 @@ impl Runner {
         let mut actions = AttributeActions::new(self.room_id, self.id);
 
         match &self.participant {
-            Participant::User(ref user) => {
+            Participant::User(user) => {
                 actions
                     .set_local(KIND, ParticipationKind::User)
                     .set_local(

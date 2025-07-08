@@ -136,7 +136,7 @@ impl TryFrom<&RawProtocol<'_>> for VotingRecord {
             .context(MissingStartSnafu)?;
 
         let vote_iter = protocol.0.iter().filter_map(|entry| match &entry.event {
-            db_protocol::v1::VoteEvent::Vote(ref vote) => Some(vote),
+            db_protocol::v1::VoteEvent::Vote(vote) => Some(vote),
             _ => None,
         });
 
