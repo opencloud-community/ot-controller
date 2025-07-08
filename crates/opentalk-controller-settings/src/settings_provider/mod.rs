@@ -12,7 +12,7 @@ use dirs::config_dir;
 use itertools::Itertools as _;
 use owo_colors::OwoColorize as _;
 
-use crate::{settings_error::ConfigurationFileNotFoundSnafu, Result, Settings, SettingsRaw};
+use crate::{Result, Settings, SettingsRaw, settings_error::ConfigurationFileNotFoundSnafu};
 
 mod loading;
 
@@ -183,8 +183,8 @@ mod tests {
 
     use super::SettingsProvider;
     use crate::{
-        settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
-        settings_runtime::settings::minimal_example, SettingsError,
+        SettingsError, settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
+        settings_runtime::settings::minimal_example,
     };
 
     #[test]

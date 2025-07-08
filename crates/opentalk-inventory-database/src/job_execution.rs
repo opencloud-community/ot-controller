@@ -5,7 +5,7 @@
 use opentalk_db_storage::jobs::{
     Job, JobExecution, NewJobExecution, NewJobExecutionLog, SerialId, UpdateJobExecution,
 };
-use opentalk_inventory::{error::StorageBackendSnafu, JobExecutionInventory};
+use opentalk_inventory::{JobExecutionInventory, error::StorageBackendSnafu};
 use snafu::ResultExt as _;
 
 use crate::{DatabaseConnection, Result};

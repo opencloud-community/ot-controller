@@ -5,15 +5,15 @@
 use chrono::{DateTime, Utc};
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_signaling_module_chat::Chat;
-use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
+use opentalk_test_util::{ROOM_ID, TestContext, USER_1, USER_2};
 use opentalk_types_common::{time::Timestamp, users::GroupName};
 use opentalk_types_signaling::{AssociatedParticipant, LeaveReason, Participant, Role};
 use opentalk_types_signaling_chat::{
+    Scope,
     command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatEvent, MessageSent},
     peer_state::ChatPeerState,
     state::ChatState,
-    Scope,
 };
 use opentalk_types_signaling_control::event::{ControlEvent, Left};
 use pretty_assertions::assert_eq;

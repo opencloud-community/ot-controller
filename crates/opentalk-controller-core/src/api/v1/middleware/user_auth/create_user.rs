@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::email_invites::EventEmailInvite,
-    groups::{insert_user_into_groups, Group},
+    groups::{Group, insert_user_into_groups},
     tariffs::Tariff,
     tenants::Tenant,
     users::NewUser,
@@ -19,7 +19,7 @@ use opentalk_types_common::{
     users::{Language, UserTitle},
 };
 
-use super::{build_info_display_name, LoginResult};
+use super::{LoginResult, build_info_display_name};
 
 /// Called when `POST /auth/login` receives an id-token with a new `sub` + `tenant_id` field combination. Creates a new
 /// user in the given tenant using the information extracted from the id-token claims.

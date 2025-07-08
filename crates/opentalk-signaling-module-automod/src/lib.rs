@@ -74,23 +74,21 @@ mod storage;
 use std::time::Duration;
 
 use either::Either;
-use futures::{stream::once, FutureExt};
+use futures::{FutureExt, stream::once};
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, RoomLockingProvider,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorage,
+    DestroyContext, Event, InitContext, ModuleContext, RoomLockingProvider, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage, control,
 };
 use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_automod::{
-    self,
+    self, MODULE_ID,
     command::{AutomodCommand, Select, Start, Yield},
     config::{FrontendConfig, Parameter, SelectionStrategy},
     event::{AutomodEvent, Error, RemainingUpdated, SpeakerUpdated, StartAnimation, StoppedReason},
     state::AutomodState,
-    MODULE_ID,
 };
-use snafu::{whatever, ResultExt};
+use snafu::{ResultExt, whatever};
 use state_machine::StateMachineOutput;
 use storage::AutomodStorage;
 use tokio::time::sleep;

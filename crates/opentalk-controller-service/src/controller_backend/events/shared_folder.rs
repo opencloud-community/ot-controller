@@ -14,8 +14,8 @@ use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{
-        shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event,
+        shared_folders::{EventSharedFolder, NewEventSharedFolder},
     },
     streaming_targets::get_room_streaming_targets,
     tenants::Tenant,
@@ -33,8 +33,8 @@ use opentalk_types_common::{
 use snafu::Report;
 
 use crate::{
-    events::{notifications::notify_event_invitees_about_update, shared_folder_for_user},
     ControllerBackend,
+    events::{notifications::notify_event_invitees_about_update, shared_folder_for_user},
 };
 
 impl ControllerBackend {
@@ -410,7 +410,9 @@ pub async fn delete_shared_folders(
             for shared_folder in shared_folders {
                 let path = &shared_folder.path;
                 if path.trim_matches('/').is_empty() {
-                    warn!("Preventing recursive deletion of empty shared folder path, this is probably harmful and not intended");
+                    warn!(
+                        "Preventing recursive deletion of empty shared folder path, this is probably harmful and not intended"
+                    );
                     return Err(ApiError::internal());
                 }
                 let user_path = format!("files/{username}/{path}");

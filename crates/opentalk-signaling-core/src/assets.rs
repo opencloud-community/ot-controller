@@ -31,7 +31,7 @@ use opentalk_types_common::{
 };
 use snafu::{IntoError, ResultExt, Snafu};
 
-use crate::{object_storage::ChunkFormat, ObjectStorage, ObjectStorageError};
+use crate::{ObjectStorage, ObjectStorageError, object_storage::ChunkFormat};
 
 #[derive(Debug, Snafu)]
 pub enum AssetError {
@@ -317,7 +317,7 @@ mod tests {
 
     use chrono::{TimeZone as _, Utc};
     use opentalk_types_common::{
-        assets::{asset_file_kind, FileExtension},
+        assets::{FileExtension, asset_file_kind},
         time::Timestamp,
     };
     use pretty_assertions::assert_eq;

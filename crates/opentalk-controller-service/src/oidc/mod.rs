@@ -10,8 +10,8 @@ use chrono::{DateTime, Utc};
 use claims::OpenTalkAdditionalClaims;
 use http::async_http_client;
 use openidconnect::{
-    core::CoreGenderClaim, AccessToken, ClientId, ClientSecret, LocalizedClaim,
-    TokenIntrospectionResponse, UserInfoClaims,
+    AccessToken, ClientId, ClientSecret, LocalizedClaim, TokenIntrospectionResponse,
+    UserInfoClaims, core::CoreGenderClaim,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_types_api_v1::error::ApiError;
@@ -28,7 +28,7 @@ mod jwt;
 mod provider;
 
 pub use claims::{OnlyExpiryClaim, ServiceClaims};
-pub use jwt::{decode_token, VerifyError};
+pub use jwt::{VerifyError, decode_token};
 
 /// The `OidcContext` contains all information about the Oidc provider and permissions matrix.
 #[derive(Debug)]

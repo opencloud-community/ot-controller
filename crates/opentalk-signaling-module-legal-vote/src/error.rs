@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_database::DatabaseError;
-use opentalk_signaling_core::{assets::AssetError, ObjectStorageError, SignalingModuleError};
+use opentalk_signaling_core::{ObjectStorageError, SignalingModuleError, assets::AssetError};
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_legal_vote::event::{ErrorKind as TypesErrorKind, GuestParticipants};
 use snafu::Snafu;

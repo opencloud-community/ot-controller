@@ -4,7 +4,7 @@
 
 //! Functionality to delete events including all associated resources
 
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use kustos::{Authz, Resource as _, ResourceId};
 use kustos_shared::access::AccessMethod;
 use log::Log;
@@ -12,15 +12,15 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
     assets::Asset,
-    events::{shared_folders::EventSharedFolder, Event},
+    events::{Event, shared_folders::EventSharedFolder},
 };
 use opentalk_log::{debug, warn};
-use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, assets::asset_key, control};
 use opentalk_types_common::{assets::AssetId, events::EventId, users::UserId};
 use opentalk_types_signaling::NamespacedEvent;
 use snafu::ResultExt;
 
-use super::{shared_folders::delete_shared_folders, Deleter, Error, RACE_CONDITION_ERROR_MESSAGE};
+use super::{Deleter, Error, RACE_CONDITION_ERROR_MESSAGE, shared_folders::delete_shared_folders};
 use crate::deletion::{error::ObjectDeletionSnafu, room::delete_rows_associated_with_room};
 
 /// Delete an event by id including the corresponding room and resources it

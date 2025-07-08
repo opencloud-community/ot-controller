@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_web::{
-    dev::{ServiceFactory, ServiceRequest},
     App, Error,
+    dev::{ServiceFactory, ServiceRequest},
 };
 
 pub(super) trait WithSwagger {

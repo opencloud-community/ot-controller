@@ -112,10 +112,12 @@ pub(crate) mod test_common {
             .await
             .unwrap()
             .expect("The allow list must contain entries");
-        assert!(storage
-            .allow_list_contains(ROOM, random_participant)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .allow_list_contains(ROOM, random_participant)
+                .await
+                .unwrap()
+        );
 
         storage.allow_list_add(ROOM, ALICE).await.unwrap();
         assert_eq!(

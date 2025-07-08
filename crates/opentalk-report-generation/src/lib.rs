@@ -35,7 +35,7 @@ pub use report_date_time::{ReportDateTime, ToReportDateTime};
 pub use report_generation_error::ReportGenerationError;
 use report_generation_error::{CompilationSnafu, DumpDirectoryCreationSnafu, DumpFileExportSnafu};
 use snafu::ResultExt;
-use typst::{diag::SourceResult, World as _};
+use typst::{World as _, diag::SourceResult};
 use typst_pdf::PdfOptions;
 use world::World;
 

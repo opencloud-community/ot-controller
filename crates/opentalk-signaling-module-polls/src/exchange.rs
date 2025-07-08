@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_types_signaling_polls::{state::PollsState, PollId};
+use opentalk_types_signaling_polls::{PollId, state::PollsState};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

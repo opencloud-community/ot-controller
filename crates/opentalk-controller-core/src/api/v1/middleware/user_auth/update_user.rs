@@ -2,19 +2,19 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use opentalk_controller_service::{oidc::OpenIdConnectUserInfo, phone_numbers::parse_phone_number};
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
-    groups::{insert_user_into_groups, remove_user_from_groups, Group},
+    groups::{Group, insert_user_into_groups, remove_user_from_groups},
     tariffs::Tariff,
     users::{UpdateUser, User},
 };
 use opentalk_types_common::{tariffs::TariffStatus, users::DisplayName};
 
-use super::{build_info_display_name, LoginResult};
+use super::{LoginResult, build_info_display_name};
 
 /// Called when the `POST /auth/login` endpoint received an id-token with a `sub`+`tenant_id` combination that maps to
 /// an existing user. Resets the expiry time of the id-token for the user. Also updates all fields in the database that

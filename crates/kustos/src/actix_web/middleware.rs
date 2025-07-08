@@ -14,13 +14,13 @@ use std::{
 };
 
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error, HttpMessage, HttpResponse, Result,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
 };
 use casbin::CoreApi;
 use futures::{
-    future::{ok, Ready},
     Future,
+    future::{Ready, ok},
 };
 use itertools::Itertools;
 use kustos_shared::{access::AccessMethod, subject::PolicyUser};

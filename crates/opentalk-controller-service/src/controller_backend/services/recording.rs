@@ -4,13 +4,13 @@
 
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_db_storage::rooms::Room;
-use opentalk_signaling_core::{assets::verify_storage_usage, Participant};
+use opentalk_signaling_core::{Participant, assets::verify_storage_usage};
 use opentalk_types_api_v1::{
     error::ApiError,
-    services::{recording::PostRecordingStartRequestBody, PostServiceStartResponseBody},
+    services::{PostServiceStartResponseBody, recording::PostRecordingStartRequestBody},
 };
 
-use crate::{signaling::ticket::start_or_continue_signaling_session, ControllerBackend};
+use crate::{ControllerBackend, signaling::ticket::start_or_continue_signaling_session};
 
 impl ControllerBackend {
     pub(crate) async fn start_recording(

@@ -6,16 +6,16 @@ use std::collections::BTreeSet;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError, SignalingRoomId,
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
 };
 use opentalk_types_signaling_legal_vote::{
     parameters::Parameters, tally::Tally, token::Token, vote::LegalVoteId,
 };
 
 use super::{
-    protocol::v1::{ProtocolEntry, Vote},
     VoteScriptResult, VoteStatus,
+    protocol::v1::{ProtocolEntry, Vote},
 };
 use crate::error::LegalVoteError;
 

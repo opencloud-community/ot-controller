@@ -4,24 +4,24 @@
 
 use actix_http::ws::Codec;
 use actix_web::{
+    HttpRequest, HttpResponse,
     dev::HttpServiceFactory,
     get, post, web,
     web::{Data, Json, Query},
-    HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
 use bytes::Bytes;
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
-    assets::{save_asset, NewAssetFileName},
     ChunkFormat, ObjectStorage, ObjectStorageError,
+    assets::{NewAssetFileName, save_asset},
 };
 use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody},
     services::{
-        recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
         PostServiceStartResponseBody,
+        recording::{GetRecordingUploadQuery, PostRecordingStartRequestBody},
     },
 };
 use tokio::{sync::mpsc, task};
@@ -29,7 +29,7 @@ use tokio::{sync::mpsc, task};
 use crate::api::{
     headers::{ConnectionUpgrade, WebsocketUpgrade},
     responses::{InternalServerError, Unauthorized},
-    upload::{UploadWebSocketActor, MAXIMUM_WEBSOCKET_BUFFER_SIZE},
+    upload::{MAXIMUM_WEBSOCKET_BUFFER_SIZE, UploadWebSocketActor},
 };
 
 // Note to devs:

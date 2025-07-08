@@ -6,7 +6,7 @@
 
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
-use diesel::{dsl::not, prelude::*, ExpressionMethods, Identifiable, QueryDsl, Queryable};
+use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable, dsl::not, prelude::*};
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;

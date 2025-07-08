@@ -19,7 +19,7 @@ use opentalk_signaling_core::{
 };
 use opentalk_types_common::{
     modules::ModuleId,
-    shared_folders::{SharedFolder as SharedFolderType, MODULE_ID},
+    shared_folders::{MODULE_ID, SharedFolder as SharedFolderType},
 };
 use opentalk_types_signaling::ForRole as _;
 use opentalk_types_signaling_shared_folder::event::SharedFolderEvent;

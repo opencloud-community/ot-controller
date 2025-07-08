@@ -4,8 +4,8 @@
 
 use opentalk_db_storage::module_resources::{Filter, ModuleResource, NewModuleResource, Operation};
 use opentalk_inventory::{
-    error::{JsonOperationSnafu, StorageBackendSnafu},
     ModuleResourceInventory,
+    error::{JsonOperationSnafu, StorageBackendSnafu},
 };
 use opentalk_types_common::{module_resources::ModuleResourceId, rooms::RoomId};
 use snafu::ResultExt as _;

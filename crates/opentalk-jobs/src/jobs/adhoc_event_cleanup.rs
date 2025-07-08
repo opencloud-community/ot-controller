@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 use snafu::{Report, ResultExt};
 
 use crate::{
-    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
-    events::{perform_deletion, DeleteSelector},
     Error, Job, JobParameters,
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
+    events::{DeleteSelector, perform_deletion},
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

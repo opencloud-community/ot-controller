@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_web::{
-    delete, put,
+    Either, delete, put,
     web::{Data, Path, ReqData},
-    Either,
 };
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::error::ApiError;

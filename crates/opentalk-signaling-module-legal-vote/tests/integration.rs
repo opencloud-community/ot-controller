@@ -10,16 +10,16 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_signaling_core::{
-    module_tester::{ModuleTester, WsMessageOutgoing},
     SignalingModule, SignalingModuleError,
+    module_tester::{ModuleTester, WsMessageOutgoing},
 };
 use opentalk_signaling_module_legal_vote::{
-    storage::{v1::ProtocolEntry, Protocol},
     LegalVote,
+    storage::{Protocol, v1::ProtocolEntry},
 };
 use opentalk_test_util::{
+    ROOM_ID, TestContext, TestUser, USER_1, USER_2, USERS,
     common::{self, TestContextVolatileStorage},
-    TestContext, TestUser, ROOM_ID, USERS, USER_1, USER_2,
 };
 use opentalk_types_common::users::DisplayName;
 use opentalk_types_signaling::{ParticipantId, Role};
@@ -39,7 +39,7 @@ use opentalk_types_signaling_legal_vote::{
     vote::{self, LegalVoteId, VoteKind, VoteOption, VoteState, VoteSummary},
 };
 use pretty_assertions::assert_eq;
-use serde_json::{to_value, Value};
+use serde_json::{Value, to_value};
 use serial_test::serial;
 
 fn compare_stopped_message_except_for_timestamp(

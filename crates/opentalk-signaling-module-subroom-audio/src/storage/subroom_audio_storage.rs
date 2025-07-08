@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::ControlStorageParticipantSet, SignalingModuleError, SignalingRoomId,
+    SignalingModuleError, SignalingRoomId, control::storage::ControlStorageParticipantSet,
 };
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_subroom_audio::{state::WhisperState, whisper_id::WhisperId};

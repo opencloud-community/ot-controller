@@ -19,8 +19,8 @@ use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
 use crate::storage::{
-    automod_storage::{AutomodHistoryStorage, Entry},
     EntryKind,
+    automod_storage::{AutomodHistoryStorage, Entry},
 };
 
 #[async_trait(?Send)]

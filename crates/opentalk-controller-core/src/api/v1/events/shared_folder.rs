@@ -4,9 +4,8 @@
 
 use actix_http::StatusCode;
 use actix_web::{
-    delete, get, put,
+    CustomizeResponder, Responder as _, delete, get, put,
     web::{Data, Json, Path, Query, ReqData},
-    CustomizeResponder, Responder as _,
 };
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{

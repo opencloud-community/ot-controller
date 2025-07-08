@@ -7,7 +7,7 @@ use diesel::{
     BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, JoinOnDsl,
     NullableExpressionMethods as _, QueryDsl, Queryable,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types_common::{
     assets::{AssetId, AssetSorting},

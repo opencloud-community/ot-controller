@@ -9,10 +9,10 @@ pub(crate) mod notifications;
 use opentalk_controller_settings::{Settings, TenantAssignment};
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
-    events::{email_invites::EventEmailInvite, shared_folders::EventSharedFolder, EventInvite},
+    events::{EventInvite, email_invites::EventEmailInvite, shared_folders::EventSharedFolder},
     tenants::Tenant,
 };
-use opentalk_keycloak_admin::{users::TenantFilter, KeycloakAdminClient};
+use opentalk_keycloak_admin::{KeycloakAdminClient, users::TenantFilter};
 use opentalk_types_api_v1::{
     events::{EventInvitee, EventInviteeProfile},
     users::UnregisteredUser,

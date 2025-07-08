@@ -6,11 +6,11 @@ use std::collections::BTreeSet;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
+    SignalingModuleError,
     control::storage::{
         ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet,
         ControlStorageSkipWaitingRoom,
     },
-    SignalingModuleError,
 };
 use opentalk_types_common::{rooms::RoomId, users::UserId};
 use opentalk_types_signaling::ParticipantId;
@@ -46,7 +46,7 @@ pub trait ModerationStorage:
     ) -> Result<(), SignalingModuleError>;
 
     async fn is_waiting_room_enabled(&mut self, room: RoomId)
-        -> Result<bool, SignalingModuleError>;
+    -> Result<bool, SignalingModuleError>;
 
     async fn delete_waiting_room_enabled(
         &mut self,

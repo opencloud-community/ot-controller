@@ -4,7 +4,7 @@
 
 //! Functionality to delete users including all associated resources
 
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use kustos::Authz;
 use log::Log;
 use opentalk_controller_settings::Settings;

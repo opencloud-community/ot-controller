@@ -18,10 +18,10 @@ use super::memory::MemoryLegalVoteState;
 use crate::{
     error::LegalVoteError,
     storage::{
-        legal_vote_storage::{LegalVoteCountStorage, LegalVoteProtocolStorage},
-        protocol::v1::{ProtocolEntry, Vote},
         LegalVoteAllowTokenStorage, LegalVoteCurrentStorage, LegalVoteHistoryStorage,
         LegalVoteParameterStorage, LegalVoteStorage, VoteScriptResult, VoteStatus,
+        legal_vote_storage::{LegalVoteCountStorage, LegalVoteProtocolStorage},
+        protocol::v1::{ProtocolEntry, Vote},
     },
 };
 

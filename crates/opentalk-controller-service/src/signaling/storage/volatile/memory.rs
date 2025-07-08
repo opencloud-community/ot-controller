@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{btree_map::Entry, BTreeMap};
+use std::collections::{BTreeMap, btree_map::Entry};
 
 use opentalk_signaling_core::{ExpiringDataHashMap, RunnerId};
 use opentalk_types_common::auth::{ResumptionToken, TicketToken};

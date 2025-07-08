@@ -24,8 +24,8 @@ use serde::{Deserialize, Serialize};
 use tokio::time::sleep_until;
 
 use crate::{
-    signaling::storage::{SignalingStorage, SignalingStorageError},
     Result,
+    signaling::storage::{SignalingStorage, SignalingStorageError},
 };
 
 const RESUMPTION_REFRESH_INTERVAL: u64 = 60;

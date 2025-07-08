@@ -10,8 +10,8 @@ use bincode::{Decode, Encode};
 use chrono::{DateTime, Utc};
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
-    dsl::sum, pg::Pg, BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy,
-    Identifiable, Insertable, OptionalExtension, QueryDsl, Queryable, TextExpressionMethods,
+    BelongingToDsl, BoolExpressionMethods, ExpressionMethods, GroupedBy, Identifiable, Insertable,
+    OptionalExtension, QueryDsl, Queryable, TextExpressionMethods, dsl::sum, pg::Pg,
 };
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};

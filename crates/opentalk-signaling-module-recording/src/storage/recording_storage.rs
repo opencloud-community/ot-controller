@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::ControlStorageParticipantAttributesRaw, SignalingModuleError, SignalingRoomId,
+    SignalingModuleError, SignalingRoomId, control::storage::ControlStorageParticipantAttributesRaw,
 };
 use opentalk_types_common::streaming::StreamingTargetId;
 use opentalk_types_signaling_recording::{StreamStatus, StreamTargetSecret};

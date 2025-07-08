@@ -6,12 +6,12 @@ use std::{pin::Pin, sync::Arc, time::Instant};
 
 use actix_http::body::{BodySize, MessageBody};
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
 };
 use futures::{
-    future::{ready, Ready},
     Future, FutureExt,
+    future::{Ready, ready},
 };
 use opentalk_controller_service::metrics::EndpointMetrics;
 use opentelemetry::{Key, KeyValue};

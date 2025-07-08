@@ -13,7 +13,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{features, rooms::RoomId};
 
-use crate::{require_feature, ControllerBackend};
+use crate::{ControllerBackend, require_feature};
 
 impl ControllerBackend {
     pub(crate) async fn get_sip_config(

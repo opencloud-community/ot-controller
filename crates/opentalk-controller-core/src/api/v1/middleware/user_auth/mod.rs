@@ -12,11 +12,11 @@ use std::{
 };
 
 use actix_web::{
+    HttpMessage, ResponseError,
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     error::Error,
     http::header::Header,
     web::Data,
-    HttpMessage, ResponseError,
 };
 use actix_web_httpauth::headers::authorization::Authorization;
 use chrono::{DateTime, Utc};
@@ -34,15 +34,15 @@ use opentalk_controller_settings::{
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{Db, OptionalExt};
 use opentalk_db_storage::{
-    groups::{get_or_create_groups_by_name, Group},
+    groups::{Group, get_or_create_groups_by_name},
     tariffs::{ExternalTariffId, Tariff},
-    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId, Tenant},
+    tenants::{OidcTenantId, Tenant, get_or_create_tenant_by_oidc_id},
     users::User,
 };
 use opentalk_types_api_v1::error::{ApiError, AuthenticationError};
 use opentalk_types_common::{
     events::EventId,
-    rooms::{invite_codes::InviteCode, RoomId},
+    rooms::{RoomId, invite_codes::InviteCode},
     tariffs::TariffStatus,
     tenants::TenantId,
     users::{DisplayName, GroupName, Language},

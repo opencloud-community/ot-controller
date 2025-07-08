@@ -8,7 +8,7 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::tenants::{OidcTenantId, Tenant, UpdateTenant};
 use opentalk_types_common::tenants::TenantId;
-use tabled::{settings::Style, Table, Tabled};
+use tabled::{Table, Tabled, settings::Style};
 use uuid::Uuid;
 
 #[derive(Subcommand, Debug, Clone)]

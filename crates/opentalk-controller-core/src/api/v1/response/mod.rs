@@ -5,7 +5,7 @@
 //! Response types for REST APIv1
 //!
 //! These all implement the [`Responder`] trait.
-use actix_web::{body::BoxBody, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, body::BoxBody};
 use opentalk_types_api_v1::error::ApiError;
 
 pub mod error;

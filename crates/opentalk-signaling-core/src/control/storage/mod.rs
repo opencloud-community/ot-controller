@@ -79,18 +79,24 @@ mod test_common {
         assert!(!storage.participant_set_exists(ROOM).await.unwrap());
         assert!(!storage.participants_contains(ROOM, BOB).await.unwrap());
         assert!(!storage.participants_contains(ROOM, ALICE).await.unwrap());
-        assert!(!storage
-            .check_participants_exist(ROOM, &[BOB, ALICE])
-            .await
-            .unwrap());
-        assert!(!storage
-            .check_participants_exist(ROOM, &[BOB])
-            .await
-            .unwrap());
-        assert!(!storage
-            .check_participants_exist(ROOM, &[ALICE])
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .check_participants_exist(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .check_participants_exist(ROOM, &[BOB])
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .check_participants_exist(ROOM, &[ALICE])
+                .await
+                .unwrap()
+        );
         assert_eq!(
             storage.get_all_participants(ROOM).await.unwrap(),
             BTreeSet::default()
@@ -101,18 +107,24 @@ mod test_common {
         assert!(storage.participant_set_exists(ROOM).await.unwrap());
         assert!(storage.participants_contains(ROOM, BOB).await.unwrap());
         assert!(!storage.participants_contains(ROOM, ALICE).await.unwrap());
-        assert!(!storage
-            .check_participants_exist(ROOM, &[BOB, ALICE])
-            .await
-            .unwrap());
-        assert!(storage
-            .check_participants_exist(ROOM, &[BOB])
-            .await
-            .unwrap());
-        assert!(!storage
-            .check_participants_exist(ROOM, &[ALICE])
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .check_participants_exist(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .check_participants_exist(ROOM, &[BOB])
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .check_participants_exist(ROOM, &[ALICE])
+                .await
+                .unwrap()
+        );
         assert_eq!(
             storage.get_all_participants(ROOM).await.unwrap(),
             BTreeSet::from([BOB])
@@ -124,18 +136,24 @@ mod test_common {
         assert!(storage.participants_contains(ROOM, BOB).await.unwrap());
         assert!(storage.participants_contains(ROOM, ALICE).await.unwrap());
 
-        assert!(storage
-            .check_participants_exist(ROOM, &[BOB, ALICE])
-            .await
-            .unwrap());
-        assert!(storage
-            .check_participants_exist(ROOM, &[BOB])
-            .await
-            .unwrap());
-        assert!(storage
-            .check_participants_exist(ROOM, &[ALICE])
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .check_participants_exist(ROOM, &[BOB, ALICE])
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .check_participants_exist(ROOM, &[BOB])
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .check_participants_exist(ROOM, &[ALICE])
+                .await
+                .unwrap()
+        );
         assert_eq!(
             storage.get_all_participants(ROOM).await.unwrap(),
             BTreeSet::from([BOB, ALICE])
@@ -174,23 +192,29 @@ mod test_common {
         let loaded: Option<Point> = storage.get_attribute(ALICE, POINT).await.unwrap();
         assert_eq!(loaded, Some(point));
 
-        assert!(storage
-            .get_attribute::<Point>(BOB, POINT)
-            .await
-            .unwrap()
-            .is_none());
-        assert!(storage
-            .get_attribute::<Point>(ALICE, LINE)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_attribute::<Point>(BOB, POINT)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        assert!(
+            storage
+                .get_attribute::<Point>(ALICE, LINE)
+                .await
+                .unwrap()
+                .is_none()
+        );
 
         storage.remove_attribute(ALICE, POINT).await.unwrap();
-        assert!(storage
-            .get_attribute::<Point>(ALICE, POINT)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_attribute::<Point>(ALICE, POINT)
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 
     pub(super) async fn participant_attributes(storage: &mut impl ControlStorage) {

@@ -6,8 +6,8 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError,
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
 };
 use opentalk_types_common::rooms::RoomId;
 

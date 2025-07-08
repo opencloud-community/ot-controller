@@ -8,13 +8,13 @@ use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{Event, EventInvite, GetEventsCursor, NewEvent, NewEventInvite, UpdateEventInvite},
     rooms::NewRoom,
-    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    tenants::{OidcTenantId, get_or_create_tenant_by_oidc_id},
     users::User,
 };
 use opentalk_types_common::{
     events::{
-        invites::{EventInviteStatus, InviteRole},
         EventId,
+        invites::{EventInviteStatus, InviteRole},
     },
     time::TimeZone,
     users::UserId,
@@ -325,18 +325,26 @@ async fn get_events_invite_filter() {
     .expect("Failed to get events: ");
 
     assert_eq!(all_events.len(), 4);
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == accept_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == decline_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == tentative_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == pending_event.id));
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == accept_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == decline_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == tentative_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == pending_event.id)
+    );
 
     // Check that no events are returned when filtering for `Declined`
     let no_events = Event::get_all_for_user_paginated(
@@ -422,9 +430,11 @@ async fn get_events_invite_filter() {
     .unwrap();
 
     assert_eq!(accepted_events.len(), 1);
-    assert!(accepted_events
-        .iter()
-        .any(|(event, ..)| event.id == accept_event.id));
+    assert!(
+        accepted_events
+            .iter()
+            .any(|(event, ..)| event.id == accept_event.id)
+    );
 
     // check `declined` invites
     let declined_events = Event::get_all_for_user_paginated(
@@ -445,9 +455,11 @@ async fn get_events_invite_filter() {
     .unwrap();
 
     assert_eq!(declined_events.len(), 1);
-    assert!(declined_events
-        .iter()
-        .any(|(event, ..)| event.id == decline_event.id));
+    assert!(
+        declined_events
+            .iter()
+            .any(|(event, ..)| event.id == decline_event.id)
+    );
 
     // check `tentative` invites
     let tentative_events = Event::get_all_for_user_paginated(
@@ -468,9 +480,11 @@ async fn get_events_invite_filter() {
     .unwrap();
 
     assert_eq!(tentative_events.len(), 1);
-    assert!(tentative_events
-        .iter()
-        .any(|(event, ..)| event.id == tentative_event.id));
+    assert!(
+        tentative_events
+            .iter()
+            .any(|(event, ..)| event.id == tentative_event.id)
+    );
 
     // check `pending` invites
     let pending_events = Event::get_all_for_user_paginated(
@@ -491,9 +505,11 @@ async fn get_events_invite_filter() {
     .unwrap();
 
     assert_eq!(pending_events.len(), 1);
-    assert!(pending_events
-        .iter()
-        .any(|(event, ..)| event.id == pending_event.id));
+    assert!(
+        pending_events
+            .iter()
+            .any(|(event, ..)| event.id == pending_event.id)
+    );
 
     // expect all events when no invite_status_filter is set
     let all_events = Event::get_all_for_user_paginated(
@@ -514,18 +530,26 @@ async fn get_events_invite_filter() {
     .unwrap();
 
     assert_eq!(all_events.len(), 4);
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == accept_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == decline_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == tentative_event.id));
-    assert!(all_events
-        .iter()
-        .any(|(event, ..)| event.id == pending_event.id));
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == accept_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == decline_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == tentative_event.id)
+    );
+    assert!(
+        all_events
+            .iter()
+            .any(|(event, ..)| event.id == pending_event.id)
+    );
 }
 
 #[tokio::test]

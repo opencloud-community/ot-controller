@@ -20,11 +20,11 @@ use snafu::whatever;
 
 use super::memory::MemoryAutomodState;
 use crate::storage::{
+    AutomodStorage, StorageConfig,
     automod_storage::{
         AutomodAllowListStorage, AutomodConfigStorage, AutomodHistoryStorage,
         AutomodPlaylistStorage, AutomodSpeakerStorage, Entry, RoomAutomodLock,
     },
-    AutomodStorage, StorageConfig,
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryAutomodState>>> = OnceLock::new();

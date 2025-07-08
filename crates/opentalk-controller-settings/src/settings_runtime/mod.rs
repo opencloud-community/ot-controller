@@ -81,11 +81,11 @@ pub use settings::Settings;
 pub use shared_folder::SharedFolder;
 pub use spacedeck::Spacedeck;
 pub use subroom_audio::SubroomAudio;
-pub use tariff_assignment::{TariffAssignment, DEFAULT_STATIC_TARIFF_NAME};
+pub use tariff_assignment::{DEFAULT_STATIC_TARIFF_NAME, TariffAssignment};
 pub use tariff_status_mapping::TariffStatusMapping;
 pub use tariffs::Tariffs;
 pub use tenant_assignment::{
-    TenantAssignment, DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TENANT_ID,
+    DEFAULT_EXTERNAL_TENANT_ID_USER_ATTRIBUTE_NAME, DEFAULT_STATIC_TENANT_ID, TenantAssignment,
 };
 pub use tenants::Tenants;
 pub use user_search_backend::UserSearchBackend;

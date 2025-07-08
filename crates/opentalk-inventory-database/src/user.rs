@@ -5,11 +5,11 @@
 use bigdecimal::BigDecimal;
 use opentalk_db_storage::{
     groups::{
-        insert_user_into_groups, remove_user_from_all_groups, remove_user_from_groups, Group,
+        Group, insert_user_into_groups, remove_user_from_all_groups, remove_user_from_groups,
     },
     users::{NewUser, UpdateUser, User},
 };
-use opentalk_inventory::{error::StorageBackendSnafu, UserInventory};
+use opentalk_inventory::{UserInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{tenants::TenantId, time::Timestamp, users::UserId};
 use snafu::ResultExt as _;
 

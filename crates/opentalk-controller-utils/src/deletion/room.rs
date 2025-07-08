@@ -4,7 +4,7 @@
 
 //! Functionality to delete rooms including all associated resources
 
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use kustos::{Authz, Resource as _, ResourceId};
 use kustos_shared::access::AccessMethod;
 use log::Log;
@@ -12,13 +12,13 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, DbConnection};
 use opentalk_db_storage::{
     assets::Asset,
-    events::{shared_folders::EventSharedFolder, Event},
+    events::{Event, shared_folders::EventSharedFolder},
     module_resources::ModuleResource,
     rooms::Room,
     sip_configs::SipConfig,
 };
 use opentalk_log::{debug, warn};
-use opentalk_signaling_core::{assets::asset_key, control, ExchangeHandle, ObjectStorage};
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, assets::asset_key, control};
 use opentalk_types_common::{
     assets::AssetId, events::EventId, module_resources::ModuleResourceId, rooms::RoomId,
     users::UserId,

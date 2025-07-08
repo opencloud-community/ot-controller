@@ -8,26 +8,26 @@ use std::{
 };
 
 use either::Either;
-use futures::{stream::once, FutureExt};
+use futures::{FutureExt, stream::once};
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use opentalk_database::Db;
 use opentalk_db_storage::streaming_targets::RoomStreamingTargetRecord;
 use opentalk_signaling_core::{
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
     control::{
         self,
         storage::{ControlStorageParticipantAttributes as _, RECORDING_CONSENT},
     },
-    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{features::FeatureId, modules::ModuleId, streaming::StreamingTargetId};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_recording::{
+    MODULE_ID, RECORD_FEATURE_ID, STREAM_FEATURE_ID, StreamStatus, StreamTargetSecret,
     command::{PauseStreaming, RecordingCommand, SetConsent, StartStreaming, StopStreaming},
     event::{Error, RecorderError, RecordingEvent},
     peer_state::RecordingPeerState,
     state::RecordingState,
-    StreamStatus, StreamTargetSecret, MODULE_ID, RECORD_FEATURE_ID, STREAM_FEATURE_ID,
 };
 use snafu::{Report, ResultExt, Snafu};
 use tokio::time::Duration;

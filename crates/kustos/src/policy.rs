@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use casbin::{rhai::Dynamic, EnforceArgs};
+use casbin::{EnforceArgs, rhai::Dynamic};
 use kustos_shared::{
     access::AccessMethod,
     internal::{ToCasbin, ToCasbinMultiple, ToCasbinString},

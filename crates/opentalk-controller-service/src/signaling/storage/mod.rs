@@ -88,11 +88,13 @@ mod test_common {
             breakout_room: None,
         };
 
-        assert!(storage
-            .get_resumption_token_data(&resumption_token)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_resumption_token_data(&resumption_token)
+                .await
+                .unwrap()
+                .is_none()
+        );
 
         assert!(matches!(
             storage.refresh_resumption_token(&resumption_token).await,
@@ -111,10 +113,12 @@ mod test_common {
                 .as_ref(),
             Some(&resumption_data_1)
         );
-        assert!(storage
-            .refresh_resumption_token(&resumption_token)
-            .await
-            .is_ok(),);
+        assert!(
+            storage
+                .refresh_resumption_token(&resumption_token)
+                .await
+                .is_ok(),
+        );
 
         storage
             .set_resumption_token_data_if_not_exists(&resumption_token, &resumption_data_2)
@@ -129,29 +133,37 @@ mod test_common {
             Some(&resumption_data_1)
         );
 
-        assert!(storage
-            .delete_resumption_token(&resumption_token)
-            .await
-            .unwrap());
-        assert!(!storage
-            .delete_resumption_token(&resumption_token)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .delete_resumption_token(&resumption_token)
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .delete_resumption_token(&resumption_token)
+                .await
+                .unwrap()
+        );
     }
 
     pub(super) async fn participant_runner_lock(storage: &mut dyn SignalingStorage) {
         let runner_id = RunnerId::from_u128(0xdeadbeef);
 
         assert!(!storage.participant_id_in_use(ALICE).await.unwrap());
-        assert!(storage
-            .acquire_participant_id(ALICE, runner_id)
-            .await
-            .is_ok());
+        assert!(
+            storage
+                .acquire_participant_id(ALICE, runner_id)
+                .await
+                .is_ok()
+        );
         assert!(storage.participant_id_in_use(ALICE).await.unwrap());
-        assert!(storage
-            .acquire_participant_id(ALICE, runner_id)
-            .await
-            .is_err());
+        assert!(
+            storage
+                .acquire_participant_id(ALICE, runner_id)
+                .await
+                .is_err()
+        );
 
         assert_eq!(
             Some(runner_id),
@@ -163,14 +175,18 @@ mod test_common {
     pub(super) async fn try_acquire_participant_id(storage: &mut dyn SignalingStorage) {
         let runner_id = RunnerId::from_u128(0xdeadbeef);
         assert!(!storage.participant_id_in_use(ALICE).await.unwrap());
-        assert!(storage
-            .try_acquire_participant_id(ALICE, runner_id)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .try_acquire_participant_id(ALICE, runner_id)
+                .await
+                .unwrap()
+        );
         assert!(storage.participant_id_in_use(ALICE).await.unwrap());
-        assert!(!storage
-            .try_acquire_participant_id(ALICE, runner_id)
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .try_acquire_participant_id(ALICE, runner_id)
+                .await
+                .unwrap()
+        );
     }
 }

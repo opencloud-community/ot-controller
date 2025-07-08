@@ -6,25 +6,28 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_core::Stream;
 use opentalk_signaling_core::{
-    assets::{ByStreamExt, NewAssetFileName},
     ObjectStorageError,
+    assets::{ByStreamExt, NewAssetFileName},
 };
 use opentalk_types_api_v1::{
     assets::{AssetResource, AssetSortingQuery},
     auth::GetLoginResponseBody,
     error::ApiError,
     events::{
-        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, DeleteEventsQuery,
-        DeleteSharedFolderQuery, EventInstance, EventInstancePath, EventInstanceQuery,
-        EventInvitee, EventOptionsQuery, EventOrException, EventResource,
-        GetEventInstanceResponseBody, GetEventInstancesQuery, GetEventInstancesResponseBody,
-        GetEventQuery, GetEventsQuery, PatchEmailInviteBody, PatchEventBody,
-        PatchEventInstanceBody, PatchEventQuery, PatchInviteBody, PostEventInviteBody,
-        PostEventInviteQuery, PostEventsBody, PutSharedFolderQuery, StreamingTargetOptionsQuery,
+        DeleteEventInvitePath, DeleteEventsQuery, DeleteSharedFolderQuery, EventInstance,
+        EventInstancePath, EventInstanceQuery, EventInvitee, EventOptionsQuery, EventOrException,
+        EventResource, GetEventInstanceResponseBody, GetEventInstancesQuery,
+        GetEventInstancesResponseBody, GetEventQuery, GetEventsQuery, PatchEmailInviteBody,
+        PatchEventBody, PatchEventInstanceBody, PatchEventQuery, PatchInviteBody,
+        PostEventInviteBody, PostEventInviteQuery, PostEventsBody, PutSharedFolderQuery,
+        StreamingTargetOptionsQuery, by_event_id::invites::GetEventsInvitesQuery,
     },
     pagination::PagePaginationQuery,
     rooms::{
+        GetRoomsResponseBody, RoomResource,
         by_room_id::{
+            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
+            RoomsStartResponseBody,
             assets::RoomsByRoomIdAssetsGetResponseBody,
             invites::{
                 GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
@@ -36,18 +39,15 @@ use opentalk_types_api_v1::{
                 PatchRoomStreamingTargetRequestBody, PatchRoomStreamingTargetResponseBody,
                 PostRoomStreamingTargetResponseBody, RoomAndStreamingTargetId,
             },
-            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
-            RoomsStartResponseBody,
         },
-        GetRoomsResponseBody, RoomResource,
     },
     services::{
-        call_in::PostCallInStartRequestBody, recording::PostRecordingStartRequestBody,
-        PostServiceStartResponseBody,
+        PostServiceStartResponseBody, call_in::PostCallInStartRequestBody,
+        recording::PostRecordingStartRequestBody,
     },
     users::{
-        me::PatchMeRequestBody, GetEventInvitesPendingResponseBody, GetFindQuery,
-        GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile,
+        GetEventInvitesPendingResponseBody, GetFindQuery, GetFindResponseBody,
+        GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, me::PatchMeRequestBody,
     },
 };
 use opentalk_types_common::{
@@ -55,7 +55,7 @@ use opentalk_types_common::{
     email::EmailAddress,
     events::EventId,
     modules::ModuleId,
-    rooms::{invite_codes::InviteCode, RoomId, RoomPassword},
+    rooms::{RoomId, RoomPassword, invite_codes::InviteCode},
     shared_folders::SharedFolder,
     streaming::StreamingTarget,
     tariffs::TariffResource,
@@ -298,7 +298,7 @@ pub trait OpenTalkControllerServiceBackend: Send + Sync {
 
     /// Accept an invite to an event
     async fn accept_event_invite(&self, user_id: UserId, event_id: EventId)
-        -> Result<(), ApiError>;
+    -> Result<(), ApiError>;
 
     /// Decline an invite to an event
     async fn decline_event_invite(

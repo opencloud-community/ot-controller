@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use std::{
-    collections::{btree_map, BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, btree_map},
     sync::{Arc, Weak},
 };
 
@@ -13,7 +13,7 @@ use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types_signaling::ParticipantId;
 use rand::seq::IteratorRandom;
 
-use crate::storage::{automod_storage::RoomAutomodLock, Entry, EntryKind, StorageConfig};
+use crate::storage::{Entry, EntryKind, StorageConfig, automod_storage::RoomAutomodLock};
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryAutomodState {

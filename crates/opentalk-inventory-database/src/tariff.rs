@@ -4,7 +4,7 @@
 
 use opentalk_database::OptionalExt as _;
 use opentalk_db_storage::tariffs::{ExternalTariff, ExternalTariffId, Tariff};
-use opentalk_inventory::{error::StorageBackendSnafu, TariffInventory};
+use opentalk_inventory::{TariffInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{tariffs::TariffId, users::UserId};
 use snafu::ResultExt as _;
 

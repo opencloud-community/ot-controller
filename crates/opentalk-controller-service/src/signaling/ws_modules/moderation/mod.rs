@@ -6,32 +6,31 @@ use std::iter::zip;
 
 use either::Either;
 use opentalk_signaling_core::{
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorage,
     control::{
-        self,
+        self, ControlStateExt as _, ControlStorageProvider,
         storage::{
             ControlStorage, ControlStorageParticipantAttributes as _, DISPLAY_NAME, IS_ROOM_OWNER,
             KIND, ROLE, USER_ID,
         },
-        ControlStateExt as _, ControlStorageProvider,
     },
-    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SerdeJsonSnafu,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorage,
 };
 use opentalk_types_common::{modules::ModuleId, rooms::RoomId, users::UserId};
 use opentalk_types_signaling::{
     AssociatedParticipant, LeaveReason, ModulePeerData, Participant, ParticipantId,
     ParticipationKind, Role,
 };
-use opentalk_types_signaling_control::{state::ControlState, WaitingRoomState};
+use opentalk_types_signaling_control::{WaitingRoomState, state::ControlState};
 use opentalk_types_signaling_moderation::{
+    MODULE_ID,
     command::{
         Accept, Ban, ChangeDisplayName, Kick, ModerationCommand, ResetRaisedHands,
         SendToWaitingRoom,
     },
     event::{DebriefingStarted, DisplayNameChanged, Error, ModerationEvent, SessionEnded},
     state::{ModerationState, ModeratorFrontendData},
-    MODULE_ID,
 };
 use snafu::{Report, ResultExt};
 

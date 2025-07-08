@@ -112,40 +112,52 @@ mod test_common {
 
         storage.set_streams(ROOM, &streams).await.unwrap();
 
-        assert!(!storage
-            .streams_contain_status(ROOM, BTreeSet::from_iter([]))
-            .await
-            .unwrap());
-        assert!(storage
-            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Active]))
-            .await
-            .unwrap());
-        assert!(storage
-            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Paused]))
-            .await
-            .unwrap());
-        assert!(!storage
-            .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Inactive]))
-            .await
-            .unwrap());
-        assert!(storage
-            .streams_contain_status(
-                ROOM,
-                BTreeSet::from_iter([
-                    StreamStatus::Inactive,
-                    StreamStatus::Starting,
-                    StreamStatus::Paused
-                ])
-            )
-            .await
-            .unwrap());
-        assert!(!storage
-            .streams_contain_status(
-                ROOM,
-                BTreeSet::from_iter([StreamStatus::Inactive, StreamStatus::Starting])
-            )
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .streams_contain_status(ROOM, BTreeSet::from_iter([]))
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Active]))
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Paused]))
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .streams_contain_status(ROOM, BTreeSet::from_iter([StreamStatus::Inactive]))
+                .await
+                .unwrap()
+        );
+        assert!(
+            storage
+                .streams_contain_status(
+                    ROOM,
+                    BTreeSet::from_iter([
+                        StreamStatus::Inactive,
+                        StreamStatus::Starting,
+                        StreamStatus::Paused
+                    ])
+                )
+                .await
+                .unwrap()
+        );
+        assert!(
+            !storage
+                .streams_contain_status(
+                    ROOM,
+                    BTreeSet::from_iter([StreamStatus::Inactive, StreamStatus::Starting])
+                )
+                .await
+                .unwrap()
+        );
     }
 
     pub(super) async fn update_streams_status(storage: &mut dyn RecordingStorage) {

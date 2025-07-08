@@ -15,7 +15,7 @@ pub mod storage;
 pub use opentalk_types_signaling_control::MODULE_ID;
 
 use self::storage::{
-    AttributeActions, ControlStorage, ControlStorageParticipantAttributes as _, AVATAR_URL,
+    AVATAR_URL, AttributeActions, ControlStorage, ControlStorageParticipantAttributes as _,
     DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE,
 };
 

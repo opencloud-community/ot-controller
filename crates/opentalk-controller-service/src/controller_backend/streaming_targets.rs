@@ -7,8 +7,8 @@ use opentalk_controller_utils::CaptureApiError;
 use opentalk_db_storage::{
     rooms::Room,
     streaming_targets::{
-        get_room_streaming_targets, insert_room_streaming_target, RoomStreamingTargetRecord,
-        UpdateRoomStreamingTarget,
+        RoomStreamingTargetRecord, UpdateRoomStreamingTarget, get_room_streaming_targets,
+        insert_room_streaming_target,
     },
     tenants::Tenant,
     users::User,
@@ -36,7 +36,7 @@ use opentalk_types_common::{
 };
 use snafu::Report;
 
-use crate::{events::notifications::notify_event_invitees_by_room_about_update, ControllerBackend};
+use crate::{ControllerBackend, events::notifications::notify_event_invitees_by_room_about_update};
 
 impl ControllerBackend {
     pub(crate) async fn get_streaming_targets(

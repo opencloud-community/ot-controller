@@ -14,17 +14,17 @@ use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::{ParticipantId, Role};
 use redis::{AsyncCommands, ErrorKind, FromRedisValue, RedisError, ToRedisArgs};
 use redis_args::ToRedisArgs;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use snafu::ResultExt;
 
 use super::{
+    AttributeActions, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
+    SKIP_WAITING_ROOM_KEY_EXPIRY,
     control_storage::{
         AttributeAction, ControlStorageEvent, ControlStorageParticipantSet,
         ControlStorageSkipWaitingRoom, GlobalRoomAttributeId, LocalRoomAttributeId,
         RoomAttributeId,
     },
-    AttributeActions, ControlStorage, ControlStorageParticipantAttributesRaw, LEFT_AT, ROLE,
-    SKIP_WAITING_ROOM_KEY_EXPIRY,
 };
 use crate::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
 

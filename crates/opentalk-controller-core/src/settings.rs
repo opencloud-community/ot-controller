@@ -5,7 +5,7 @@
 //! Handles the application settings via a config file and environment variables.
 pub use opentalk_controller_settings::*;
 
-use crate::{cli::Args, Result};
+use crate::{Result, cli::Args};
 
 /// Loads settings from program arguments and config file
 ///

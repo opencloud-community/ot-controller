@@ -46,7 +46,7 @@ mod test_common {
     use opentalk_signaling_core::SignalingRoomId;
     use opentalk_types_common::time::Timestamp;
     use opentalk_types_signaling::ParticipantId;
-    use opentalk_types_signaling_timer::{peer_state::TimerPeerState, Kind, TimerId};
+    use opentalk_types_signaling_timer::{Kind, TimerId, peer_state::TimerPeerState};
     use pretty_assertions::assert_eq;
 
     use super::{Timer, TimerStorage};
@@ -56,11 +56,13 @@ mod test_common {
     const ALICE: ParticipantId = ParticipantId::nil();
 
     pub(super) async fn ready_status(storage: &mut dyn TimerStorage) {
-        assert!(storage
-            .ready_status_get(ROOM, ALICE)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .ready_status_get(ROOM, ALICE)
+                .await
+                .unwrap()
+                .is_none()
+        );
 
         storage.ready_status_set(ROOM, ALICE, true).await.unwrap();
 
@@ -71,11 +73,13 @@ mod test_common {
 
         storage.ready_status_delete(ROOM, ALICE).await.unwrap();
 
-        assert!(storage
-            .ready_status_get(ROOM, ALICE)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .ready_status_get(ROOM, ALICE)
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 
     pub(super) async fn timer(storage: &mut dyn TimerStorage) {
@@ -96,10 +100,12 @@ mod test_common {
             id: TimerId::generate(),
             ..timer.clone()
         };
-        assert!(!storage
-            .timer_set_if_not_exists(ROOM, &new_timer)
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .timer_set_if_not_exists(ROOM, &new_timer)
+                .await
+                .unwrap()
+        );
         assert_eq!(Some(timer), storage.timer_get(ROOM).await.unwrap());
     }
 }

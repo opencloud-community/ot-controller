@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use openidconnect::{
-    core::CoreClient, url::Url, ClientId, ClientSecret, IntrospectionUrl, IssuerUrl,
+    ClientId, ClientSecret, IntrospectionUrl, IssuerUrl, core::CoreClient, url::Url,
 };
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, ResultExt};
+use snafu::{ResultExt, whatever};
 
 use super::http::async_http_client;
 use crate::Result;

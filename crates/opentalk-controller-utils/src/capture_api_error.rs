@@ -5,7 +5,7 @@
 use std::fmt::Display;
 
 use opentalk_database::DatabaseError;
-use opentalk_signaling_core::{assets::AssetError, ObjectStorageError};
+use opentalk_signaling_core::{ObjectStorageError, assets::AssetError};
 use opentalk_types_api_v1::error::ApiError;
 use rand::distr::uniform;
 use snafu::Whatever;

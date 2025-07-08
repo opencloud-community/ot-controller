@@ -8,13 +8,13 @@ use url::Url;
 
 use super::{Oidc, OidcController, OidcFrontend};
 use crate::{
+    Result, SettingsError, SettingsRaw,
     settings_error::{
         OidcConfigurationMissingSnafu, OidcInvalidConfigurationSnafu,
         UsersFindBehaviorBackendMissingSnafu,
     },
     settings_file::{self, UsersFindBehavior},
     settings_runtime::{UserSearchBackend, UserSearchBackendKeycloak},
-    Result, SettingsError, SettingsRaw,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -212,8 +212,8 @@ mod tests {
 
     use super::OidcAndUserSearchBuilder;
     use crate::{
-        settings_file::{settings_raw_minimal_example, UsersFindBehavior},
         Oidc, SettingsError, UserSearchBackend, UserSearchBackendKeycloak,
+        settings_file::{UsersFindBehavior, settings_raw_minimal_example},
     };
 
     #[test]

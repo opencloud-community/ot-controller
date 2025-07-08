@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types_signaling::ParticipantId;
 
-use crate::{storage::InitState, SessionInfo};
+use crate::{SessionInfo, storage::InitState};
 
 #[derive(Debug, Clone, Default)]
 pub(crate) struct MemoryMeetingNotesState {

@@ -8,20 +8,20 @@ use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
+    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
+    OptionalExtension, PgSortExpressionMethods, QueryDsl, Queryable,
     expression::AsExpression,
     pg::Pg,
     prelude::*,
     sql_types::{Nullable, Record, Timestamptz, Uuid},
-    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-    OptionalExtension, PgSortExpressionMethods, QueryDsl, Queryable,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DatabaseError, DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types_common::{
     events::{
-        invites::{EventInviteStatus, InviteRole},
         EventDescription, EventId, EventInfo, EventTitle,
+        invites::{EventInviteStatus, InviteRole},
     },
     rooms::RoomId,
     sql_enum,

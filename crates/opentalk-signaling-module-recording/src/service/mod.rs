@@ -5,16 +5,16 @@
 use std::collections::BTreeMap;
 
 use opentalk_signaling_core::{
-    control, DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    DestroyContext, Event, InitContext, ModuleContext, Participant, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, control,
 };
 use opentalk_types_common::{modules::ModuleId, streaming::StreamingTargetId};
 use opentalk_types_signaling_recording::{StreamStatus, StreamTargetSecret, StreamUpdated};
 use opentalk_types_signaling_recording_service::{
+    MODULE_ID,
     command::RecordingServiceCommand,
     event::RecordingServiceEvent,
     state::{RecorderStreamInfo, RecordingServiceState},
-    MODULE_ID,
 };
 
 use crate::{Recording, RecordingStorageProvider};

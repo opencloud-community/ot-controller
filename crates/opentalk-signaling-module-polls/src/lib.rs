@@ -5,18 +5,18 @@
 use std::{collections::BTreeSet, time::Duration};
 
 use either::Either;
-use futures::{stream::once, FutureExt};
+use futures::{FutureExt, stream::once};
 use opentalk_signaling_core::{
-    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage, control,
 };
 use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_polls::{
+    Choice, ChoiceId, MODULE_ID, PollId, Results,
     command::{PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
     state::PollsState,
-    Choice, ChoiceId, PollId, Results, MODULE_ID,
 };
 use snafu::Report;
 use storage::PollsStorage;

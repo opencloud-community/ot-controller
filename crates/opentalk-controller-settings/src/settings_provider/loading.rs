@@ -7,7 +7,7 @@ use std::path::Path;
 use snafu::ResultExt as _;
 
 use super::SettingsProvider;
-use crate::{settings_error::DeserializeConfigSnafu, Result, SettingsRaw};
+use crate::{Result, SettingsRaw, settings_error::DeserializeConfigSnafu};
 
 impl SettingsProvider {
     pub(super) fn load_raw(file_path: &Path) -> Result<SettingsRaw> {

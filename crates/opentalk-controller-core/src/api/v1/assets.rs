@@ -4,13 +4,12 @@
 
 use actix_http::StatusCode;
 use actix_web::{
-    delete, get, post,
+    HttpResponse, delete, get, post,
     web::{Data, Path, Payload, Query},
-    HttpResponse,
 };
 use futures::TryStreamExt;
 use opentalk_controller_service_facade::OpenTalkControllerService;
-use opentalk_signaling_core::{assets::NewAssetFileName, ObjectStorageError};
+use opentalk_signaling_core::{ObjectStorageError, assets::NewAssetFileName};
 use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
@@ -20,7 +19,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{assets::AssetId, rooms::RoomId, time::Timestamp};
 
-use super::{response::NoContent, ApiResponse, DefaultApiResult};
+use super::{ApiResponse, DefaultApiResult, response::NoContent};
 use crate::api::responses::{BinaryData, Forbidden, InternalServerError, NotFound, Unauthorized};
 
 /// Get the assets associated with a room.

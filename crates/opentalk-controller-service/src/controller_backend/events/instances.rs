@@ -7,7 +7,7 @@
 use chrono::{DateTime, Utc};
 use kustos::policies_builder::PoliciesBuilder;
 use opentalk_controller_service_facade::RequestUser;
-use opentalk_controller_utils::{event::EventExt, CaptureApiError};
+use opentalk_controller_utils::{CaptureApiError, event::EventExt};
 use opentalk_db_storage::{
     events::{Event, EventException, EventExceptionKind, NewEventException, UpdateEventException},
     invites::Invite,
@@ -16,6 +16,7 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_types_api_v1::{
+    Cursor,
     error::ApiError,
     events::{
         EventAndInstanceId, EventInstance, EventInstancePath, EventInstanceQuery, EventInvitee,
@@ -23,10 +24,9 @@ use opentalk_types_api_v1::{
         GetEventInstancesCursorData, GetEventInstancesQuery, GetEventInstancesResponseBody,
         InstanceId, PatchEventInstanceBody,
     },
-    Cursor,
 };
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{EventId, invites::EventInviteStatus},
     shared_folders::SharedFolder,
     time::DateTimeTz,
     training_participation_report::TrainingParticipationReportParameterSet,
@@ -34,17 +34,17 @@ use opentalk_types_common::{
 use rrule::RRuleSet;
 
 use crate::{
+    ControllerBackend,
     controller_backend::{
-        events::{can_edit, DateTimeTzFromDb, EventRoomInfoExt, ONE_HUNDRED_YEARS_IN_DAYS},
         RoomsPoliciesBuilderExt,
+        events::{DateTimeTzFromDb, EventRoomInfoExt, ONE_HUNDRED_YEARS_IN_DAYS, can_edit},
     },
     events::{
         enrich_invitees_from_optional_user_search, get_invited_mail_recipients_for_event,
-        notifications::{notify_invitees_about_update, UpdateNotificationValues},
+        notifications::{UpdateNotificationValues, notify_invitees_about_update},
         shared_folder_for_user,
     },
     user_profiles::{GetUserProfilesBatched, UserProfilesBatch},
-    ControllerBackend,
 };
 
 impl ControllerBackend {
@@ -631,7 +631,7 @@ mod tests {
         users::PublicUserProfile,
     };
     use opentalk_types_common::{
-        events::{invites::InviteRole, EventId},
+        events::{EventId, invites::InviteRole},
         rooms::RoomId,
         time::{TimeZone, Timestamp},
         users::{UserId, UserInfo},

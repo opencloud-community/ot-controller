@@ -7,7 +7,7 @@ use opentalk_db_storage::{
     rooms::Room,
     sip_configs::{NewSipConfig, SipConfig, UpdateSipConfig},
 };
-use opentalk_inventory::{error::StorageBackendSnafu, RoomSipConfigInventory};
+use opentalk_inventory::{RoomSipConfigInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{call_in::CallInId, rooms::RoomId};
 use snafu::ResultExt as _;
 

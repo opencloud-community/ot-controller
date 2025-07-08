@@ -18,8 +18,8 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use crate::{
-    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
     Error, Job, JobParameters,
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]

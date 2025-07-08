@@ -32,11 +32,13 @@ mod test_common {
     }
 
     pub(super) async fn last_seen_global(storage: &mut dyn ChatStorage) {
-        assert!(storage
-            .get_last_seen_timestamp_global(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_last_seen_timestamp_global(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_none()
+        );
 
         storage
             .set_last_seen_timestamp_global(ROOM, SELF, unix_epoch(1000).into())
@@ -56,11 +58,13 @@ mod test_common {
             .await
             .unwrap();
 
-        assert!(storage
-            .get_last_seen_timestamp_global(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_last_seen_timestamp_global(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 
     pub(super) async fn last_seen_global_is_personal(storage: &mut dyn ChatStorage) {
@@ -81,19 +85,23 @@ mod test_common {
                 .unwrap();
         }
 
-        assert!(storage
-            .get_last_seen_timestamp_global(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .get_last_seen_timestamp_global(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_none()
+        );
     }
 
     pub(super) async fn last_seen_private(storage: &mut dyn ChatStorage) {
-        assert!(storage
-            .get_last_seen_timestamps_private(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_empty(),);
+        assert!(
+            storage
+                .get_last_seen_timestamps_private(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_empty(),
+        );
 
         storage
             .set_last_seen_timestamps_private(ROOM, SELF, &[(BOB, unix_epoch(1000).into())])
@@ -129,11 +137,13 @@ mod test_common {
             .await
             .unwrap();
 
-        assert!(storage
-            .get_last_seen_timestamps_private(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_empty(),);
+        assert!(
+            storage
+                .get_last_seen_timestamps_private(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_empty(),
+        );
     }
 
     pub(super) async fn last_seen_private_is_personal(storage: &mut dyn ChatStorage) {
@@ -161,10 +171,12 @@ mod test_common {
                 .unwrap();
         }
 
-        assert!(storage
-            .get_last_seen_timestamps_private(ROOM, SELF)
-            .await
-            .unwrap()
-            .is_empty());
+        assert!(
+            storage
+                .get_last_seen_timestamps_private(ROOM, SELF)
+                .await
+                .unwrap()
+                .is_empty()
+        );
     }
 }

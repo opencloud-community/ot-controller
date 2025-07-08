@@ -30,25 +30,24 @@ use bytes::Bytes;
 use chrono::{Duration, Local, Utc};
 use chrono_tz::Tz;
 use either::Either;
-use futures::{stream::once, FutureExt as _};
+use futures::{FutureExt as _, stream::once};
 use opentalk_database::Db;
 use opentalk_db_storage::{events::EventTrainingParticipationReportParameterSet, users::User};
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError, NewAssetFileName},
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
+    VolatileStorage,
+    assets::{AssetError, NewAssetFileName, save_asset},
     control::{
-        self,
+        self, ControlStorageProvider,
         storage::{
             ControlStorage, ControlStorageParticipantAttributes as _, DISPLAY_NAME, IS_PRESENT,
             IS_ROOM_OWNER,
         },
-        ControlStorageProvider,
     },
-    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
-    ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
-    VolatileStorage,
 };
 use opentalk_types_common::{
-    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    assets::{AssetFileKind, FileExtension, asset_file_kind},
     events::{EventDescription, EventTitle},
     modules::ModuleId,
     rooms::RoomId,
@@ -59,13 +58,13 @@ use opentalk_types_common::{
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_control::state::ControlState;
 use opentalk_types_signaling_training_participation_report::{
+    MODULE_ID,
     command::TrainingParticipationReportCommand,
     event::{
         Error, PdfAsset, PresenceLoggingEnded, PresenceLoggingEndedReason, PresenceLoggingStarted,
         PresenceLoggingStartedReason, TrainingParticipationReportEvent,
     },
     state::{ParticipationLoggingState, TrainingParticipationReportState},
-    MODULE_ID,
 };
 use rand::Rng as _;
 use snafu::{Report, ResultExt as _};
@@ -1102,10 +1101,10 @@ impl TrainingParticipationReport {
             }
             Err(e) => {
                 log::error!(
-                        "Failed to read training participation report parameter set initialized flag for room {} cleanup: {}",
-                        self.room,
-                        e
-                    );
+                    "Failed to read training participation report parameter set initialized flag for room {} cleanup: {}",
+                    self.room,
+                    e
+                );
             }
         }
     }
@@ -1144,7 +1143,7 @@ mod tests {
     use insta::assert_snapshot;
 
     use crate::{
-        template::ReportTemplateParameter, TrainingParticipationReport, DEFAULT_TEMPLATE, MODULE_ID,
+        DEFAULT_TEMPLATE, MODULE_ID, TrainingParticipationReport, template::ReportTemplateParameter,
     };
 
     fn generate(sample_name: &str, parameter: &ReportTemplateParameter) -> String {

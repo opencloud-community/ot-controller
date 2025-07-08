@@ -14,7 +14,7 @@ use snafu::ensure;
 use super::memory::MemorySignalingState;
 use crate::signaling::{
     resumption::ResumptionData,
-    storage::{error::ResumptionTokenAlreadyUsedSnafu, SignalingStorage, SignalingStorageError},
+    storage::{SignalingStorage, SignalingStorageError, error::ResumptionTokenAlreadyUsedSnafu},
     ticket::TicketData,
 };
 

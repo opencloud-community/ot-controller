@@ -9,24 +9,25 @@ use either::Either;
 use futures::stream::once;
 use opentalk_database::Db;
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError, NewAssetFileName},
-    control, ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext,
-    ObjectStorage, SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
     VolatileStorage,
+    assets::{AssetError, NewAssetFileName, save_asset},
+    control,
 };
 use opentalk_types_common::{
-    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    assets::{AssetFileKind, FileExtension, asset_file_kind},
     modules::ModuleId,
     time::Timestamp,
 };
 use opentalk_types_signaling::Role;
 use opentalk_types_signaling_whiteboard::{
+    MODULE_ID,
     command::WhiteboardCommand,
     event::{AccessUrl, Error, PdfAsset, WhiteboardEvent},
     state::WhiteboardState,
-    MODULE_ID,
 };
-use snafu::{whatever, Report};
+use snafu::{Report, whatever};
 use storage::{InitState, SpaceInfo, WhiteboardStorage};
 use url::Url;
 
@@ -131,7 +132,9 @@ impl SignalingModule for Whiteboard {
                                 url: space_info.url,
                             });
                         } else {
-                            log::error!("Whiteboard module received `Initialized` but spacedeck was not initialized");
+                            log::error!(
+                                "Whiteboard module received `Initialized` but spacedeck was not initialized"
+                            );
                         }
                     }
                     exchange::Event::PdfAsset(pdf_asset) => {

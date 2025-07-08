@@ -68,13 +68,14 @@ mod tests {
     use insta::assert_snapshot;
 
     use super::{
+        DEFAULT_TEMPLATE,
         data::{
-            report_data::tests::{example_live_roll_call, example_pseudonymous, example_roll_call},
             ReportData,
+            report_data::tests::{example_live_roll_call, example_pseudonymous, example_roll_call},
         },
-        generate_from_template, DEFAULT_TEMPLATE,
+        generate_from_template,
     };
-    use crate::{report::data::report_data::tests::canceled_live_roll_call, MODULE_ID};
+    use crate::{MODULE_ID, report::data::report_data::tests::canceled_live_roll_call};
 
     fn generate(sample_name: &str, parameter: &ReportData) -> String {
         let pdf = generate_from_template(

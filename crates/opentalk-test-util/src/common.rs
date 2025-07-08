@@ -7,8 +7,8 @@ use std::sync::Arc;
 use kustos::Authz;
 use opentalk_db_storage::users::User;
 use opentalk_signaling_core::{
-    module_tester::{ModuleTester, WsMessageOutgoing},
     SignalingModule, VolatileStaticMemoryStorage, VolatileStorage,
+    module_tester::{ModuleTester, WsMessageOutgoing},
 };
 use opentalk_types_common::{rooms::RoomId, users::DisplayName};
 use opentalk_types_signaling::{ParticipantId, Role};

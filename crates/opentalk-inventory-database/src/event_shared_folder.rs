@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_db_storage::events::shared_folders::{EventSharedFolder, NewEventSharedFolder};
-use opentalk_inventory::{error::StorageBackendSnafu, EventSharedFolderInventory};
+use opentalk_inventory::{EventSharedFolderInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{events::EventId, rooms::RoomId};
 use snafu::ResultExt as _;
 

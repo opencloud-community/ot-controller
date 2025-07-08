@@ -9,8 +9,8 @@ use opentalk_signaling_core::{
     SignalingModuleInitData,
 };
 use opentalk_types_common::{
-    features::{FeatureId, CALL_IN_FEATURE_ID, STORAGE_UPGRADABLE_FEATURE_ID},
-    modules::{ModuleId, CORE_MODULE_ID},
+    features::{CALL_IN_FEATURE_ID, FeatureId, STORAGE_UPGRADABLE_FEATURE_ID},
+    modules::{CORE_MODULE_ID, ModuleId},
 };
 
 pub struct Core {}

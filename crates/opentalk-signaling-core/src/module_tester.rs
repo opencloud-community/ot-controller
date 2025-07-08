@@ -19,7 +19,7 @@ use std::{
 
 use actix_http::ws::CloseCode;
 use actix_rt::task::JoinHandle;
-use futures::{stream::SelectAll, StreamExt};
+use futures::{StreamExt, stream::SelectAll};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
@@ -34,14 +34,14 @@ use opentalk_types_signaling::{
     ParticipantId, ParticipationKind, Role,
 };
 use opentalk_types_signaling_control::{
+    MODULE_ID,
     command::{ControlCommand, Join},
     event::{ControlEvent, JoinSuccess, Left},
     room::RoomInfo,
     state::ControlState,
-    MODULE_ID,
 };
 use serde_json::Value;
-use snafu::{whatever, OptionExt, Report, ResultExt, Snafu};
+use snafu::{OptionExt, Report, ResultExt, Snafu, whatever};
 use tokio::{
     select,
     sync::{
@@ -49,24 +49,23 @@ use tokio::{
         mpsc::{self, UnboundedReceiver, UnboundedSender},
     },
     task,
-    time::{timeout, timeout_at, Instant},
+    time::{Instant, timeout, timeout_at},
 };
 
 use crate::{
-    control::{
-        self,
-        storage::{
-            AttributeActions, ControlStorageParticipantAttributes, LocalRoomAttributeId,
-            AVATAR_URL, BREAKOUT_ROOM, DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_PRESENT,
-            IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
-        },
-        ControlStateExt as _, ControlStorageProvider,
-    },
-    destroy_context::CleanupScope,
-    room_lock::RoomLockingProvider,
     AnyStream, DestroyContext, Event, ExchangePublish, InitContext, ModuleContext, ObjectStorage,
     Participant, SerdeJsonSnafu, SignalingModule, SignalingModuleError, SignalingRoomId,
     VolatileStorage,
+    control::{
+        self, ControlStateExt as _, ControlStorageProvider,
+        storage::{
+            AVATAR_URL, AttributeActions, BREAKOUT_ROOM, ControlStorageParticipantAttributes,
+            DISPLAY_NAME, HAND_IS_UP, HAND_UPDATED_AT, IS_PRESENT, IS_ROOM_OWNER, JOINED_AT, KIND,
+            LEFT_AT, LocalRoomAttributeId, ROLE, USER_ID,
+        },
+    },
+    destroy_context::CleanupScope,
+    room_lock::RoomLockingProvider,
 };
 
 /// A module tester that simulates a runner environment for provided module.

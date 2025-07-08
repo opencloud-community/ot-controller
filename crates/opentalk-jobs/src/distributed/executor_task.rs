@@ -18,11 +18,11 @@ use snafu::{ResultExt, Snafu};
 use tokio::{sync::oneshot, task::JoinHandle, time::interval};
 
 use super::{
-    build_queue_key, build_running_key,
+    ETCD_LEASE_TTL, JOB_QUEUE_PREFIX, JOB_RUNNING_PREFIX, build_queue_key, build_running_key,
     execution_logger::{ExecutionLogger, ExecutionLoggerError},
-    ETCD_LEASE_TTL, JOB_QUEUE_PREFIX, JOB_RUNNING_PREFIX,
 };
 use crate::{
+    Job as JobImpl,
     error::{
         ConnectSnafu, CreateKeepAliveSnafu, CreateWatchSnafu, GetSnafu, KeepAliveSnafu, LeaseSnafu,
         ParseSnafu, RemoveSnafu, WatchProgressSnafu,
@@ -31,7 +31,6 @@ use crate::{
         AdhocEventCleanup, EventCleanup, InviteCleanup, KeycloakAccountSync, RoomCleanup,
         SelfCheck, SyncStorageFiles,
     },
-    Job as JobImpl,
 };
 
 #[derive(Debug, Snafu)]
@@ -475,7 +474,9 @@ impl JobExecutor {
         let response_lease_ttl = lease.ttl();
 
         if response_lease_ttl != ETCD_LEASE_TTL as i64 {
-            log::warn!("Requested lease ttl of {ETCD_LEASE_TTL} seconds, server responded with lease ttl {response_lease_ttl}");
+            log::warn!(
+                "Requested lease ttl of {ETCD_LEASE_TTL} seconds, server responded with lease ttl {response_lease_ttl}"
+            );
         }
 
         let (mut lease_keeper, _) = client

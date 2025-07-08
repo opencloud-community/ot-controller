@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::Entry};
 
 use opentalk_signaling_core::{NotFoundSnafu, SignalingModuleError, SignalingRoomId};
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_subroom_audio::{state::WhisperState, whisper_id::WhisperId};
-use snafu::{whatever, OptionExt};
+use snafu::{OptionExt, whatever};
 
 #[derive(Default)]
 pub(crate) struct MemorySubroomAudio {

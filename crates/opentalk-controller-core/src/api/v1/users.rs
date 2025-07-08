@@ -8,13 +8,12 @@
 //! structs are defined in the Database crate [`opentalk_db_storage`] for database operations.
 
 use actix_web::{
-    get, patch,
+    Either, get, patch,
     web::{Data, Json, Path, Query, ReqData},
-    Either,
 };
 use chrono::Utc;
 use openidconnect::AccessToken;
-use opentalk_controller_service::oidc::{decode_token, OnlyExpiryClaim};
+use opentalk_controller_service::oidc::{OnlyExpiryClaim, decode_token};
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::Db;
@@ -24,8 +23,8 @@ use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
     users::{
-        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody,
-        PrivateUserProfile, PublicUserProfile,
+        GetFindQuery, GetFindResponseBody, GetUserAssetsResponseBody, PrivateUserProfile,
+        PublicUserProfile, me::PatchMeRequestBody,
     },
 };
 use opentalk_types_common::{tariffs::TariffResource, tenants::TenantId, users::UserId};

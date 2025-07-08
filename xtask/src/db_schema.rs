@@ -10,10 +10,10 @@ use diesel_async::{AsyncConnection, AsyncPgConnection, RunQueryDsl};
 use opentalk_database::query_helper;
 use opentalk_db_storage::migrations::migrate_from_url;
 use rand::Rng;
-use snafu::{whatever, Report};
+use snafu::{Report, whatever};
 use unified_diff::diff;
 
-use crate::{locate_project_root, Result};
+use crate::{Result, locate_project_root};
 
 const SCHEMA_RS_PATH: &str = "crates/opentalk-db-storage/src/schema.rs";
 const DATABASE_DEFAULT_URL: &str = "postgres://postgres:password123@localhost:5432";

@@ -59,11 +59,13 @@ mod test_common {
             duration: None,
         };
 
-        assert!(storage
-            .set_breakout_config(ROOM, &config)
-            .await
-            .unwrap()
-            .is_none());
+        assert!(
+            storage
+                .set_breakout_config(ROOM, &config)
+                .await
+                .unwrap()
+                .is_none()
+        );
 
         assert_eq!(
             storage.get_breakout_config(ROOM).await.unwrap(),

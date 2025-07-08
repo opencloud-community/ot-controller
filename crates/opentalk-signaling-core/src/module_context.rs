@@ -5,12 +5,12 @@
 use std::{marker::PhantomData, sync::Arc};
 
 use actix_http::ws::CloseCode;
-use futures::{stream::SelectAll, Stream};
+use futures::{Stream, stream::SelectAll};
 use opentalk_types_common::{modules::ModuleId, time::Timestamp};
 use opentalk_types_signaling::{LeaveReason, NamespacedEvent, Role};
 use serde::Serialize;
 
-use crate::{any_stream, AnyStream, SignalingMetrics, SignalingModule, VolatileStorage};
+use crate::{AnyStream, SignalingMetrics, SignalingModule, VolatileStorage, any_stream};
 
 #[derive(Debug, Clone)]
 pub struct ExchangePublish {

@@ -9,18 +9,18 @@ use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use bytestring::ByteString;
 use lapin::{
+    BasicProperties, ChannelState, Consumer, ExchangeKind,
     message::Delivery,
     options::{
         BasicConsumeOptions, BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions,
         QueueDeclareOptions,
     },
     types::FieldTable,
-    BasicProperties, ChannelState, Consumer, ExchangeKind,
 };
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use rustc_hash::FxHasher;
 use serde::{Deserialize, Serialize};
-use slotmap::{new_key_type, SlotMap};
+use slotmap::{SlotMap, new_key_type};
 use snafu::{Report, Snafu};
 use tokio::{
     select,
@@ -277,7 +277,9 @@ impl ExchangeTask {
                     ),
                 },
                 Err(_) => {
-                    log::warn!("RabbitMQ reconnect attempt failed, waiting {wait_duration:?} before next attempt");
+                    log::warn!(
+                        "RabbitMQ reconnect attempt failed, waiting {wait_duration:?} before next attempt"
+                    );
                 }
             }
 

@@ -26,7 +26,7 @@ pub trait ToUserProfile {
 
     /// Convert to the private user profile
     fn to_private_user_profile(&self, settings: &Settings, used_storage: u64)
-        -> PrivateUserProfile;
+    -> PrivateUserProfile;
 }
 
 impl ToUserProfile for User {

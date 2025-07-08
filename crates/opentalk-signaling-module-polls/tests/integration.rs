@@ -8,9 +8,9 @@ use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_signaling_module_polls::*;
 use opentalk_test_util::*;
 use opentalk_types_signaling_polls::{
+    Choice, ChoiceId, Item, Results,
     command::{Choices, PollsCommand, Start, Vote},
     event::{Error, PollsEvent, Started},
-    Choice, ChoiceId, Item, Results,
 };
 use pretty_assertions::assert_eq;
 use serial_test::serial;

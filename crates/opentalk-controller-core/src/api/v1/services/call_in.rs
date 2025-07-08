@@ -11,7 +11,7 @@ use actix_web::{
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody},
-    services::{call_in::PostCallInStartRequestBody, PostServiceStartResponseBody},
+    services::{PostServiceStartResponseBody, call_in::PostCallInStartRequestBody},
 };
 
 use crate::api::responses::{InternalServerError, Unauthorized};
