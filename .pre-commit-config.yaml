@@ -35,7 +35,7 @@ repos:
           - --workspace
           - --no-deps
   - repo: https://github.com/EmbarkStudios/cargo-deny
-    rev: 0.18.2
+    rev: 0.18.3
     hooks:
       - id: cargo-deny
         args:
@@ -62,7 +62,7 @@ repos:
       - id: taplo-format
       - id: taplo-lint
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.29.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
         exclude: ^api/docs/openapi\.yml$
@@ -87,7 +87,7 @@ repos:
       - id: commitlint
         stages: [commit-msg]
   - repo: https://github.com/daveshanley/vacuum
-    rev: v0.16.5
+    rev: v0.17.3
     hooks:
       - id: vacuum
         files: ^api/.*\.(json|ya?ml)$
