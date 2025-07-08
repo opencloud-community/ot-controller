@@ -4,8 +4,8 @@
 
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_timer::{
-    event::{Started, Stopped},
     TimerId,
+    event::{Started, Stopped},
 };
 use serde::{Deserialize, Serialize};
 

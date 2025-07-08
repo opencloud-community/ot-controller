@@ -14,7 +14,7 @@ use opentalk_controller_service::oidc::{OidcContext, VerifyError};
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_types_api_v1::{
-    auth::{login::AuthLoginPostRequestBody, GetLoginResponseBody, PostLoginResponseBody},
+    auth::{GetLoginResponseBody, PostLoginResponseBody, login::AuthLoginPostRequestBody},
     error::{ApiError, AuthenticationError, ErrorBody},
 };
 

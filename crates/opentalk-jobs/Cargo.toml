@@ -5,7 +5,7 @@
 [package]
 authors.workspace = true
 description = "OpenTalk job execution system"
-edition = "2021"
+edition = "2024"
 license = "EUPL-1.2"
 name = "opentalk-jobs"
 publish = false

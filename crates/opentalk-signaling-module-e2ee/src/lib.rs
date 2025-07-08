@@ -6,9 +6,9 @@ use std::collections::BTreeSet;
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::{exchange, ControlStorageProvider},
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData, SignalingRoomId,
+    control::{ControlStorageProvider, exchange},
 };
 use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::ParticipantId;

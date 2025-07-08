@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_db_storage::streaming_targets::{
-    get_room_streaming_targets, insert_room_streaming_target, override_room_streaming_targets,
-    RoomStreamingTargetRecord, UpdateRoomStreamingTarget,
+    RoomStreamingTargetRecord, UpdateRoomStreamingTarget, get_room_streaming_targets,
+    insert_room_streaming_target, override_room_streaming_targets,
 };
-use opentalk_inventory::{error::StorageBackendSnafu, RoomStreamingTargetInventory};
+use opentalk_inventory::{RoomStreamingTargetInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
     rooms::RoomId,
     streaming::{RoomStreamingTarget, StreamingTarget, StreamingTargetId},

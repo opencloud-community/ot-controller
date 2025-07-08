@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use super::{
-    oidc_and_user_search_builder::OidcAndUserSearchBuilder, Authz, Avatar, CallIn, Database,
-    Defaults, Endpoints, Etcd, Etherpad, Frontend, Http, LiveKit, Logging, Metrics, MinIO,
-    Monitoring, Oidc, OperatorInformation, RabbitMq, Redis, SharedFolder, Spacedeck, SubroomAudio,
-    Tariffs, Tenants, UserSearchBackend,
+    Authz, Avatar, CallIn, Database, Defaults, Endpoints, Etcd, Etherpad, Frontend, Http, LiveKit,
+    Logging, Metrics, MinIO, Monitoring, Oidc, OperatorInformation, RabbitMq, Redis, SharedFolder,
+    Spacedeck, SubroomAudio, Tariffs, Tenants, UserSearchBackend,
+    oidc_and_user_search_builder::OidcAndUserSearchBuilder,
 };
-use crate::{settings_file::UsersFindBehavior, Result, SettingsError, SettingsRaw};
+use crate::{Result, SettingsError, SettingsRaw, settings_file::UsersFindBehavior};
 
 /// The settings used for the OpenTalk controller at runtime
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -187,12 +187,12 @@ pub(crate) fn minimal_example() -> Settings {
 
     use super::OidcController;
     use crate::{
+        DEFAULT_LIBRAVATAR_URL, DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID, Frontend,
+        OidcFrontend, TariffAssignment, TenantAssignment,
         settings_runtime::{
             database::DEFAULT_DATABASE_MAX_CONNECTIONS, defaults::default_user_language,
             http::DEFAULT_HTTP_PORT,
         },
-        Frontend, OidcFrontend, TariffAssignment, TenantAssignment, DEFAULT_LIBRAVATAR_URL,
-        DEFAULT_STATIC_TARIFF_NAME, DEFAULT_STATIC_TENANT_ID,
     };
 
     Settings {

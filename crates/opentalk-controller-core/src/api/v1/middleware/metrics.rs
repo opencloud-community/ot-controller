@@ -6,12 +6,12 @@ use std::{pin::Pin, sync::Arc, time::Instant};
 
 use actix_http::body::{BodySize, MessageBody};
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
 };
 use futures::{
-    future::{ready, Ready},
     Future, FutureExt,
+    future::{Ready, ready},
 };
 use opentalk_controller_service::metrics::EndpointMetrics;
 use opentelemetry::{Key, KeyValue};
@@ -86,7 +86,7 @@ where
 
             let duration = start.elapsed();
 
-            let res = if let Ok(resp) = result {
+            if let Ok(resp) = result {
                 let status = KeyValue::new(STATUS_KEY, resp.status().as_u16() as i64);
                 let labels = [handler, method, status];
 
@@ -101,9 +101,7 @@ where
                 Ok(resp)
             } else {
                 result
-            };
-
-            res
+            }
         }
         .boxed_local()
     }

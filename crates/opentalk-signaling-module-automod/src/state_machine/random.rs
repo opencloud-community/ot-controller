@@ -4,7 +4,7 @@
 
 use opentalk_signaling_core::SignalingRoomId;
 use opentalk_types_signaling_automod::config::{Parameter, SelectionStrategy};
-use rand::{seq::IndexedRandom, Rng};
+use rand::{Rng, seq::IndexedRandom};
 
 use super::{Error, StateMachineOutput};
 use crate::{
@@ -91,8 +91,8 @@ mod test {
     use super::*;
     use crate::{
         state_machine::{
-            test::{rng, setup_memory, setup_redis, unix_epoch, ROOM},
             StateMachineOutput,
+            test::{ROOM, rng, setup_memory, setup_redis, unix_epoch},
         },
         storage::{Entry, EntryKind},
     };

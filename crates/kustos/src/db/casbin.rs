@@ -4,8 +4,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel::{result::Error as DieselError, BoolExpressionMethods, ExpressionMethods, QueryDsl};
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel::{BoolExpressionMethods, ExpressionMethods, QueryDsl, result::Error as DieselError};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DatabaseError, DbConnection, Result};
 
 use super::schema::casbin_rule::{self, dsl::*};

@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use nix::sys::signal::{kill, SIGHUP};
+use nix::sys::signal::{SIGHUP, kill};
 use snafu::{OptionExt, ResultExt};
-use sysinfo::{self, get_current_pid, Pid, Process, ProcessRefreshKind, RefreshKind, System};
+use sysinfo::{self, Pid, Process, ProcessRefreshKind, RefreshKind, System, get_current_pid};
 
 use crate::Result;
 

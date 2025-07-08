@@ -5,13 +5,13 @@
 use std::{sync::Arc, time::Instant};
 
 use opentelemetry::{
-    metrics::{Histogram, Meter},
     Key, KeyValue,
+    metrics::{Histogram, Meter},
 };
 use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
+    Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream, new_view,
 };
-use redis::{aio::ConnectionLike, Arg, RedisFuture};
+use redis::{Arg, RedisFuture, aio::ConnectionLike};
 
 const COMMAND_KEY: Key = Key::from_static_str("command");
 const EXEC_TIME: &str = "redis.command_execution_time_seconds";

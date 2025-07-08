@@ -7,7 +7,7 @@ use std::{fmt::Display, str::FromStr};
 use chrono::{DateTime, NaiveDateTime, SubsecRound, TimeZone};
 use chrono_tz::Tz;
 use serde::{Deserialize, Deserializer, Serialize};
-use snafu::{ensure, ResultExt as _, Snafu};
+use snafu::{ResultExt as _, Snafu, ensure};
 
 /// Representation of a date-time for use in report generation
 ///

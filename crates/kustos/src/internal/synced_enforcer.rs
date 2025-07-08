@@ -13,33 +13,33 @@ use std::{
 
 use async_trait::async_trait;
 use casbin::{
-    rhai::ImmutableString, Adapter, CoreApi, Effector, EnforceArgs, Enforcer, Event, EventData,
-    EventEmitter, Filter, InternalApi, MgmtApi, Model, RbacApi, Result as CasbinResult,
-    RoleManager, TryIntoAdapter, TryIntoModel,
+    Adapter, CoreApi, Effector, EnforceArgs, Enforcer, Event, EventData, EventEmitter, Filter,
+    InternalApi, MgmtApi, Model, RbacApi, Result as CasbinResult, RoleManager, TryIntoAdapter,
+    TryIntoModel, rhai::ImmutableString,
 };
 use futures::StreamExt;
 use kustos_shared::internal::{ToCasbin, ToCasbinString};
 use lapin::{
+    ExchangeKind,
     options::{
         BasicConsumeOptions, BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions,
         QueueDeclareOptions,
     },
     protocol::basic::AMQPProperties,
     types::{FieldTable, ShortString},
-    ExchangeKind,
 };
 use lapin_pool::{RabbitMqChannel, RabbitMqPool};
 use parking_lot as pl;
 use serde::{Deserialize, Serialize};
 use tokio::{
-    sync::{mpsc, RwLock},
+    sync::{RwLock, mpsc},
     task::JoinHandle,
     time::sleep,
 };
 use uuid::Uuid;
 
 use super::rbac_api_ex::RbacApiEx;
-use crate::{metrics::KustosMetrics, PolicyUser, UserPolicy};
+use crate::{PolicyUser, UserPolicy, metrics::KustosMetrics};
 
 const EXCHANGE_NAME: &str = "opentalk-acl-updates";
 const RETRY_INTERVAL: Duration = Duration::from_secs(10);
@@ -665,33 +665,49 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(enforcer
-            .enforce(to_owned(vec!["user::bob", "/rooms", "GET"]))
-            .unwrap());
-        assert!(enforcer
-            .enforce(to_owned(vec!["user::bob", "/rooms", "POST"]))
-            .unwrap());
-        assert!(!enforcer
-            .enforce(to_owned(vec!["user::bob", "/rooms", "DELETE"]))
-            .unwrap());
+        assert!(
+            enforcer
+                .enforce(to_owned(vec!["user::bob", "/rooms", "GET"]))
+                .unwrap()
+        );
+        assert!(
+            enforcer
+                .enforce(to_owned(vec!["user::bob", "/rooms", "POST"]))
+                .unwrap()
+        );
+        assert!(
+            !enforcer
+                .enforce(to_owned(vec!["user::bob", "/rooms", "DELETE"]))
+                .unwrap()
+        );
 
-        assert!(enforcer
-            .enforce(to_owned(vec!["user::bob", "/rooms", "UPDATE"]))
-            .unwrap());
+        assert!(
+            enforcer
+                .enforce(to_owned(vec!["user::bob", "/rooms", "UPDATE"]))
+                .unwrap()
+        );
 
-        assert!(!enforcer
-            .enforce(to_owned(vec!["user::bob", "/rooms/abc", "UPDATE"]))
-            .unwrap());
+        assert!(
+            !enforcer
+                .enforce(to_owned(vec!["user::bob", "/rooms/abc", "UPDATE"]))
+                .unwrap()
+        );
 
-        assert!(enforcer
-            .enforce(to_owned(vec!["user::bob", "/events/1", "GET"]))
-            .unwrap());
-        assert!(enforcer
-            .enforce(to_owned(vec!["user::bob", "/events/1", "POST"]))
-            .unwrap());
+        assert!(
+            enforcer
+                .enforce(to_owned(vec!["user::bob", "/events/1", "GET"]))
+                .unwrap()
+        );
+        assert!(
+            enforcer
+                .enforce(to_owned(vec!["user::bob", "/events/1", "POST"]))
+                .unwrap()
+        );
 
-        assert!(!enforcer
-            .enforce(to_owned(vec!["user::bob", "/events/1", "UPDATE"]))
-            .unwrap());
+        assert!(
+            !enforcer
+                .enforce(to_owned(vec!["user::bob", "/events/1", "UPDATE"]))
+                .unwrap()
+        );
     }
 }

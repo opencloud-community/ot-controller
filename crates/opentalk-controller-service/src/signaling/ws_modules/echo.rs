@@ -6,7 +6,7 @@ use opentalk_signaling_core::{
     DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
     SignalingModuleInitData,
 };
-use opentalk_types_common::modules::{module_id, ModuleId};
+use opentalk_types_common::modules::{ModuleId, module_id};
 use serde_json::Value;
 
 /// The namespace string for the signaling module

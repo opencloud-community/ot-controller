@@ -14,7 +14,7 @@ use snafu::Snafu;
 use tokio::sync::broadcast;
 
 use crate::{
-    room_lock::LockError, DestroyContext, Event, InitContext, ModuleContext, VolatileStorage,
+    DestroyContext, Event, InitContext, ModuleContext, VolatileStorage, room_lock::LockError,
 };
 
 type Result<T> = std::result::Result<T, SignalingModuleError>;

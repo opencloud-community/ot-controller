@@ -19,7 +19,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::rooms::RoomId;
 
-use super::{response::NoContent, DefaultApiResult};
+use super::{DefaultApiResult, response::NoContent};
 use crate::api::{
     responses::{Forbidden, InternalServerError, NotFound, Unauthorized},
     v1::ApiResponse,

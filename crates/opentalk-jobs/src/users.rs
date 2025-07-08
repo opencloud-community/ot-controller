@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use kustos::Authz;
 use log::Log;
 use opentalk_controller_settings::Settings;
-use opentalk_controller_utils::deletion::{user::UserDeleter, Deleter};
+use opentalk_controller_utils::deletion::{Deleter, user::UserDeleter};
 use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::{Event, UpdateEvent},

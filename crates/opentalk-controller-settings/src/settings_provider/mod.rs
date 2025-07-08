@@ -12,7 +12,7 @@ use dirs::config_dir;
 use itertools::Itertools as _;
 use owo_colors::OwoColorize as _;
 
-use crate::{settings_error::ConfigurationFileNotFoundSnafu, Result, Settings, SettingsRaw};
+use crate::{Result, Settings, SettingsRaw, settings_error::ConfigurationFileNotFoundSnafu};
 
 mod loading;
 
@@ -175,15 +175,16 @@ impl ConfigSearchPath {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs::File, io::Write as _, path::Path};
+    use std::{collections::BTreeMap, env, fs::File, io::Write as _, path::Path};
 
     use pretty_assertions::{assert_eq, assert_matches, assert_ne};
+    use serial_test::serial;
     use tempfile::tempdir;
 
     use super::SettingsProvider;
     use crate::{
-        settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
-        settings_runtime::settings::minimal_example, SettingsError,
+        SettingsError, settings_file::SETTINGS_RAW_MINIMAL_CONFIG_TOML,
+        settings_runtime::settings::minimal_example,
     };
 
     #[test]
@@ -230,12 +231,35 @@ mod tests {
         );
     }
 
+    /// Test reloading the settings.
+    ///
+    /// This test sets and reads environment variables which is inherently unsafe.
+    /// Therefore it is marked as `#[serial]` so that it doesn't interfere with any other
+    /// tests that might run in parallel.
+    ///
+    /// Once the test is finished, all variables are restored.
     #[test]
+    #[serial]
     fn reload() {
-        env::remove_var("OPENTALK_CTRL_DATABASE__URL");
-        env::remove_var("OPENTALK_CTRL_HTTP__PORT");
-        env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__USER_LANGUAGE");
-        env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+        // backup current environment variables
+        let backup_vars = backup_env_variables();
+
+        // perform the test which modifies the env variables
+        reload_inner();
+
+        // restore the environment variables from the backup
+        unsafe {
+            restore_env_variables(backup_vars);
+        }
+    }
+
+    fn reload_inner() {
+        unsafe {
+            env::remove_var("OPENTALK_CTRL_DATABASE__URL");
+            env::remove_var("OPENTALK_CTRL_HTTP__PORT");
+            env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__USER_LANGUAGE");
+            env::remove_var("OPENTALK_CTRL_HTTP__DEFAULTS__SCREEN_SHARE_REQUIRES_PERMISSION");
+        }
 
         let tempdir = tempdir().unwrap();
 
@@ -306,5 +330,22 @@ mod tests {
         );
 
         assert_eq!(&(*settings_provider.get()), &minimal_example());
+    }
+
+    pub(super) fn backup_env_variables() -> BTreeMap<String, String> {
+        env::vars().collect()
+    }
+
+    pub(super) unsafe fn restore_env_variables(backup_vars: BTreeMap<String, String>) {
+        {
+            for (k, _) in env::vars() {
+                if !backup_vars.contains_key(&k) {
+                    unsafe { env::remove_var(&k) };
+                }
+            }
+            for (k, v) in backup_vars {
+                unsafe { env::set_var(k, v) };
+            }
+        }
     }
 }

@@ -6,18 +6,18 @@ use std::collections::BTreeMap;
 
 use actix_http::error::PayloadError;
 use aws_sdk_s3::{
+    Client,
     config::{
-        endpoint::{Endpoint, EndpointFuture, Params, ResolveEndpoint},
         Builder, Credentials as AwsCred, Region,
+        endpoint::{Endpoint, EndpointFuture, Params, ResolveEndpoint},
     },
     primitives::ByteStream,
     types::{CompletedMultipartUpload, CompletedPart},
-    Client,
 };
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use opentalk_controller_settings::MinIO;
-use snafu::{ensure, OptionExt, ResultExt, Snafu};
+use snafu::{OptionExt, ResultExt, Snafu, ensure};
 use url::Url;
 
 const CHUNK_SIZE: usize = 5_242_880; // 5 MebiByte (minimum for aws s3)

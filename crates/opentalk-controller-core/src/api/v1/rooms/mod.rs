@@ -18,11 +18,11 @@ use opentalk_types_api_v1::{
     error::{ApiError, ErrorBody},
     pagination::PagePaginationQuery,
     rooms::{
+        GetRoomsResponseBody, PostRoomsRequestBody, RoomResource,
         by_room_id::{
             DeleteRoomQuery, GetRoomEventResponseBody, PatchRoomsRequestBody,
             PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody, RoomsStartResponseBody,
         },
-        GetRoomsResponseBody, PostRoomsRequestBody, RoomResource,
     },
 };
 use opentalk_types_common::{events::EventInfo, rooms::RoomId, tariffs::TariffResource};

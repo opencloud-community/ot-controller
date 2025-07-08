@@ -11,7 +11,7 @@ use opentalk_types_signaling_timer::peer_state::TimerPeerState;
 use parking_lot::RwLock;
 
 use super::memory::MemoryTimerState;
-use crate::storage::{timer_storage::TimerStorage, Timer};
+use crate::storage::{Timer, timer_storage::TimerStorage};
 
 static STATE: OnceLock<Arc<RwLock<MemoryTimerState>>> = OnceLock::new();
 

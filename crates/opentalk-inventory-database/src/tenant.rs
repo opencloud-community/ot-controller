@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_db_storage::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId, Tenant};
-use opentalk_inventory::{error::StorageBackendSnafu, TenantInventory};
+use opentalk_db_storage::tenants::{OidcTenantId, Tenant, get_or_create_tenant_by_oidc_id};
+use opentalk_inventory::{TenantInventory, error::StorageBackendSnafu};
 use opentalk_types_common::tenants::TenantId;
 use snafu::ResultExt as _;
 

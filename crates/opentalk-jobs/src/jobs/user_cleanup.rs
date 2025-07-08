@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 use snafu::{Report, ResultExt};
 
 use crate::{
-    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
-    users::{perform_deletion, DeleteSelector},
     Error, Job, JobParameters,
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
+    users::{DeleteSelector, perform_deletion},
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -105,12 +105,12 @@ mod tests {
     use opentalk_test_util::database::DatabaseContext;
     use opentalk_types_common::{events::EventId, users::UserId};
 
-    use super::{default_days_since_user_has_been_disabled, UserCleanup};
+    use super::{UserCleanup, default_days_since_user_has_been_disabled};
     use crate::{
+        Job as _,
         jobs::test_utils::{
             create_generic_test_event, create_generic_test_invite, create_generic_test_room,
         },
-        Job as _,
     };
 
     fn init_logger() {

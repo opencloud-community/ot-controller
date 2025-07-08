@@ -5,21 +5,21 @@
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{
-        shared_folders::{EventSharedFolder, NewEventSharedFolder},
         Event, NewEvent,
+        shared_folders::{EventSharedFolder, NewEventSharedFolder},
     },
-    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    tenants::{OidcTenantId, get_or_create_tenant_by_oidc_id},
 };
 use opentalk_signaling_core::{
+    VolatileStorage,
     control::ControlStorageProvider as _,
     module_tester::{ModuleTester, WsMessageOutgoing},
-    VolatileStorage,
 };
-use opentalk_test_util::{TestContext, ROOM_ID, USER_1, USER_2};
+use opentalk_test_util::{ROOM_ID, TestContext, USER_1, USER_2};
 use opentalk_types_common::{
     events::EventId,
     rooms::RoomId,
-    shared_folders::{SharedFolder, MODULE_ID},
+    shared_folders::{MODULE_ID, SharedFolder},
     users::UserId,
 };
 use opentalk_types_signaling::Role;

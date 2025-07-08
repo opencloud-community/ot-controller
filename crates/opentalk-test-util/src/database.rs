@@ -11,7 +11,7 @@ use opentalk_db_storage::{
     migrations::migrate_from_url,
     rooms::{NewRoom, Room},
     tariffs::Tariff,
-    tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId},
+    tenants::{OidcTenantId, get_or_create_tenant_by_oidc_id},
     users::{NewUser, User},
 };
 use opentalk_types_common::{

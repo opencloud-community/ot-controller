@@ -17,13 +17,13 @@ use either::Either;
 use opentalk_database::Db;
 use opentalk_db_storage::groups::Group;
 use opentalk_signaling_core::{
+    CleanupScope, DestroyContext, Event, InitContext, LockError, ModuleContext, Participant,
+    RoomLockingProvider as _, SignalingModule, SignalingModuleError, SignalingModuleInitData,
+    SignalingRoomId, VolatileStorage,
     control::{
         exchange,
         storage::{ControlStorageParticipantAttributes as _, USER_ID},
     },
-    CleanupScope, DestroyContext, Event, InitContext, LockError, ModuleContext, Participant,
-    RoomLockingProvider as _, SignalingModule, SignalingModuleError, SignalingModuleInitData,
-    SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
     modules::ModuleId,
@@ -32,11 +32,11 @@ use opentalk_types_common::{
 };
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_chat::{
+    MODULE_ID, MessageId, Scope,
     command::{ChatCommand, SendMessage, SetLastSeenTimestamp},
     event::{ChatDisabled, ChatEnabled, ChatEvent, Error, HistoryCleared, MessageSent},
     peer_state::ChatPeerState,
     state::{ChatState, GroupHistory, PrivateHistory, StoredMessage},
-    MessageId, Scope, MODULE_ID,
 };
 use snafu::Report;
 

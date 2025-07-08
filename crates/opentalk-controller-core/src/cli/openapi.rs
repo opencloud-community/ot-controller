@@ -10,8 +10,8 @@ use std::{
 
 use clap::{Args, Subcommand, ValueEnum};
 use itertools::Itertools as _;
-use snafu::{ensure_whatever, ResultExt};
-use utoipa::{openapi::Server, OpenApi as _};
+use snafu::{ResultExt, ensure_whatever};
+use utoipa::{OpenApi as _, openapi::Server};
 use yaml_rust2::{YamlEmitter, YamlLoader};
 
 use crate::Result;

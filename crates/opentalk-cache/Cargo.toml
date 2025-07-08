@@ -6,7 +6,7 @@
 authors.workspace = true
 description = "OpenTalk caching of redis data in local memory"
 documentation = "https://docs.rs/opentalk-cache"
-edition = "2021"
+edition = "2024"
 homepage.workspace = true
 license = "EUPL-1.2"
 name = "opentalk-cache"

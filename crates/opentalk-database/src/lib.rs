@@ -5,15 +5,15 @@
 //! OpenTalk Database connector, interface and connection handling
 
 use diesel::{
+    QueryResult,
     pg::Pg,
     query_builder::{AstPass, Query, QueryFragment, QueryId},
     sql_types::BigInt,
-    QueryResult,
 };
 use diesel_async::{
+    AsyncConnection, AsyncPgConnection,
     methods::LoadQuery,
     pooled_connection::deadpool::{BuildError, Object, PoolError},
-    AsyncConnection, AsyncPgConnection,
 };
 use snafu::Snafu;
 

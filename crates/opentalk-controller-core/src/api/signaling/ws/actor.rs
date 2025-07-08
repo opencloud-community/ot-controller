@@ -109,7 +109,9 @@ impl WebSocketActor {
                                 self.forward_to_runner(ctx, Message::Text(string));
                             }
                             Err(_) => {
-                                log::warn!("Got text continuation item but it wasn't valid UTF8, discarding");
+                                log::warn!(
+                                    "Got text continuation item but it wasn't valid UTF8, discarding"
+                                );
                             }
                         }
                     } else {

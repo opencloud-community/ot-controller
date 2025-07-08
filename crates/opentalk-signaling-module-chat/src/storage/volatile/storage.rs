@@ -19,7 +19,7 @@ use opentalk_types_signaling_chat::state::StoredMessage;
 use parking_lot::RwLock;
 
 use super::memory::MemoryChatState;
-use crate::{storage::chat_storage::ChatStorage, ParticipantPair};
+use crate::{ParticipantPair, storage::chat_storage::ChatStorage};
 
 static STATE: OnceLock<Arc<RwLock<MemoryChatState>>> = OnceLock::new();
 

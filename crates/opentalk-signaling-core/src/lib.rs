@@ -28,7 +28,7 @@ pub mod module_tester;
 pub mod assets;
 pub mod control;
 
-pub use any_stream::{any_stream, AnyStream};
+pub use any_stream::{AnyStream, any_stream};
 pub use destroy_context::{CleanupScope, DestroyContext};
 pub use event::Event;
 pub use exchange_task::{Error as ExchangeError, ExchangeHandle, ExchangeTask, SubscriberHandle};

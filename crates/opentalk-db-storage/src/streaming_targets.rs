@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use diesel::{ExpressionMethods, Identifiable, QueryDsl, Queryable};
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DatabaseError, DbConnection, Result};
 use opentalk_types_common::{
     rooms::RoomId,

@@ -14,14 +14,14 @@ use opentalk_types_signaling::ParticipantId;
 use snafu::OptionExt as _;
 
 use crate::{
+    ExpiringDataHashMap, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
     control::storage::{
+        AttributeActions, LocalAttributeId, SKIP_WAITING_ROOM_KEY_EXPIRY,
         control_storage::{
             AttributeAction, GlobalAttributeId, GlobalRoomAttributeId, LocalRoomAttributeId,
             RoomAttributeId,
         },
-        AttributeActions, LocalAttributeId, SKIP_WAITING_ROOM_KEY_EXPIRY,
     },
-    ExpiringDataHashMap, NotFoundSnafu, SignalingModuleError, SignalingRoomId,
 };
 
 type GlobalAttributeMap = HashMap<(ParticipantId, GlobalAttributeId), serde_json::Value>;

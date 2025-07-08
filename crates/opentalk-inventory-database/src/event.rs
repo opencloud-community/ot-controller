@@ -6,18 +6,18 @@ use std::collections::BTreeSet;
 
 use opentalk_db_storage::{
     events::{
-        shared_folders::EventSharedFolder, Event, EventException, EventExceptionId, EventFavorite,
-        EventInvite, EventTrainingParticipationReportParameterSet, GetEventsCursor, NewEvent,
-        NewEventException, NewEventFavorite, UpdateEvent, UpdateEventException,
+        Event, EventException, EventExceptionId, EventFavorite, EventInvite,
+        EventTrainingParticipationReportParameterSet, GetEventsCursor, NewEvent, NewEventException,
+        NewEventFavorite, UpdateEvent, UpdateEventException, shared_folders::EventSharedFolder,
     },
     rooms::Room,
     sip_configs::SipConfig,
     tariffs::Tariff,
     users::User,
 };
-use opentalk_inventory::{error::StorageBackendSnafu, EventInventory};
+use opentalk_inventory::{EventInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{EventId, invites::EventInviteStatus},
     rooms::RoomId,
     time::Timestamp,
     training_participation_report::TrainingParticipationReportParameterSet,

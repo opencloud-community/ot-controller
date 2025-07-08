@@ -4,7 +4,7 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::ControlStorageEvent, SignalingModuleError, SignalingRoomId,
+    SignalingModuleError, SignalingRoomId, control::storage::ControlStorageEvent,
 };
 use opentalk_types_common::shared_folders::SharedFolder;
 

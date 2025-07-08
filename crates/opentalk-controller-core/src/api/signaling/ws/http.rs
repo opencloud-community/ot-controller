@@ -9,7 +9,7 @@ use std::{
     time::Instant,
 };
 
-use actix_web::{get, http::header, web, web::Data, HttpMessage, HttpRequest, HttpResponse};
+use actix_web::{HttpMessage, HttpRequest, HttpResponse, get, http::header, web, web::Data};
 use actix_web_actors::ws;
 use kustos::Authz;
 use opentalk_controller_service::signaling::{

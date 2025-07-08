@@ -8,11 +8,11 @@ use opentalk_types_common::auth::{ResumptionToken, TicketToken};
 use opentalk_types_signaling::ParticipantId;
 use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
-use snafu::{ensure, whatever, ResultExt as _};
+use snafu::{ResultExt as _, ensure, whatever};
 
 use super::{
+    RESUMPTION_TOKEN_EXPIRY, SignalingStorage, SignalingStorageError, TICKET_EXPIRY,
     error::{RedisSnafu, ResumptionTokenAlreadyUsedSnafu},
-    SignalingStorage, SignalingStorageError, RESUMPTION_TOKEN_EXPIRY, TICKET_EXPIRY,
 };
 use crate::signaling::{resumption::ResumptionData, ticket::TicketData};
 

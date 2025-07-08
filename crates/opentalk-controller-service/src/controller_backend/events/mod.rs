@@ -6,24 +6,25 @@
 
 use chrono::{DateTime, Datelike, NaiveTime, Utc};
 use chrono_tz::Tz;
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
 use kustos::{
+    AccessMethod, Resource,
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::IsSubject,
-    AccessMethod, Resource,
 };
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::{
-    deletion::{Deleter, EventDeleter},
     CaptureApiError,
+    deletion::{Deleter, EventDeleter},
 };
 use opentalk_database::DbConnection;
 use opentalk_db_storage::{
     events::{
-        email_invites::EventEmailInvite, shared_folders::EventSharedFolder, Event, EventException,
-        EventExceptionKind, EventInvite, EventTrainingParticipationReportParameterSet, NewEvent,
-        UpdateEvent, UpdateEventTrainingParticipationReportParameterSet,
+        Event, EventException, EventExceptionKind, EventInvite,
+        EventTrainingParticipationReportParameterSet, NewEvent, UpdateEvent,
+        UpdateEventTrainingParticipationReportParameterSet, email_invites::EventEmailInvite,
+        shared_folders::EventSharedFolder,
     },
     invites::Invite,
     rooms::{NewRoom, Room, UpdateRoom},
@@ -37,7 +38,8 @@ use opentalk_db_storage::{
 };
 use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types_api_v1::{
-    error::{ApiError, ValidationErrorEntry, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED},
+    Cursor,
+    error::{ApiError, ERROR_CODE_IGNORED_VALUE, ERROR_CODE_VALUE_REQUIRED, ValidationErrorEntry},
     events::{
         CallInInfo, DeleteEventsQuery, EmailOnlyUser, EventAndInstanceId, EventExceptionResource,
         EventInvitee, EventInviteeProfile, EventOptionsQuery, EventOrException, EventResource,
@@ -46,10 +48,9 @@ use opentalk_types_api_v1::{
     },
     pagination::default_pagination_per_page,
     users::PublicUserProfile,
-    Cursor,
 };
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventDescription, EventId, EventTitle},
+    events::{EventDescription, EventId, EventTitle, invites::EventInviteStatus},
     features,
     rooms::RoomPassword,
     shared_folders::SharedFolder,
@@ -62,17 +63,17 @@ use serde::Deserialize;
 use snafu::Report;
 
 use crate::{
-    controller_backend::{delete_shared_folders, put_shared_folder, RoomsPoliciesBuilderExt},
+    ControllerBackend, ToUserProfile,
+    controller_backend::{RoomsPoliciesBuilderExt, delete_shared_folders, put_shared_folder},
     email_to_libravatar_url,
     events::{
         enrich_from_optional_user_search, enrich_invitees_from_optional_user_search,
         get_invited_mail_recipients_for_event,
-        notifications::{notify_invitees_about_update, UpdateNotificationValues},
+        notifications::{UpdateNotificationValues, notify_invitees_about_update},
         shared_folder_for_user,
     },
     services::{MailRecipient, MailService},
     user_profiles::GetUserProfilesBatched,
-    ControllerBackend, ToUserProfile,
 };
 
 mod favorites;

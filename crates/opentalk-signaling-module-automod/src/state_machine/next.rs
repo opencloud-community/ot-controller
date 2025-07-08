@@ -90,7 +90,7 @@ mod test {
     use crate::{
         state_machine::{
             self, exchange,
-            test::{rng, setup_memory, setup_redis, unix_epoch, ROOM},
+            test::{ROOM, rng, setup_memory, setup_redis, unix_epoch},
         },
         storage::Entry,
     };

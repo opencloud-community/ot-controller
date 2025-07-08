@@ -12,15 +12,15 @@ use std::{
 use either::Either;
 use futures::FutureExt;
 use opentalk_signaling_core::{
+    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
+    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
     control::{
         self,
         storage::{
-            AttributeActions, ControlStorageParticipantAttributes as _, AVATAR_URL, DISPLAY_NAME,
+            AVATAR_URL, AttributeActions, ControlStorageParticipantAttributes as _, DISPLAY_NAME,
             JOINED_AT, KIND, LEFT_AT, ROLE,
         },
     },
-    DestroyContext, Event, InitContext, ModuleContext, SignalingModule, SignalingModuleError,
-    SignalingModuleInitData, SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
     modules::ModuleId,
@@ -28,10 +28,10 @@ use opentalk_types_common::{
 };
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_breakout::{
+    AssociatedParticipantInOtherRoom, BreakoutRoom, MODULE_ID, ParticipantInOtherRoom,
     command::BreakoutCommand,
     event::{BreakoutEvent, Error, Started},
     state::BreakoutState,
-    AssociatedParticipantInOtherRoom, BreakoutRoom, ParticipantInOtherRoom, MODULE_ID,
 };
 use snafu::whatever;
 use tokio::time::sleep;

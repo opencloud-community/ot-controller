@@ -6,7 +6,7 @@ use opentalk_db_storage::{
     rooms::{NewRoom, Room, UpdateRoom},
     users::User,
 };
-use opentalk_inventory::{error::StorageBackendSnafu, RoomInventory};
+use opentalk_inventory::{RoomInventory, error::StorageBackendSnafu};
 use opentalk_types_common::rooms::RoomId;
 use snafu::ResultExt as _;
 

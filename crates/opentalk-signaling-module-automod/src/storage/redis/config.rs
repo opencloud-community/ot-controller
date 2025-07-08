@@ -11,7 +11,7 @@ use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use crate::storage::{automod_storage::AutomodConfigStorage, StorageConfig};
+use crate::storage::{StorageConfig, automod_storage::AutomodConfigStorage};
 
 #[async_trait(?Send)]
 impl AutomodConfigStorage for RedisConnection {

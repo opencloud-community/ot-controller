@@ -6,10 +6,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{RedisConnection, RedisSnafu, SignalingModuleError, SignalingRoomId};
-use opentalk_types_signaling_polls::{state::PollsState, ChoiceId, PollId};
+use opentalk_types_signaling_polls::{ChoiceId, PollId, state::PollsState};
 use redis::AsyncCommands as _;
 use redis_args::ToRedisArgs;
-use snafu::{whatever, ResultExt as _};
+use snafu::{ResultExt as _, whatever};
 
 use super::polls_storage::PollsStorage;
 

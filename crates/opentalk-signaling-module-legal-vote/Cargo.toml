@@ -4,7 +4,7 @@
 
 [package]
 authors.workspace = true
-edition = "2021"
+edition = "2024"
 name = "opentalk-signaling-module-legal-vote"
 publish = false
 version.workspace = true

@@ -5,13 +5,13 @@
 use std::pin::Pin;
 
 use actix_web::{
+    Error, HttpMessage,
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     http::header::{HeaderName, HeaderValue},
-    Error, HttpMessage,
 };
 use futures::{
-    future::{ready, Ready},
     Future, FutureExt,
+    future::{Ready, ready},
 };
 use tracing_actix_web::RequestId;
 

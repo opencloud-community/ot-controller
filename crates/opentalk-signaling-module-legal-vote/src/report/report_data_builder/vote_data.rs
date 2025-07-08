@@ -12,9 +12,9 @@ use snafu::OptionExt as _;
 use super::StopInfo;
 use crate::{
     report::{
+        Error,
         data::{ReportData, ResolvedVote, Summary, TimedEvent},
         error::UserDisplayNameNotFoundSnafu,
-        Error,
     },
     storage::v1::{FinalResults, Start},
 };

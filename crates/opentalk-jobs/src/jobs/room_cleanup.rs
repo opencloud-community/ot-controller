@@ -17,9 +17,9 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use crate::{
+    Error, Job, JobParameters,
     error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
     events::delete_orphaned_rooms,
-    Error, Job, JobParameters,
 };
 
 #[derive(Debug)]

@@ -13,7 +13,7 @@ use diesel_async::RunQueryDsl;
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types_common::{
-    rooms::{invite_codes::InviteCode, RoomId},
+    rooms::{RoomId, invite_codes::InviteCode},
     users::UserId,
 };
 use serde::{Deserialize, Serialize};

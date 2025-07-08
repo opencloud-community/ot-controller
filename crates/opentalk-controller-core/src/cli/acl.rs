@@ -13,8 +13,8 @@ use snafu::ResultExt;
 
 use super::AclSubCommand;
 use crate::{
-    acl::{check_or_create_kustos_role_policy, maybe_remove_kustos_role_policy},
     Result,
+    acl::{check_or_create_kustos_role_policy, maybe_remove_kustos_role_policy},
 };
 
 pub(crate) async fn acl(settings: &Settings, e: AclSubCommand) -> Result<()> {

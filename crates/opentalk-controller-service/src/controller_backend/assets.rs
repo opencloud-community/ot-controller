@@ -7,8 +7,8 @@ use futures_core::Stream;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_db_storage::assets::Asset;
 use opentalk_signaling_core::{
-    assets::{delete_asset, get_asset, save_asset, ByStreamExt, NewAssetFileName},
     ChunkFormat, ObjectStorageError,
+    assets::{ByStreamExt, NewAssetFileName, delete_asset, get_asset, save_asset},
 };
 use opentalk_types_api_v1::{
     assets::AssetResource, pagination::PagePaginationQuery,
@@ -16,7 +16,7 @@ use opentalk_types_api_v1::{
 };
 use opentalk_types_common::{assets::AssetId, modules::ModuleId, rooms::RoomId};
 
-use crate::{helpers::asset_to_asset_resource, ControllerBackend};
+use crate::{ControllerBackend, helpers::asset_to_asset_resource};
 
 impl ControllerBackend {
     pub(crate) async fn get_room_assets(

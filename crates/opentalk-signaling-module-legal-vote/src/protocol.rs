@@ -12,9 +12,9 @@ use opentalk_types_signaling_legal_vote::{
     token::Token,
     vote::{LegalVoteId, VoteKind, VoteOption, VoteState, VoteSummary},
 };
-use snafu::{ensure, OptionExt, ResultExt, Snafu};
+use snafu::{OptionExt, ResultExt, Snafu, ensure};
 
-use crate::{storage::protocol as db_protocol, LegalVoteStorageProvider};
+use crate::{LegalVoteStorageProvider, storage::protocol as db_protocol};
 
 pub struct RawProtocol<'a>(&'a [db_protocol::v1::ProtocolEntry]);
 
@@ -136,7 +136,7 @@ impl TryFrom<&RawProtocol<'_>> for VotingRecord {
             .context(MissingStartSnafu)?;
 
         let vote_iter = protocol.0.iter().filter_map(|entry| match &entry.event {
-            db_protocol::v1::VoteEvent::Vote(ref vote) => Some(vote),
+            db_protocol::v1::VoteEvent::Vote(vote) => Some(vote),
             _ => None,
         });
 

@@ -43,16 +43,16 @@ use std::{
 };
 
 use actix_cors::Cors;
-use actix_web::{web, web::Data, App, HttpServer, Scope};
+use actix_web::{App, HttpServer, Scope, web, web::Data};
 use api::signaling::SignalingModules;
 use async_trait::async_trait;
 use kustos::Authz;
 use lapin_pool::RabbitMqPool;
 use opentalk_controller_service::{
+    ControllerBackend, Whatever,
     oidc::OidcContext,
     services::MailService,
     signaling::ws_modules::{breakout::BreakoutRooms, echo::Echo, moderation::ModerationModule},
-    ControllerBackend, Whatever,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_controller_settings::{
@@ -68,13 +68,13 @@ use opentalk_signaling_core::{
 };
 use opentalk_types_api_v1::{auth::OidcProvider, error::ApiError};
 use rustls_pki_types::{CertificateDer, PrivatePkcs8KeyDer};
-use service_probe::{set_service_state, start_probe, ServiceState};
+use service_probe::{ServiceState, set_service_state, start_probe};
 use snafu::{ErrorCompat, Report, ResultExt, Snafu};
 use swagger::WithSwagger as _;
 use tokio::{
     signal::{
         ctrl_c,
-        unix::{signal, SignalKind},
+        unix::{SignalKind, signal},
     },
     sync::broadcast,
     task::JoinError,
@@ -1076,7 +1076,7 @@ fn v1_scope(
 }
 
 fn setup_cors() -> Cors {
-    use actix_web::http::{header::*, Method};
+    use actix_web::http::{Method, header::*};
 
     // Use a permissive CORS configuration.
     // The HTTP API is using Bearer tokens for authentication, which are handled by the application and not the browser.

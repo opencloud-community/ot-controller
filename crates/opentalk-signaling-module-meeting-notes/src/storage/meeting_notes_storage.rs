@@ -4,8 +4,8 @@
 
 use async_trait::async_trait;
 use opentalk_signaling_core::{
-    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
     SignalingModuleError, SignalingRoomId,
+    control::storage::{ControlStorageParticipantAttributesRaw, ControlStorageParticipantSet},
 };
 use opentalk_types_signaling::ParticipantId;
 

@@ -20,8 +20,8 @@ use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use either::Either;
 use error::LegalVoteError;
-use futures::{stream::once, FutureExt};
-use kustos::{prelude::AccessMethod, Authz, Resource};
+use futures::{FutureExt, stream::once};
+use kustos::{Authz, Resource, prelude::AccessMethod};
 use opentalk_database::Db;
 use opentalk_db_storage::{
     module_resources::{Filter, ModuleResource, NewModuleResource},
@@ -29,14 +29,14 @@ use opentalk_db_storage::{
     users::User,
 };
 use opentalk_signaling_core::{
-    assets::{save_asset, NewAssetFileName},
+    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, Participant,
+    SerdeJsonSnafu, SignalingModule, SignalingModuleError, SignalingModuleInitData,
+    SignalingRoomId, VolatileStorage,
+    assets::{NewAssetFileName, save_asset},
     control::{
         self,
         storage::{ControlStorageParticipantAttributes, LocalRoomAttributeId, USER_ID},
     },
-    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage, Participant,
-    SerdeJsonSnafu, SignalingModule, SignalingModuleError, SignalingModuleInitData,
-    SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
     assets::FileExtension,
@@ -47,6 +47,7 @@ use opentalk_types_common::{
 };
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_legal_vote::{
+    MODULE_ID,
     cancel::{CancelReason, CustomCancelReason},
     command::{Cancel, LegalVoteCommand, Stop, Vote},
     event::{
@@ -61,14 +62,13 @@ use opentalk_types_signaling_legal_vote::{
     token::Token,
     user_parameters::UserParameters,
     vote::{LegalVoteId, VoteKind, VoteOption},
-    MODULE_ID,
 };
 use snafu::ResultExt;
 use storage::{LegalVoteStorage, VoteScriptResult, VoteStatus};
 use tokio::time::sleep;
 
 use crate::{
-    protocol::{load_from_history, RawProtocol},
+    protocol::{RawProtocol, load_from_history},
     storage::protocol::{self as db_protocol},
 };
 
@@ -1214,9 +1214,12 @@ impl LegalVote {
             Ok(voting_record) => voting_record,
             Err(err) => {
                 return {
-                    log::warn!("Something went wrong while generating `VotingRecord` out of `RawProtocol`. Error: {:?}", err);
+                    log::warn!(
+                        "Something went wrong while generating `VotingRecord` out of `RawProtocol`. Error: {:?}",
+                        err
+                    );
                     Ok(FinalResults::Invalid(Invalid::ProtocolInconsistent))
-                }
+                };
             }
         };
 

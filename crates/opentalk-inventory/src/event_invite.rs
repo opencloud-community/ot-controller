@@ -4,13 +4,13 @@
 
 use opentalk_db_storage::{
     events::{
-        email_invites::{EventEmailInvite, NewEventEmailInvite, UpdateEventEmailInvite},
         Event, EventInvite, NewEventInvite, UpdateEventInvite,
+        email_invites::{EventEmailInvite, NewEventEmailInvite, UpdateEventEmailInvite},
     },
     users::User,
 };
 use opentalk_types_common::{
-    events::{invites::EventInviteStatus, EventId},
+    events::{EventId, invites::EventInviteStatus},
     rooms::RoomId,
     users::UserId,
 };

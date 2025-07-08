@@ -5,7 +5,7 @@
 use core::{
     future::Future,
     pin::Pin,
-    task::{ready, Poll},
+    task::{Poll, ready},
 };
 use std::{
     sync::{Arc, Mutex},
@@ -18,16 +18,16 @@ use diesel::{
     result::{ConnectionResult, QueryResult},
 };
 use diesel_async::{
-    pooled_connection::deadpool::Object, AnsiTransactionManager, AsyncConnection,
-    AsyncPgConnection, SimpleAsyncConnection, TransactionManager,
+    AnsiTransactionManager, AsyncConnection, AsyncPgConnection, SimpleAsyncConnection,
+    TransactionManager, pooled_connection::deadpool::Object,
 };
 use futures_core::{future::BoxFuture, stream::BoxStream};
 use opentelemetry::{
-    metrics::{Counter, Histogram, Meter},
     Key, KeyValue,
+    metrics::{Counter, Histogram, Meter},
 };
 use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument as OtlInstrument, MeterProviderBuilder, MetricError, Stream,
+    Aggregation, Instrument as OtlInstrument, MeterProviderBuilder, MetricError, Stream, new_view,
 };
 
 type Parent = Object<AsyncPgConnection>;

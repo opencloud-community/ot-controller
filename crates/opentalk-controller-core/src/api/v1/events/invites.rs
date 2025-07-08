@@ -3,17 +3,16 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_web::{
-    delete, get, patch, post,
+    Either, delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
-    Either,
 };
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
-        by_event_id::invites::GetEventsInvitesQuery, DeleteEmailInviteBody, DeleteEventInvitePath,
-        EventInvitee, EventOptionsQuery, EventResource, GetEventInstanceResponseBody,
-        PatchEmailInviteBody, PatchInviteBody, PostEventInviteBody, PostEventInviteQuery,
+        DeleteEmailInviteBody, DeleteEventInvitePath, EventInvitee, EventOptionsQuery,
+        EventResource, GetEventInstanceResponseBody, PatchEmailInviteBody, PatchInviteBody,
+        PostEventInviteBody, PostEventInviteQuery, by_event_id::invites::GetEventsInvitesQuery,
     },
     users::GetEventInvitesPendingResponseBody,
 };

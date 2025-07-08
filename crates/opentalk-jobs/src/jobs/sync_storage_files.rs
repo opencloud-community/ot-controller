@@ -9,13 +9,13 @@ use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
 use opentalk_db_storage::assets::{Asset, UpdateAsset};
 use opentalk_log::{debug, info, warn};
-use opentalk_signaling_core::{assets::asset_key, ExchangeHandle, ObjectStorage};
+use opentalk_signaling_core::{ExchangeHandle, ObjectStorage, assets::asset_key};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use crate::{
-    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
     Error, Job, JobParameters,
+    error::{ParameterLoadingSnafu, ParameterSerializingSnafu},
 };
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -184,8 +184,8 @@ mod tests {
     use opentalk_controller_settings::MinIO;
     use opentalk_db_storage::assets::{Asset, NewAsset, UpdateAsset};
     use opentalk_signaling_core::{
-        assets::{save_asset, NewAssetFileName},
         ChunkFormat, ObjectStorage, ObjectStorageError,
+        assets::{NewAssetFileName, save_asset},
     };
     use opentalk_test_util::common::TestContext;
     use opentalk_types_common::{
@@ -194,7 +194,7 @@ mod tests {
         time::Timestamp,
     };
 
-    use crate::jobs::sync_storage_files::{sync_files, MissingStorageFileHandling};
+    use crate::jobs::sync_storage_files::{MissingStorageFileHandling, sync_files};
 
     /// The id for an asset that has no related storage file
     const LOST_ASSET_ID: AssetId = AssetId::from_u128(42);

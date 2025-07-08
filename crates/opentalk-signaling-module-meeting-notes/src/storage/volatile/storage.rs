@@ -11,8 +11,8 @@ use parking_lot::RwLock;
 
 use super::memory::MemoryMeetingNotesState;
 use crate::{
-    storage::{meeting_notes_storage::MeetingNotesStorage, InitState},
     SessionInfo,
+    storage::{InitState, meeting_notes_storage::MeetingNotesStorage},
 };
 
 static STATE: OnceLock<Arc<RwLock<MemoryMeetingNotesState>>> = OnceLock::new();

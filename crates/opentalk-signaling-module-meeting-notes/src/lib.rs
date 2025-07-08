@@ -10,29 +10,29 @@ use exchange::GenerateUrl;
 use opentalk_database::Db;
 use opentalk_etherpad_client::EtherpadClient;
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError, NewAssetFileName},
+    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
+    VolatileStorage,
+    assets::{AssetError, NewAssetFileName, save_asset},
     control::{
         self,
         storage::{ControlStorageParticipantAttributes as _, DISPLAY_NAME},
     },
-    ChunkFormat, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
-    SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorage,
 };
 use opentalk_types_common::{
-    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    assets::{AssetFileKind, FileExtension, asset_file_kind},
     modules::ModuleId,
 };
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_meeting_notes::{
+    MODULE_ID,
     command::{MeetingNotesCommand, ParticipantSelection},
     event::{AccessUrl, Error, MeetingNotesEvent, PdfAsset},
     peer_state::MeetingNotesPeerState,
-    MODULE_ID,
 };
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::{whatever, OptionExt, Report};
+use snafu::{OptionExt, Report, whatever};
 use storage::InitState;
 
 use crate::storage::MeetingNotesStorage;

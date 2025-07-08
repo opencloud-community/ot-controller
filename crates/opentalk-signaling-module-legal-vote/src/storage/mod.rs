@@ -13,7 +13,7 @@ pub(crate) use legal_vote_storage::{
     LegalVoteAllowTokenStorage, LegalVoteCurrentStorage, LegalVoteHistoryStorage,
     LegalVoteParameterStorage, LegalVoteStorage,
 };
-pub use protocol::{v1, NewProtocol, Protocol};
+pub use protocol::{NewProtocol, Protocol, v1};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VoteStatus {
@@ -95,7 +95,7 @@ pub(crate) mod test_common {
     use pretty_assertions::assert_eq;
 
     use super::LegalVoteStorage;
-    use crate::storage::{protocol::v1::Vote, VoteStatus};
+    use crate::storage::{VoteStatus, protocol::v1::Vote};
 
     pub(crate) const ROOM: SignalingRoomId = SignalingRoomId::nil();
     pub(crate) const VOTE: LegalVoteId = LegalVoteId::nil();
@@ -147,10 +147,12 @@ pub(crate) mod test_common {
         assert_eq!(Some(VOTE), storage.current_vote_get(ROOM).await.unwrap());
 
         let replacement_vote = LegalVoteId::generate();
-        assert!(!storage
-            .current_vote_set(ROOM, replacement_vote)
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .current_vote_set(ROOM, replacement_vote)
+                .await
+                .unwrap()
+        );
         assert_eq!(Some(VOTE), storage.current_vote_get(ROOM).await.unwrap());
 
         storage.current_vote_delete(ROOM).await.unwrap();

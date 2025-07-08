@@ -4,19 +4,19 @@
 
 use chrono::{self, Utc};
 use either::Either;
-use futures::{stream::once, FutureExt};
+use futures::{FutureExt, stream::once};
 use opentalk_signaling_core::{
-    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage, control,
 };
 use opentalk_types_common::{modules::ModuleId, time::Timestamp};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_timer::{
+    Kind, MODULE_ID, TimerConfig, TimerId,
     command::{self, TimerCommand},
     event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
     peer_state::TimerPeerState,
     state::TimerState,
-    Kind, TimerConfig, TimerId, MODULE_ID,
 };
 use storage::TimerStorage;
 use tokio::time::sleep;

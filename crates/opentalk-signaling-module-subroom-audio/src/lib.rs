@@ -16,13 +16,14 @@ use livekit_api::{
 use livekit_protocol::TrackSource;
 use opentalk_controller_settings::LiveKit;
 use opentalk_signaling_core::{
-    control, CleanupScope, DestroyContext, Event as SignalingEvent, InitContext, ModuleContext,
+    CleanupScope, DestroyContext, Event as SignalingEvent, InitContext, ModuleContext,
     SignalingModule, SignalingModuleError, SignalingModuleInitData, SignalingRoomId,
-    VolatileStorage,
+    VolatileStorage, control,
 };
 use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_subroom_audio::{
+    MODULE_ID,
     command::Command,
     event::{
         Error, Event, ParticipantsInvited, WhisperAccepted, WhisperGroupOutgoing, WhisperInvite,
@@ -30,7 +31,6 @@ use opentalk_types_signaling_subroom_audio::{
     },
     state::{WhisperGroup, WhisperState},
     whisper_id::WhisperId,
-    MODULE_ID,
 };
 use snafu::ResultExt;
 use storage::SubroomAudioStorage;

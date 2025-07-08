@@ -5,7 +5,7 @@
 [package]
 authors.workspace = true
 description = "Utilities used in opentalk-controller"
-edition = "2021"
+edition = "2024"
 license = "EUPL-1.2"
 name = "opentalk-controller-utils"
 publish = false

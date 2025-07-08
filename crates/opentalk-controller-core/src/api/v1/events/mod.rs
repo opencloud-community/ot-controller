@@ -3,15 +3,14 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_web::{
-    delete, get, patch, post,
+    Either, delete, get, patch, post,
     web::{Data, Json, Path, Query, ReqData},
-    Either,
 };
 use chrono::{DateTime, Utc};
 use kustos::{
+    Resource,
     policies_builder::{GrantingAccess, PoliciesBuilder},
     prelude::{AccessMethod, IsSubject},
-    Resource,
 };
 use opentalk_controller_service_facade::{OpenTalkControllerService, RequestUser};
 use opentalk_types_api_v1::{
@@ -24,7 +23,7 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::{events::EventId, time::RecurrencePattern};
 use serde::Deserialize;
 
-use super::{response::NoContent, ApiResponse, DefaultApiResult};
+use super::{ApiResponse, DefaultApiResult, response::NoContent};
 use crate::api::{
     headers::CursorLink,
     responses::{BadRequest, Forbidden, InternalServerError, NotFound, Unauthorized},

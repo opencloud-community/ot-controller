@@ -5,7 +5,7 @@
 use std::collections::BTreeSet;
 
 use async_trait::async_trait;
-use opentalk_signaling_core::{control::storage::ControlStorageEvent, SignalingModuleError};
+use opentalk_signaling_core::{SignalingModuleError, control::storage::ControlStorageEvent};
 use opentalk_types_common::{
     rooms::RoomId,
     time::Timestamp,

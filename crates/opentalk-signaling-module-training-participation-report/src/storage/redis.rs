@@ -16,7 +16,7 @@ use opentalk_types_signaling_training_participation_report::state::Participation
 use redis::{AsyncCommands, ExistenceCheck, SetOptions};
 use redis_args::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snafu::{ensure_whatever, whatever, OptionExt as _, ResultExt as _};
+use snafu::{OptionExt as _, ResultExt as _, ensure_whatever, whatever};
 
 use super::{Checkpoint, RoomState, TrainingParticipationReportStorage, TrainingReportState};
 

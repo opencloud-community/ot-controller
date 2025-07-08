@@ -6,12 +6,12 @@ use std::{borrow::Cow, collections::BTreeMap, path::Path, sync::LazyLock};
 
 use chrono::{DateTime, Datelike as _, FixedOffset, Local, Utc};
 use typst::{
+    Library,
     diag::{FileError, FileResult},
     foundations::{Bytes, Datetime},
     syntax::{FileId, Source, VirtualPath},
     text::{Font, FontBook},
     utils::LazyHash,
-    Library,
 };
 use typst_kit::fonts::{FontSlot, Fonts};
 

@@ -65,9 +65,9 @@ mod tests {
 
     use super::*;
     use crate::{
+        AccessMethod, InvitePolicy, UserPolicies, UserPolicy,
         internal::rbac_api_ex::RbacApiEx,
         subject::{PolicyInvite, PolicyUser},
-        AccessMethod, InvitePolicy, UserPolicies, UserPolicy,
     };
 
     fn to_owned(v: Vec<&str>) -> Vec<String> {
@@ -199,11 +199,13 @@ mod tests {
             "GET|PUT".to_string(),
         ]];
 
-        assert!(input
-            .into_iter()
-            .map(TryInto::<UserPolicy>::try_into)
-            .collect::<std::result::Result<Vec<_>, ParsingError>>()
-            .is_err());
+        assert!(
+            input
+                .into_iter()
+                .map(TryInto::<UserPolicy>::try_into)
+                .collect::<std::result::Result<Vec<_>, ParsingError>>()
+                .is_err()
+        );
     }
 
     #[test]
@@ -274,12 +276,14 @@ mod tests {
             )
         );
         // User 307 has /rooms POST access via its role::user group
-        assert!(enforcer
-            .enforce(to_owned(vec![
-                "user::3079670b-2bad-4023-bf16-95993f462530",
-                "/rooms",
-                "POST"
-            ]))
-            .unwrap());
+        assert!(
+            enforcer
+                .enforce(to_owned(vec![
+                    "user::3079670b-2bad-4023-bf16-95993f462530",
+                    "/rooms",
+                    "POST"
+                ]))
+                .unwrap()
+        );
     }
 }

@@ -9,8 +9,8 @@ use opentalk_signaling_core::{
     SignalingModuleInitData,
 };
 use opentalk_types_common::{
-    features::{feature_id, FeatureId},
-    modules::{module_id, ModuleId},
+    features::{FeatureId, feature_id},
+    modules::{ModuleId, module_id},
 };
 
 /// The namespace string for the signaling module

@@ -13,7 +13,7 @@ use opentalk_jobs::Job;
 use opentalk_signaling_core::{ExchangeHandle, ExchangeTask};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use snafu::{ensure_whatever, ResultExt};
+use snafu::{ResultExt, ensure_whatever};
 
 use self::job_type::JobType;
 use crate::Result;

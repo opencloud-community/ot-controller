@@ -4,8 +4,8 @@
 
 use actix_web::dev::ServiceRequest;
 use fluent_langneg::{
-    convert_vec_str_to_langids_lossy, negotiate_languages, parse_accepted_languages,
-    NegotiationStrategy,
+    NegotiationStrategy, convert_vec_str_to_langids_lossy, negotiate_languages,
+    parse_accepted_languages,
 };
 use opentalk_types_common::users::Language;
 

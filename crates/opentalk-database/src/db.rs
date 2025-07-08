@@ -6,14 +6,14 @@ use std::{sync::Arc, time::Duration};
 
 use deadpool_runtime::Runtime;
 use diesel_async::{
-    pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection,
+    pooled_connection::{AsyncDieselConnectionManager, deadpool::Pool},
 };
 use snafu::Report;
 
 use crate::{
-    metrics::{DatabaseMetrics, MetricsConnection},
     DatabaseError, DbConnection,
+    metrics::{DatabaseMetrics, MetricsConnection},
 };
 
 type DbPool = Pool<AsyncPgConnection>;

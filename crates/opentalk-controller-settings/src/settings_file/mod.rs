@@ -69,7 +69,7 @@ pub(crate) use reports::Reports;
 pub(crate) use reports_template::ReportsTemplate;
 pub use settings_raw::SettingsRaw;
 #[cfg(test)]
-pub(crate) use settings_raw::{settings_raw_minimal_example, SETTINGS_RAW_MINIMAL_CONFIG_TOML};
+pub(crate) use settings_raw::{SETTINGS_RAW_MINIMAL_CONFIG_TOML, settings_raw_minimal_example};
 pub(crate) use shared_folder::SharedFolder;
 pub(crate) use spacedeck::Spacedeck;
 pub(crate) use subroom_audio::SubroomAudio;

@@ -15,11 +15,11 @@ use opentalk_database::{Db, DbConnection};
 use opentalk_db_storage::{
     events::Event, invites::Invite, module_resources::ModuleResource, rooms::Room, users::User,
 };
-use snafu::{whatever, ResultExt};
+use snafu::{ResultExt, whatever};
 
 use crate::{
-    acl::check_or_create_kustos_default_permissions, api::v1::events::EventPoliciesBuilderExt,
-    Result,
+    Result, acl::check_or_create_kustos_default_permissions,
+    api::v1::events::EventPoliciesBuilderExt,
 };
 
 #[derive(Debug, Clone, Parser)]

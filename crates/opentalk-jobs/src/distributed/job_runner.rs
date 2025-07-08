@@ -12,7 +12,7 @@ use opentalk_signaling_core::ExchangeHandle;
 use snafu::{ResultExt, Snafu};
 use tokio::{
     sync::broadcast,
-    time::{interval_at, Instant},
+    time::{Instant, interval_at},
 };
 
 use super::{
@@ -160,7 +160,9 @@ impl JobRunner {
                         Err(e) => {
                             let retry_in_secs = 10;
 
-                            log::error!("Failed to recreate election task, retrying in {retry_in_secs} seconds: {e}");
+                            log::error!(
+                                "Failed to recreate election task, retrying in {retry_in_secs} seconds: {e}"
+                            );
                             tokio::time::sleep(Duration::from_secs(retry_in_secs)).await;
                         }
                     }

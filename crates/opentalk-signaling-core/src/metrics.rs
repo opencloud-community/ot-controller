@@ -7,11 +7,11 @@ use std::{collections::HashMap, time::Instant};
 use opentalk_types_common::rooms::RoomId;
 use opentalk_types_signaling::ParticipantId;
 use opentelemetry::{
-    metrics::{Counter, Histogram, Meter, UpDownCounter},
     Key, KeyValue,
+    metrics::{Counter, Histogram, Meter, UpDownCounter},
 };
 use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
+    Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream, new_view,
 };
 use parking_lot::Mutex;
 
@@ -283,7 +283,9 @@ impl SignalingMetrics {
 
         let mut participants = self.participants.lock();
         let Some(joined_at) = participants.remove(&participant_id) else {
-            log::warn!("participant left metrics invoked for participant {participant_id} that does not exist");
+            log::warn!(
+                "participant left metrics invoked for participant {participant_id} that does not exist"
+            );
             return;
         };
         let meeting_time = Instant::now().duration_since(joined_at);

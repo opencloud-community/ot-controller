@@ -96,24 +96,30 @@ mod test_common {
             storage.waiting_room_participant_count(ROOM).await.unwrap(),
             0usize
         );
-        assert!(storage
-            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+                .await
+                .unwrap()
+        );
         // Ensure that we receive `false` when attempting to add the same participant twice
-        assert!(!storage
-            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
-            .await
-            .unwrap());
+        assert!(
+            !storage
+                .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+                .await
+                .unwrap()
+        );
         storage
             .waiting_room_remove_participant(ROOM, BOB_PARTICIPANT)
             .await
             .unwrap();
         // Now the same participant can be added again
-        assert!(storage
-            .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .waiting_room_add_participant(ROOM, BOB_PARTICIPANT)
+                .await
+                .unwrap()
+        );
 
         assert_eq!(
             storage.waiting_room_participants(ROOM).await.unwrap(),
@@ -124,10 +130,12 @@ mod test_common {
             1usize
         );
 
-        assert!(storage
-            .waiting_room_add_participant(ROOM, ALICE_PARTICIPANT)
-            .await
-            .unwrap());
+        assert!(
+            storage
+                .waiting_room_add_participant(ROOM, ALICE_PARTICIPANT)
+                .await
+                .unwrap()
+        );
 
         assert_eq!(
             storage.waiting_room_participants(ROOM).await.unwrap(),

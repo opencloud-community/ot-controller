@@ -4,7 +4,7 @@
 
 use std::{marker::PhantomData, sync::Arc};
 
-use futures::{stream::SelectAll, Stream};
+use futures::{Stream, stream::SelectAll};
 use kustos::Authz;
 use opentalk_database::Db;
 use opentalk_db_storage::{rooms::Room, users::User};
@@ -12,8 +12,8 @@ use opentalk_types_common::{rooms::BreakoutRoomId, tariffs::TariffResource};
 use opentalk_types_signaling::{ParticipantId, Role};
 
 use crate::{
-    any_stream, AnyStream, ObjectStorage, Participant, SignalingModule, SignalingRoomId,
-    VolatileStorage,
+    AnyStream, ObjectStorage, Participant, SignalingModule, SignalingRoomId, VolatileStorage,
+    any_stream,
 };
 
 pub struct ExchangeBinding {

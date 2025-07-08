@@ -4,10 +4,10 @@
 
 use derive_more::{AsRef, Display, From, FromStr, Into};
 use diesel::{
-    prelude::*, BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable,
-    OptionalExtension, QueryDsl, Queryable,
+    BoolExpressionMethods, ExpressionMethods, Identifiable, Insertable, OptionalExtension,
+    QueryDsl, Queryable, prelude::*,
 };
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DbConnection, Result};
 use opentalk_diesel_newtype::DieselNewtype;
 use opentalk_types_common::{

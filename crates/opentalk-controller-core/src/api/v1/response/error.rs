@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 //! Error response types for REST APIv1
-use actix_web::{error::JsonPayloadError, HttpRequest};
+use actix_web::{HttpRequest, error::JsonPayloadError};
 use bincode::{BorrowDecode, Decode, Encode};
 use http::StatusCode;
 use opentalk_controller_service::Whatever;

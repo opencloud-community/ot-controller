@@ -7,12 +7,12 @@ use opentalk_db_storage::sip_configs::SipConfig;
 use opentalk_signaling_core::Participant;
 use opentalk_types_api_v1::{
     error::ApiError,
-    services::{call_in::PostCallInStartRequestBody, PostServiceStartResponseBody},
+    services::{PostServiceStartResponseBody, call_in::PostCallInStartRequestBody},
 };
 use opentalk_types_common::features;
 
 use crate::{
-    require_feature, signaling::ticket::start_or_continue_signaling_session, ControllerBackend,
+    ControllerBackend, require_feature, signaling::ticket::start_or_continue_signaling_session,
 };
 
 impl ControllerBackend {

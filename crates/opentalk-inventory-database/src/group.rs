@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use opentalk_db_storage::groups::{get_or_create_groups_by_name, Group};
-use opentalk_inventory::{error::StorageBackendSnafu, GroupInventory};
+use opentalk_db_storage::groups::{Group, get_or_create_groups_by_name};
+use opentalk_inventory::{GroupInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
     tenants::TenantId,
     users::{GroupName, UserId},

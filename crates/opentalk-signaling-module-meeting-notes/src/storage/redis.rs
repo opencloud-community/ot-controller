@@ -9,7 +9,7 @@ use redis::AsyncCommands;
 use redis_args::ToRedisArgs;
 use snafu::ResultExt;
 
-use super::{meeting_notes_storage::MeetingNotesStorage, InitState};
+use super::{InitState, meeting_notes_storage::MeetingNotesStorage};
 use crate::SessionInfo;
 
 #[async_trait(?Send)]

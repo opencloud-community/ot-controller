@@ -7,8 +7,8 @@ use std::collections::BTreeSet;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use opentalk_signaling_core::{
-    control::storage::ControlStorageParticipantSet, RoomLocking, SignalingModuleError,
-    SignalingRoomId,
+    RoomLocking, SignalingModuleError, SignalingRoomId,
+    control::storage::ControlStorageParticipantSet,
 };
 use opentalk_types_signaling::ParticipantId;
 use redis_args::{FromRedisValue, ToRedisArgs};

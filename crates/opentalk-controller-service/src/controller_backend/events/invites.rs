@@ -5,17 +5,17 @@
 //! Handles event invites
 
 use chrono::Utc;
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use kustos::{policies_builder::PoliciesBuilder, Authz};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
+use kustos::{Authz, policies_builder::PoliciesBuilder};
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::Settings;
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, Db};
 use opentalk_db_storage::{
     events::{
+        Event, EventFavorite, EventInvite, NewEventInvite, UpdateEventInvite,
         email_invites::{EventEmailInvite, NewEventEmailInvite, UpdateEventEmailInvite},
         shared_folders::EventSharedFolder,
-        Event, EventFavorite, EventInvite, NewEventInvite, UpdateEventInvite,
     },
     invites::NewInvite,
     rooms::Room,
@@ -28,9 +28,9 @@ use opentalk_keycloak_admin::KeycloakAdminClient;
 use opentalk_types_api_v1::{
     error::ApiError,
     events::{
-        by_event_id::invites::GetEventsInvitesQuery, DeleteEventInvitePath, EmailInvite,
-        EventInvitee, EventOptionsQuery, PatchEmailInviteBody, PatchInviteBody,
-        PostEventInviteBody, PostEventInviteQuery, UserInvite,
+        DeleteEventInvitePath, EmailInvite, EventInvitee, EventOptionsQuery, PatchEmailInviteBody,
+        PatchInviteBody, PostEventInviteBody, PostEventInviteQuery, UserInvite,
+        by_event_id::invites::GetEventsInvitesQuery,
     },
     pagination::PagePaginationQuery,
     users::GetEventInvitesPendingResponseBody,
@@ -38,8 +38,8 @@ use opentalk_types_api_v1::{
 use opentalk_types_common::{
     email::EmailAddress,
     events::{
-        invites::{EmailInviteRole, EventInviteStatus},
         EventId,
+        invites::{EmailInviteRole, EventInviteStatus},
     },
     rooms::RoomId,
     shared_folders::SharedFolder,
@@ -49,9 +49,10 @@ use opentalk_types_common::{
 use snafu::Report;
 
 use crate::{
+    ControllerBackend,
     controller_backend::{
-        events::{EventInviteeExt, EventPoliciesBuilderExt},
         RoomsPoliciesBuilderExt,
+        events::{EventInviteeExt, EventPoliciesBuilderExt},
     },
     events::{
         enrich_from_optional_user_search, enrich_invitees_from_optional_user_search,
@@ -61,7 +62,6 @@ use crate::{
         ExternalMailRecipient, MailRecipient, MailService, RegisteredMailRecipient,
         UnregisteredMailRecipient,
     },
-    ControllerBackend,
 };
 
 impl ControllerBackend {

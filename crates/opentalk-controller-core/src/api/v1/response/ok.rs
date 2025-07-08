@@ -10,9 +10,9 @@
 use std::collections::HashMap;
 
 use actix_web::{
+    HttpResponse, Responder,
     body::BoxBody,
     http::header::{self, HeaderMap},
-    HttpResponse, Responder,
 };
 use either::Either;
 use opentalk_controller_service::Whatever;

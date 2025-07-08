@@ -8,12 +8,15 @@ use bytes::Bytes;
 use chrono::{DateTime, Local, Utc};
 use chrono_tz::Tz;
 use either::Either;
-use futures::{stream, StreamExt as _, TryStreamExt};
+use futures::{StreamExt as _, TryStreamExt, stream};
 use opentalk_database::Db;
 use opentalk_db_storage::{events::Event as DbEvent, users::User};
 use opentalk_report_generation::ToReportDateTime;
 use opentalk_signaling_core::{
-    assets::{save_asset, AssetError, NewAssetFileName},
+    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
+    ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
+    SignalingRoomId, VolatileStorage,
+    assets::{AssetError, NewAssetFileName, save_asset},
     control::{
         self,
         storage::{
@@ -21,21 +24,18 @@ use opentalk_signaling_core::{
             LEFT_AT, ROLE, USER_ID,
         },
     },
-    ChunkFormat, DestroyContext, Event, InitContext, ModuleContext, ObjectStorage,
-    ObjectStorageError, SignalingModule, SignalingModuleError, SignalingModuleInitData,
-    SignalingRoomId, VolatileStorage,
 };
 use opentalk_types_common::{
-    assets::{asset_file_kind, AssetFileKind, FileExtension},
+    assets::{AssetFileKind, FileExtension, asset_file_kind},
     modules::ModuleId,
     time::{TimeZone, Timestamp},
     users::UserId,
 };
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, Role};
 use opentalk_types_signaling_meeting_report::{
+    MODULE_ID,
     command::MeetingReportCommand,
     event::{Error, MeetingReportEvent, PdfAsset},
-    MODULE_ID,
 };
 use snafu::{Report, ResultExt};
 use storage::MeetingReportStorage;
@@ -369,7 +369,7 @@ mod tests {
 
     use insta::assert_snapshot;
 
-    use crate::{template::ReportTemplateParameter, MeetingReport, DEFAULT_TEMPLATE, MODULE_ID};
+    use crate::{DEFAULT_TEMPLATE, MODULE_ID, MeetingReport, template::ReportTemplateParameter};
 
     fn generate(sample_name: &str, parameter: &ReportTemplateParameter) -> String {
         let pdf = MeetingReport::generate_pdf_report_from_template(

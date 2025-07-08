@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use chrono::{DateTime, Utc};
-use diesel::{prelude::*, ExpressionMethods, QueryDsl, Queryable};
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection, RunQueryDsl};
+use diesel::{ExpressionMethods, QueryDsl, Queryable, prelude::*};
+use diesel_async::{AsyncConnection, RunQueryDsl, scoped_futures::ScopedFutureExt};
 use opentalk_database::{DbConnection, Paginate, Result};
 use opentalk_types_common::{
-    events::{invites::EmailInviteRole, EventId},
+    events::{EventId, invites::EmailInviteRole},
     rooms::RoomId,
     users::UserId,
 };

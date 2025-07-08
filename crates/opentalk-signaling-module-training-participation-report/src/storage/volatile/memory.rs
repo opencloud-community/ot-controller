@@ -12,7 +12,7 @@ use opentalk_types_common::{
 };
 use opentalk_types_signaling::ParticipantId;
 use opentalk_types_signaling_training_participation_report::state::ParticipationLoggingState;
-use snafu::{ensure_whatever, OptionExt as _};
+use snafu::{OptionExt as _, ensure_whatever};
 
 use crate::storage::{Checkpoint, RoomState, TrainingReportState};
 

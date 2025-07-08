@@ -5,7 +5,7 @@
 use core::{fmt::Display, time::Duration};
 use std::{hash::Hash, time::Instant};
 
-use bincode::{config, Decode, Encode};
+use bincode::{Decode, Encode, config};
 use moka::future::Cache as LocalCache;
 use redis::{AsyncCommands, RedisError, ToRedisArgs};
 use serde::de::DeserializeOwned;

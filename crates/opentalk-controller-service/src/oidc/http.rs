@@ -4,7 +4,7 @@
 
 use std::{future::Future, pin::Pin};
 
-use openidconnect::{reqwest::Error, HttpRequest, HttpResponse};
+use openidconnect::{HttpRequest, HttpResponse, reqwest::Error};
 
 pub fn make_client() -> Result<reqwest11::Client, reqwest11::Error> {
     reqwest11::Client::builder()

@@ -29,7 +29,7 @@ use snafu::ResultExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use crate::{metrics::EndpointMetrics, Result};
+use crate::{Result, metrics::EndpointMetrics};
 
 /// A registered mail recipient
 #[derive(Debug)]

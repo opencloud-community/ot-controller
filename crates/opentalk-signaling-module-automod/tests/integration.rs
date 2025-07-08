@@ -4,7 +4,7 @@
 
 use opentalk_signaling_core::module_tester::WsMessageOutgoing;
 use opentalk_signaling_module_automod as automod;
-use opentalk_test_util::{common, TestContext, TestUser, USER_1, USER_2};
+use opentalk_test_util::{TestContext, TestUser, USER_1, USER_2, common};
 use opentalk_types_signaling::{ParticipantId, Role};
 use opentalk_types_signaling_automod::{
     command::{AutomodCommand, Edit, Select, Start, Yield},

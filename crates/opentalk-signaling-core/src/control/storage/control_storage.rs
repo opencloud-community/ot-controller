@@ -10,7 +10,7 @@ use opentalk_types_common::{rooms::RoomId, time::Timestamp, users::UserInfo};
 use opentalk_types_signaling::{ParticipantId, Role};
 use redis::ToRedisArgs;
 use redis_args::ToRedisArgs;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use snafu::ResultExt as _;
 
 use super::LEFT_AT;

@@ -166,10 +166,12 @@ mod test_common {
     ) {
         let room = RoomId::generate();
         assert_eq!(storage.get_training_report_state(room).await.unwrap(), None);
-        assert!(storage
-            .set_training_report_state(room, TrainingReportState::WaitingForInitialTimeout)
-            .await
-            .is_err());
+        assert!(
+            storage
+                .set_training_report_state(room, TrainingReportState::WaitingForInitialTimeout)
+                .await
+                .is_err()
+        );
 
         initialize_room_example(storage, room).await.unwrap();
 
@@ -313,10 +315,12 @@ mod test_common {
         // Setting the stage
         {
             // Returns an error because we're not yet in `TrackingPresence` state
-            assert!(storage
-                .record_presence_confirmation(room, ALICE, recorded1a)
-                .await
-                .is_err());
+            assert!(
+                storage
+                    .record_presence_confirmation(room, ALICE, recorded1a)
+                    .await
+                    .is_err()
+            );
             assert_eq!(
                 storage
                     .get_recorded_presence_state(room, ALICE)
@@ -332,10 +336,12 @@ mod test_common {
 
             // Returns an error because even though the state is correct we
             // don't have a current checkpoint yet
-            assert!(storage
-                .record_presence_confirmation(room, ALICE, recorded1a)
-                .await
-                .is_err());
+            assert!(
+                storage
+                    .record_presence_confirmation(room, ALICE, recorded1a)
+                    .await
+                    .is_err()
+            );
 
             storage
                 .switch_to_next_checkpoint(room, checkpoint1)
@@ -345,10 +351,12 @@ mod test_common {
             // Returns an error because even though the state is correct we
             // don't have a current checkpoint yet, we only queued the timestamp
             // for the upcoming checkpoint.
-            assert!(storage
-                .record_presence_confirmation(room, ALICE, recorded1a)
-                .await
-                .is_err());
+            assert!(
+                storage
+                    .record_presence_confirmation(room, ALICE, recorded1a)
+                    .await
+                    .is_err()
+            );
         }
 
         // Record the first checkpoint

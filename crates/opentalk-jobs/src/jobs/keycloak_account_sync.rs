@@ -13,15 +13,15 @@ use opentalk_keycloak_admin::{AuthorizedClient, KeycloakAdminClient};
 use opentalk_log::{debug, info};
 use opentalk_signaling_core::ExchangeHandle;
 use serde::{Deserialize, Serialize};
-use snafu::{ensure, ResultExt};
+use snafu::{ResultExt, ensure};
 
 use crate::{
+    Error, Job, JobParameters,
     error::{
         InvalidParameterValueSnafu, KeycloakApiReturnedInvalidUserCountSnafu,
         ParameterLoadingSnafu, ParameterSerializingSnafu, UserSearchBackendIsNotKeycloakSnafu,
     },
     events::update_user_accounts,
-    Error, Job, JobParameters,
 };
 
 const DEFAULT_KEYCLOAK_API_PAGE_SIZE: usize = 100;

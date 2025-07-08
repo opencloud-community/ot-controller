@@ -15,7 +15,7 @@ use std::{
 use actix::Addr;
 use actix_http::ws::{CloseCode, CloseReason, Message};
 use bytestring::ByteString;
-use futures::{stream::SelectAll, Future};
+use futures::{Future, stream::SelectAll};
 use kustos::Authz;
 use log::log_enabled;
 use opentalk_controller_service::{
@@ -36,18 +36,17 @@ use opentalk_db_storage::{
     events::EventInvite, rooms::Room, tariffs::Tariff, users::User, utils::build_event_info,
 };
 use opentalk_signaling_core::{
-    control::{
-        self, exchange,
-        storage::{
-            AttributeActions, ControlStorageParticipantAttributes, GlobalRoomAttributeId,
-            LocalRoomAttributeId, AVATAR_URL, BREAKOUT_ROOM, DISPLAY_NAME, HAND_IS_UP,
-            HAND_UPDATED_AT, IS_PRESENT, IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, ROLE, USER_ID,
-        },
-        ControlStateExt as _, ControlStorageProvider, MODULE_ID,
-    },
     AnyStream, ExchangeHandle, LockError, ObjectStorage, Participant, RoomLockingProvider as _,
     RunnerId, SignalingMetrics, SignalingModule, SignalingModuleError, SignalingRoomId,
     SubscriberHandle, VolatileStorage,
+    control::{
+        self, ControlStateExt as _, ControlStorageProvider, MODULE_ID, exchange,
+        storage::{
+            AVATAR_URL, AttributeActions, BREAKOUT_ROOM, ControlStorageParticipantAttributes,
+            DISPLAY_NAME, GlobalRoomAttributeId, HAND_IS_UP, HAND_UPDATED_AT, IS_PRESENT,
+            IS_ROOM_OWNER, JOINED_AT, KIND, LEFT_AT, LocalRoomAttributeId, ROLE, USER_ID,
+        },
+    },
 };
 use opentalk_types_common::{
     features::FeatureId,
@@ -73,7 +72,7 @@ use opentalk_types_signaling_moderation::event::{
     ModerationEvent, RaiseHandsDisabled, RaiseHandsEnabled, RaisedHandResetByModerator,
 };
 use serde_json::Value;
-use snafu::{ensure, whatever, Report, ResultExt, Snafu};
+use snafu::{Report, ResultExt, Snafu, ensure, whatever};
 use tokio::{
     sync::{broadcast, mpsc},
     time::{interval, sleep},
@@ -81,9 +80,9 @@ use tokio::{
 use tokio_stream::StreamExt;
 
 use super::{
+    CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
     actor::WebSocketActor,
     modules::{DynBroadcastEvent, DynEventCtx, DynTargetedEvent, Modules, NoSuchModuleError},
-    CleanupScope, DestroyContext, ExchangeBinding, ExchangePublish, NamespacedEvent, RunnerMessage,
 };
 use crate::api::signaling::ws::actor::WsCommand;
 
@@ -839,7 +838,9 @@ impl Runner {
             .participants_all_left(self.room_id)
             .await?;
 
-        log::debug!("Participant state while determining cleanup scope ( current room empty: {current_room_empty}, global room: {global_room_participants})");
+        log::debug!(
+            "Participant state while determining cleanup scope ( current room empty: {current_room_empty}, global room: {global_room_participants})"
+        );
 
         if global_room_participants == 0 {
             // The main room, waiting room and all breakout rooms are empty
@@ -1855,7 +1856,7 @@ impl Runner {
         let mut actions = AttributeActions::new(self.room_id, self.id);
 
         match &self.participant {
-            Participant::User(ref user) => {
+            Participant::User(user) => {
                 actions
                     .set_local(KIND, ParticipationKind::User)
                     .set_local(

@@ -16,8 +16,8 @@ use opentalk_types_signaling_legal_vote::{
 use crate::{
     error::{ErrorKind, LegalVoteError},
     storage::{
-        protocol::v1::{ProtocolEntry, Vote, VoteEvent},
         VoteScriptResult, VoteStatus,
+        protocol::v1::{ProtocolEntry, Vote, VoteEvent},
     },
 };
 

@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
 use diesel::{
-    pg::Pg, prelude::*, sql_types::Jsonb, ExpressionMethods, Identifiable, QueryDsl, Queryable,
+    ExpressionMethods, Identifiable, QueryDsl, Queryable, pg::Pg, prelude::*, sql_types::Jsonb,
 };
 use diesel_async::RunQueryDsl;
 use opentalk_database::{DatabaseError, DbConnection, Result};
@@ -354,11 +354,11 @@ impl NewModuleResource {
 #[cfg(test)]
 mod tests {
     use opentalk_test_util::{assert_eq, *};
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
     use serial_test::serial;
 
     use super::*;
-    use crate::tenants::{get_or_create_tenant_by_oidc_id, OidcTenantId};
+    use crate::tenants::{OidcTenantId, get_or_create_tenant_by_oidc_id};
 
     async fn init_resource(json: Value) -> (ModuleResourceId, DbConnection) {
         let db_ctx = opentalk_test_util::database::DatabaseContext::new(false).await;

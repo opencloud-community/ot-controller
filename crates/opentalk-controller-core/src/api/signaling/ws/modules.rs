@@ -19,10 +19,10 @@ use serde_json::Value;
 use snafu::{Report, ResultExt, Snafu};
 
 use crate::{
-    api::signaling::ws::{
-        runner::Builder, DestroyContext, ExchangePublish, ModuleContext, SignalingModule,
-    },
     Result,
+    api::signaling::ws::{
+        DestroyContext, ExchangePublish, ModuleContext, SignalingModule, runner::Builder,
+    },
 };
 
 #[derive(Debug, Snafu)]

@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use opentalk_db_storage::invites::{Invite, InviteWithUsers, NewInvite, UpdateInvite};
-use opentalk_inventory::{error::StorageBackendSnafu, RoomInviteInventory};
+use opentalk_inventory::{RoomInviteInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
-    rooms::{invite_codes::InviteCode, RoomId},
+    rooms::{RoomId, invite_codes::InviteCode},
     time::Timestamp,
     users::UserId,
 };

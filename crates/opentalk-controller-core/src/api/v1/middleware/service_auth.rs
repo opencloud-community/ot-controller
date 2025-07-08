@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use core::{
-    future::{ready, Future, Ready},
+    future::{Future, Ready, ready},
     pin::Pin,
     task::{Context, Poll},
 };
 use std::rc::Rc;
 
-use actix_http::{header::Header, HttpMessage};
+use actix_http::{HttpMessage, header::Header};
 use actix_web::{
+    ResponseError,
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     error::Error,
     web::Data,
-    ResponseError,
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Bearer};
 use openidconnect::AccessToken;

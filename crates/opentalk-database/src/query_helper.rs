@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use diesel::{backend::Backend, query_builder::*, result::QueryResult, RunQueryDsl};
+use diesel::{RunQueryDsl, backend::Backend, query_builder::*, result::QueryResult};
 
 /// Database drop statement
 ///

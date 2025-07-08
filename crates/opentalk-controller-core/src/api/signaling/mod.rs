@@ -5,4 +5,4 @@
 mod ws;
 
 pub use ws::SignalingModules;
-pub(crate) use ws::{__path_ws_service, ws_service, SignalingProtocols};
+pub(crate) use ws::{__path_ws_service, SignalingProtocols, ws_service};

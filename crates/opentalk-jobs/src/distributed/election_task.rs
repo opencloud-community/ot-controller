@@ -63,7 +63,9 @@ impl Lease {
         let lease_response_ttl = lease_response.ttl();
 
         if lease_response_ttl != ETCD_LEASE_TTL as i64 {
-            log::warn!("Requested lease with {ETCD_LEASE_TTL} seconds ttl, server responded with {lease_response_ttl} seconds ttl");
+            log::warn!(
+                "Requested lease with {ETCD_LEASE_TTL} seconds ttl, server responded with {lease_response_ttl} seconds ttl"
+            );
         };
 
         Ok(Self {

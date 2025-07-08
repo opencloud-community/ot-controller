@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: EUPL-1.2
 
-use refinery::{embed_migrations, Report};
+use refinery::{Report, embed_migrations};
 use refinery_core::tokio_postgres::{Config, NoTls};
 use snafu::Snafu;
 use tokio::sync::oneshot;

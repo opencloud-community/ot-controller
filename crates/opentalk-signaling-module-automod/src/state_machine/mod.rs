@@ -13,9 +13,8 @@ use opentalk_types_signaling_automod::config::SelectionStrategy;
 use snafu::Snafu;
 
 use crate::{
-    exchange,
+    AutomodStorage, exchange,
     storage::{Entry, StorageConfig},
-    AutomodStorage,
 };
 
 mod next;
@@ -121,7 +120,7 @@ mod test {
 
     use chrono::{DateTime, Utc};
     use opentalk_signaling_core::{RedisConnection, SignalingRoomId, VolatileStaticMemoryStorage};
-    use rand::{rngs::StdRng, SeedableRng};
+    use rand::{SeedableRng, rngs::StdRng};
     use redis::aio::ConnectionManager;
 
     use crate::storage::reset_memory_state;

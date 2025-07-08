@@ -4,7 +4,7 @@
 
 use opentelemetry::metrics::{Histogram, Meter};
 use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
+    Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream, new_view,
 };
 
 const ENFORCE_EXEC_TIME: &str = "kustos.enforce_execution_time_seconds";

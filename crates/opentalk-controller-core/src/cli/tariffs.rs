@@ -9,8 +9,8 @@ use std::{
 
 use chrono::Utc;
 use clap::Subcommand;
-use diesel_async::{scoped_futures::ScopedFutureExt, AsyncConnection};
-use humansize::{format_size, FormatSizeOptions, DECIMAL};
+use diesel_async::{AsyncConnection, scoped_futures::ScopedFutureExt};
+use humansize::{DECIMAL, FormatSizeOptions, format_size};
 use itertools::Itertools;
 use opentalk_controller_settings::Settings;
 use opentalk_database::{DatabaseError, Db, DbConnection};
@@ -21,7 +21,7 @@ use opentalk_db_storage::{
 use opentalk_types_common::{features::ModuleFeatureId, modules::ModuleId, tariffs::QuotaType};
 use parse_size::parse_size;
 use snafu::{OptionExt, ResultExt, Snafu};
-use tabled::{settings::Style, Table, Tabled};
+use tabled::{Table, Tabled, settings::Style};
 
 #[derive(Subcommand, Debug, Clone)]
 #[clap(rename_all = "kebab_case")]

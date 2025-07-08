@@ -4,7 +4,7 @@
 
 use opentalk_database::DatabaseError;
 use opentalk_db_storage::assets::{self, Asset, NewAsset, UpdateAsset};
-use opentalk_inventory::{error::StorageBackendSnafu, AssetInventory};
+use opentalk_inventory::{AssetInventory, error::StorageBackendSnafu};
 use opentalk_types_common::{
     assets::{AssetId, AssetSorting},
     events::EventId,

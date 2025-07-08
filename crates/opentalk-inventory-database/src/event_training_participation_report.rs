@@ -6,7 +6,7 @@ use opentalk_db_storage::events::{
     EventTrainingParticipationReportParameterSet,
     UpdateEventTrainingParticipationReportParameterSet,
 };
-use opentalk_inventory::{error::StorageBackendSnafu, EventTrainingParticipationReportInventory};
+use opentalk_inventory::{EventTrainingParticipationReportInventory, error::StorageBackendSnafu};
 use opentalk_types_common::events::EventId;
 use snafu::ResultExt as _;
 

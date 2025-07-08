@@ -6,7 +6,7 @@
 authors.workspace = true
 description = "OpenTalk report generation functionality"
 documentation = "https://docs.rs/opentalk-report-generation"
-edition = "2021"
+edition = "2024"
 homepage.workspace = true
 license = "EUPL-1.2"
 name = "opentalk-report-generation"

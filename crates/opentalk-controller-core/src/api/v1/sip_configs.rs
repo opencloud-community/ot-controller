@@ -3,9 +3,8 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use actix_web::{
-    delete, get, put,
+    HttpResponse, delete, get, put,
     web::{Data, Json, Path},
-    HttpResponse,
 };
 use opentalk_controller_service_facade::OpenTalkControllerService;
 use opentalk_types_api_v1::{

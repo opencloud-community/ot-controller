@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: EUPL-1.2
 
 use core::{
-    future::{ready, Ready},
+    future::{Ready, ready},
     task::{Context, Poll},
 };
 use std::rc::Rc;
 
 use actix_http::HttpMessage;
 use actix_web::{
-    dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
 };
 use futures::future::Either;
 use opentalk_types_api_v1::error::ApiError;

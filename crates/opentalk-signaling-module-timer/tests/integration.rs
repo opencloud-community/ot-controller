@@ -5,12 +5,12 @@
 use chrono::{Duration, Utc};
 use opentalk_signaling_core::module_tester::{ModuleTester, WsMessageOutgoing};
 use opentalk_signaling_module_timer::Timer;
-use opentalk_test_util::{common, TestContext, USER_1, USER_2};
+use opentalk_test_util::{TestContext, USER_1, USER_2, common};
 use opentalk_types_common::time::Timestamp;
 use opentalk_types_signaling_timer::{
+    Kind, TimerConfig, TimerId,
     command::{self, Start, Stop, TimerCommand, UpdateReadyStatus},
     event::{Error, Started, StopKind, Stopped, TimerEvent, UpdatedReadyStatus},
-    Kind, TimerConfig, TimerId,
 };
 use pretty_assertions::assert_eq;
 use serial_test::serial;

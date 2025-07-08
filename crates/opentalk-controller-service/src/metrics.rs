@@ -6,11 +6,11 @@
 
 use opentalk_mail_worker_protocol::MailTask;
 use opentelemetry::{
-    metrics::{Counter, Histogram, Meter},
     Key, KeyValue,
+    metrics::{Counter, Histogram, Meter},
 };
 use opentelemetry_sdk::metrics::{
-    new_view, Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream,
+    Aggregation, Instrument, MeterProviderBuilder, MetricError, Stream, new_view,
 };
 
 const MAIL_TASK_KIND: Key = Key::from_static_str("mail_task_kind");

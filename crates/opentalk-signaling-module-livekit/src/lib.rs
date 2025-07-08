@@ -6,29 +6,29 @@ use std::{collections::BTreeSet, sync::Arc, time::Duration};
 
 use either::Either;
 use futures::{
-    stream::{self},
     StreamExt,
+    stream::{self},
 };
 use livekit_api::{
     access_token::{AccessToken, VideoGrants},
     services::{
-        room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
         ServiceError, TwirpError, TwirpErrorCode,
+        room::{CreateRoomOptions, RoomClient, UpdateParticipantOptions},
     },
 };
 use livekit_protocol::{ParticipantPermission, TrackSource};
 use opentalk_controller_settings::{LiveKit, SettingsProvider};
 use opentalk_signaling_core::{
-    control, CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
-    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage,
+    CleanupScope, DestroyContext, Event, InitContext, ModuleContext, SignalingModule,
+    SignalingModuleError, SignalingModuleInitData, SignalingRoomId, VolatileStorage, control,
 };
 use opentalk_types_common::modules::ModuleId;
 use opentalk_types_signaling::{ParticipantId, ParticipationKind, ParticipationVisibility, Role};
 use opentalk_types_signaling_livekit::{
+    Credentials, MicrophoneRestrictionState,
     command::{self, UnrestrictedParticipants},
     event,
     state::{self, LiveKitState},
-    Credentials, MicrophoneRestrictionState,
 };
 use snafu::ResultExt;
 use storage::LivekitStorage;
@@ -272,7 +272,9 @@ impl Livekit {
                     {
                         Ok(p) => p,
                         Err(e) => {
-                            log::error!("Failed fetch participant room={room} participant={participant_id_str}, {e}");
+                            log::error!(
+                                "Failed fetch participant room={room} participant={participant_id_str}, {e}"
+                            );
                             continue;
                         }
                     };
@@ -289,7 +291,10 @@ impl Livekit {
                             .mute_published_track(&room, &participant_id_str, &track.sid, true)
                             .await
                         {
-                            log::error!("Failed to mute track room={room} participant={participant_id_str} track-id={}, {e}", track.sid);
+                            log::error!(
+                                "Failed to mute track room={room} participant={participant_id_str} track-id={}, {e}",
+                                track.sid
+                            );
                         }
                     }
 

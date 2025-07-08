@@ -4,8 +4,8 @@
 
 use opentalk_controller_service_facade::RequestUser;
 use opentalk_controller_settings::{
-    settings_file::UsersFindBehavior, TenantAssignment, UserSearchBackend,
-    UserSearchBackendKeycloak,
+    TenantAssignment, UserSearchBackend, UserSearchBackendKeycloak,
+    settings_file::UsersFindBehavior,
 };
 use opentalk_controller_utils::CaptureApiError;
 use opentalk_database::{DatabaseError, DbConnection};
@@ -20,16 +20,16 @@ use opentalk_types_api_v1::{
     error::ApiError,
     pagination::PagePaginationQuery,
     users::{
-        me::PatchMeRequestBody, GetFindQuery, GetFindResponseBody, GetFindResponseEntry,
-        GetUserAssetsResponseBody, PrivateUserProfile, PublicUserProfile, UnregisteredUser,
-        UserAssetResource,
+        GetFindQuery, GetFindResponseBody, GetFindResponseEntry, GetUserAssetsResponseBody,
+        PrivateUserProfile, PublicUserProfile, UnregisteredUser, UserAssetResource,
+        me::PatchMeRequestBody,
     },
 };
 use opentalk_types_common::{tariffs::TariffResource, users::UserId};
 use snafu::{ResultExt, Whatever};
 
 use crate::{
-    email_to_libravatar_url, helpers::asset_to_asset_resource, ControllerBackend, ToUserProfile,
+    ControllerBackend, ToUserProfile, email_to_libravatar_url, helpers::asset_to_asset_resource,
 };
 
 impl ControllerBackend {

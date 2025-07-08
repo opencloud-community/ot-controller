@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use opentalk_database::Db;
-use opentalk_inventory::{error::StorageBackendSnafu, Inventory, InventoryProvider};
+use opentalk_inventory::{Inventory, InventoryProvider, error::StorageBackendSnafu};
 use snafu::ResultExt as _;
 
 use crate::{DatabaseConnection, Result};

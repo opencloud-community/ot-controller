@@ -4,7 +4,7 @@
 
 //! Initial addition of the underlying casbin database schema.
 //! This follows the casbin guidelines naming the table `casbin_rule`
-use barrel::{backend::Pg, types, Migration};
+use barrel::{Migration, backend::Pg, types};
 
 pub fn migration() -> String {
     let mut migr = Migration::new();
