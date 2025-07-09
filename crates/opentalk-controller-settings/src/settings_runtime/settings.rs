@@ -8,7 +8,10 @@ use super::{
     Spacedeck, SubroomAudio, Tariffs, Tenants, UserSearchBackend,
     oidc_and_user_search_builder::OidcAndUserSearchBuilder,
 };
-use crate::{Result, SettingsError, SettingsRaw, settings_file::UsersFindBehavior};
+use crate::{
+    Result, SettingsError, SettingsRaw, settings_file::UsersFindBehavior,
+    settings_runtime::RoomServer,
+};
 
 /// The settings used for the OpenTalk controller at runtime
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,6 +93,9 @@ pub struct Settings {
 
     /// Information about the operator.
     pub operator_information: Option<OperatorInformation>,
+
+    /// The roomserver configuration
+    pub roomserver: Option<RoomServer>,
 }
 
 impl Settings {
@@ -146,6 +152,7 @@ impl TryFrom<SettingsRaw> for Settings {
         let defaults = raw.defaults.clone().map(Into::into).unwrap_or_default();
         let livekit = raw.livekit.clone().into();
         let operator_information = raw.operator_information.clone().map(Into::into);
+        let roomserver = raw.roomserver.clone().map(Into::into);
 
         Ok(Settings {
             frontend,
@@ -174,6 +181,7 @@ impl TryFrom<SettingsRaw> for Settings {
             defaults,
             livekit,
             operator_information,
+            roomserver,
         })
     }
 }
@@ -282,5 +290,6 @@ pub(crate) fn minimal_example() -> Settings {
             api_secret: "secret".to_string(),
         },
         operator_information: None,
+        roomserver: None,
     }
 }

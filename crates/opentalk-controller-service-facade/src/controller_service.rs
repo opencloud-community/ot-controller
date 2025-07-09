@@ -27,8 +27,9 @@ use opentalk_types_api_v1::{
     rooms::{
         GetRoomsResponseBody, RoomResource,
         by_room_id::{
-            GetRoomEventResponseBody, PostRoomsStartInvitedRequestBody, PostRoomsStartRequestBody,
-            RoomsStartResponseBody,
+            GetRoomEventResponseBody, PostRoomsRoomserverStartInvitedRequestBody,
+            PostRoomsRoomserverStartRequestBody, PostRoomsStartInvitedRequestBody,
+            PostRoomsStartRequestBody, RoomsStartResponseBody, RoomserverStartResponseBody,
             assets::RoomsByRoomIdAssetsGetResponseBody,
             invites::{
                 GetRoomsInvitesResponseBody, InviteResource, PostInviteRequestBody,
@@ -208,6 +209,33 @@ impl OpenTalkControllerService {
             .read()
             .await
             .start_invited_room_session(room_id, request)
+            .await
+    }
+
+    /// Start a roomserver signaling session as a registered user
+    pub async fn start_roomserver_room_session(
+        &self,
+        current_user: RequestUser,
+        room_id: RoomId,
+        request: PostRoomsRoomserverStartRequestBody,
+    ) -> Result<RoomserverStartResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .start_roomserver_room_session(current_user, room_id, request)
+            .await
+    }
+
+    /// Start a roomserver signaling session for an invitation code
+    pub async fn start_invited_roomserver_room_session(
+        &self,
+        room_id: RoomId,
+        request: PostRoomsRoomserverStartInvitedRequestBody,
+    ) -> Result<RoomserverStartResponseBody, ApiError> {
+        self.backend
+            .read()
+            .await
+            .start_invited_roomserver_room_session(room_id, request)
             .await
     }
 

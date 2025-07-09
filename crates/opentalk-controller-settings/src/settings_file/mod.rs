@@ -28,6 +28,7 @@ mod rabbit_mq_config;
 mod redis_config;
 mod reports;
 mod reports_template;
+mod roomserver;
 mod settings_raw;
 mod shared_folder;
 mod spacedeck;
@@ -67,6 +68,7 @@ pub(crate) use rabbit_mq_config::RabbitMqConfig;
 pub(crate) use redis_config::RedisConfig;
 pub(crate) use reports::Reports;
 pub(crate) use reports_template::ReportsTemplate;
+pub(crate) use roomserver::RoomServer;
 pub use settings_raw::SettingsRaw;
 #[cfg(test)]
 pub(crate) use settings_raw::{SETTINGS_RAW_MINIMAL_CONFIG_TOML, settings_raw_minimal_example};

@@ -1761,7 +1761,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RoomsStartResponseBody"
         "400":
-          description: "Either no breakout rooms were found for this room, or the breakout room id is invalid"
+          description: "Either no breakout rooms were found for this room, the breakout room id is invalid or legacy signaling is disabled for this controller"
           content:
             application/json:
               schema:
@@ -1772,6 +1772,11 @@ paths:
                   value:
                     code: invalid_breakout_room_id
                     message: The provided breakout room ID is invalid
+                LegacySignalingDisabled:
+                  summary: Legacy signaling is disabled
+                  value:
+                    code: legacy_signaling_disabled
+                    message: "Legacy signaling has been disabled on this controller, use roomserver signaling instead"
                 NoBreakoutRooms:
                   summary: No breakout rooms
                   value:
@@ -1787,7 +1792,7 @@ paths:
             www-authenticate:
               schema:
                 type: string
-              description: "will contain 'session expired' to distinguish between an invalid and an expired token"
+              description: "Will contain 'session expired' to distinguish between an invalid and an expired token"
           content:
             application/json:
               schema:
@@ -1859,11 +1864,11 @@ paths:
           description: |-
             The provided ID token is malformed or contains
                             invalid claims,  no breakout rooms were found for this room, the
-                            breakout room id is invalid, the room doesn't exist or the guest
-                            does not have a valid invite for this room. Guests shall not be
-                            able to distinguish between existing rooms and rooms they don't
-                            have permission to enter, therefore the response is the same in
-                            these cases
+                            breakout room id is invalid, the room doesn't exist, the guest
+                            does not have a valid invite for this room or legacy signaling has been
+                            disabled for this controller. Guests shall not be able to distinguish
+                            between existing rooms and rooms they don't have permission to enter,
+                            therefore the response is the same in these cases
           content:
             application/json:
               schema:
@@ -1874,6 +1879,11 @@ paths:
                   value:
                     code: invalid_breakout_room_id
                     message: The provided breakout room ID is invalid
+                LegacySignalingDisabled:
+                  summary: Legacy signaling is disabled
+                  value:
+                    code: legacy_signaling_disabled
+                    message: "Legacy signaling has been disabled on this controller, use roomserver signaling instead"
                 NoBreakoutRooms:
                   summary: No breakout rooms
                   value:
@@ -1896,7 +1906,7 @@ paths:
             www-authenticate:
               schema:
                 type: string
-              description: "will contain 'session expired' to distinguish between an invalid and an expired token"
+              description: "Will contain 'session expired' to distinguish between an invalid and an expired token"
           content:
             application/json:
               schema:

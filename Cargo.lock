@@ -828,7 +828,7 @@ dependencies = [
  "hex",
  "hmac",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "once_cell",
  "p256 0.11.1",
  "percent-encoding",
@@ -937,7 +937,7 @@ dependencies = [
  "bytes-utils",
  "futures-core",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 0.4.6",
  "once_cell",
  "percent-encoding",
@@ -989,7 +989,7 @@ dependencies = [
  "bytes",
  "fastrand 2.3.0",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 0.4.6",
  "http-body 1.0.1",
  "once_cell",
@@ -1009,7 +1009,7 @@ dependencies = [
  "aws-smithy-types",
  "bytes",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "pin-project-lite",
  "tokio",
  "tracing",
@@ -1027,7 +1027,7 @@ dependencies = [
  "bytes-utils",
  "futures-core",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 0.4.6",
  "http-body 1.0.1",
  "http-body-util",
@@ -1072,14 +1072,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
 dependencies = [
  "async-trait",
- "axum-core",
+ "axum-core 0.4.5",
  "bytes",
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "http-body-util",
  "itoa",
- "matchit",
+ "matchit 0.7.3",
  "memchr",
  "mime",
  "percent-encoding",
@@ -1093,6 +1093,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "021e862c184ae977658b36c4500f7feac3221ca5da43e3f25bd04ab6c79a29b5"
+dependencies = [
+ "axum-core 0.5.2",
+ "bytes",
+ "form_urlencoded",
+ "futures-util",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "hyper 1.6.0",
+ "hyper-util",
+ "itoa",
+ "matchit 0.8.4",
+ "memchr",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustversion",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_urlencoded",
+ "sync_wrapper 1.0.2",
+ "tokio",
+ "tower 0.5.2",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
 name = "axum-core"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1101,7 +1135,7 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "http-body-util",
  "mime",
@@ -1110,6 +1144,26 @@ dependencies = [
  "sync_wrapper 1.0.2",
  "tower-layer",
  "tower-service",
+]
+
+[[package]]
+name = "axum-core"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68464cd0412f486726fb3373129ef5d2993f90c34bc2bc1c1e9943b2f4fc7ca6"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "http 1.3.1",
+ "http-body 1.0.1",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "rustversion",
+ "sync_wrapper 1.0.2",
+ "tower-layer",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -2175,6 +2229,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
+
+[[package]]
 name = "data-url"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2709,7 +2769,7 @@ version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "27f998f8294bc5e7d4f8ea31bd08a1e4a69f94e79d88bc289ea48e9eb7c33b39"
 dependencies = [
- "http 1.2.0",
+ "http 1.3.1",
  "prost 0.13.5",
  "tokio",
  "tokio-stream",
@@ -3776,7 +3836,7 @@ dependencies = [
  "fnv",
  "futures-core",
  "futures-sink",
- "http 1.2.0",
+ "http 1.3.1",
  "indexmap 2.8.0",
  "slab",
  "tokio",
@@ -3930,9 +3990,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "1.2.0"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f16ca2af56261c99fba8bac40a10251ce8188205a4c448fbb745a2e4daa76fea"
+checksum = "f4a85d31aea989eead29a3aaf9e1115a180df8282431156e533de47660892565"
 dependencies = [
  "bytes",
  "fnv",
@@ -3957,7 +4017,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1efedce1fb8e6913f23e0c92de8e62cd5b772a67e7b3946df930a62566c93184"
 dependencies = [
  "bytes",
- "http 1.2.0",
+ "http 1.3.1",
 ]
 
 [[package]]
@@ -3968,9 +4028,64 @@ checksum = "793429d76616a256bcb62c2a2ec2bed781c8307e797e2598c50010f2bee2544f"
 dependencies = [
  "bytes",
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "pin-project-lite",
+]
+
+[[package]]
+name = "http-request-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3076872b277efd8eac5d6a302b585298ab272dd75ff0664b95e507d2007dc0a"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "http 1.3.1",
+ "http-request-derive-macros",
+ "serde",
+ "serde_json",
+ "serde_url_params",
+ "snafu",
+ "url",
+]
+
+[[package]]
+name = "http-request-derive-client"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d1abdaaaa3fb1404482e695c82d2a780d96530012f99d123a9fd9e19584716e"
+dependencies = [
+ "async-trait",
+ "http-request-derive",
+]
+
+[[package]]
+name = "http-request-derive-client-reqwest"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fddf7a5031f97b360b9caf8c38a002034ee84672ead66833a86fc2ca656578c8"
+dependencies = [
+ "async-trait",
+ "http 1.3.1",
+ "http-request-derive",
+ "http-request-derive-client",
+ "reqwest 0.12.12",
+ "snafu",
+ "url",
+]
+
+[[package]]
+name = "http-request-derive-macros"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3198ccc630b08dedb2e2fb86d7daf6a5fba43b2e722e1273afdf4cedb0b0db1"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "strum 0.27.1",
+ "syn",
 ]
 
 [[package]]
@@ -4028,7 +4143,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "h2 0.4.8",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "httparse",
  "httpdate",
@@ -4062,7 +4177,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d191583f3da1305256f22463b9bb0471acad48a4e534a5218b9963e9c1f59b2"
 dependencies = [
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "hyper 1.6.0",
  "hyper-util",
  "rustls 0.23.23",
@@ -4095,7 +4210,7 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "hyper 1.6.0",
  "pin-project-lite",
@@ -4633,7 +4748,7 @@ version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "435b864e517b4e164fa5877ca7b28eb9e59ef92824658bcc9a633ff7c3204153"
 dependencies = [
- "http 1.2.0",
+ "http 1.3.1",
  "itertools 0.14.0",
  "snafu",
  "uuid",
@@ -4943,6 +5058,12 @@ name = "matchit"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+
+[[package]]
+name = "matchit"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "maybe-async"
@@ -5390,7 +5511,7 @@ dependencies = [
  "either",
  "fluent-langneg",
  "futures",
- "http 1.2.0",
+ "http 1.3.1",
  "humansize",
  "itertools 0.14.0",
  "kustos",
@@ -5410,6 +5531,7 @@ dependencies = [
  "opentalk-jobs",
  "opentalk-keycloak-admin",
  "opentalk-r3dlock",
+ "opentalk-roomserver-client",
  "opentalk-signaling-core",
  "opentalk-types-api-v1",
  "opentalk-types-common",
@@ -5480,6 +5602,8 @@ dependencies = [
  "opentalk-keycloak-admin",
  "opentalk-mail-worker-protocol",
  "opentalk-nextcloud-client",
+ "opentalk-roomserver-client",
+ "opentalk-roomserver-types",
  "opentalk-signaling-core",
  "opentalk-test-util",
  "opentalk-types-api-v1",
@@ -5834,6 +5958,145 @@ dependencies = [
  "typst",
  "typst-kit",
  "typst-pdf",
+]
+
+[[package]]
+name = "opentalk-roomserver-client"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8447f9ae856d29d5d4bb8d4f23ddd068225a27db7fd99ee45d7d6d1741a8843"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "http 1.3.1",
+ "http-request-derive",
+ "http-request-derive-client",
+ "http-request-derive-client-reqwest",
+ "log",
+ "opentalk-roomserver-signaling",
+ "opentalk-roomserver-types",
+ "opentalk-roomserver-types-chat",
+ "opentalk-roomserver-types-e2ee",
+ "opentalk-roomserver-types-livekit",
+ "opentalk-roomserver-types-ping",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "reqwest 0.12.12",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-tungstenite",
+ "tungstenite",
+ "url",
+]
+
+[[package]]
+name = "opentalk-roomserver-common"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13d8280deba49daa36236690f2e64775aa37c54e99f2e03b2531769cfa3773aa"
+dependencies = [
+ "anyhow",
+ "config",
+ "dirs",
+ "rand 0.9.0",
+ "serde",
+ "serde_path_to_error",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "opentalk-roomserver-signaling"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80581ad0def82a67b3b5b17c03e76a5eab08f7dcf355ac2d4b1738df3b7211f4"
+dependencies = [
+ "anyhow",
+ "futures",
+ "log",
+ "opentalk-roomserver-common",
+ "opentalk-roomserver-types",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "opentalk-roomserver-types"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ace5b1b396d5db342ed29ffe107cafad6517b618feebbd10658c8e5405a13fd9"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "derive_more 2.0.1",
+ "opentalk-types-api-v1",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "opentalk-types-signaling-control",
+ "serde",
+ "serde_json",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "opentalk-roomserver-types-chat"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44d74c513dcc76c7a94cbac7453c70a0b226a67f5cc44c3b8616e65ff0119b64"
+dependencies = [
+ "derive_more 2.0.1",
+ "opentalk-roomserver-signaling",
+ "opentalk-roomserver-types",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+ "uuid",
+]
+
+[[package]]
+name = "opentalk-roomserver-types-e2ee"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e0efe395cedfee55a654bd802a37f2278689b204fbdb2a2dcb7baddf93b955b"
+dependencies = [
+ "bytes",
+ "opentalk-roomserver-signaling",
+ "opentalk-roomserver-types",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+]
+
+[[package]]
+name = "opentalk-roomserver-types-livekit"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcc1a34a39285d98b82f6cbc04d6c60c7025c316eb46cad29d65f4a2e8e98595"
+dependencies = [
+ "opentalk-roomserver-signaling",
+ "opentalk-roomserver-types",
+ "opentalk-types-common",
+ "opentalk-types-signaling",
+ "serde",
+]
+
+[[package]]
+name = "opentalk-roomserver-types-ping"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ceba6a16eb8bf2f9deefd3aaf1e572d09075a407a342ae066b317f92aef24903"
+dependencies = [
+ "opentalk-roomserver-signaling",
+ "opentalk-roomserver-types",
+ "opentalk-types-common",
+ "serde",
 ]
 
 [[package]]
@@ -6331,18 +6594,19 @@ dependencies = [
 
 [[package]]
 name = "opentalk-types-api-v1"
-version = "0.39.0"
+version = "0.39.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c0f573adfac6a5ff0d8ee684dc03d8c2451fc50a6024c7a9fb1f04f73321b6a"
+checksum = "b48ffa662aa65d1d20ca46163614dea0ed54ce378b2db1f9d9e1983570831cac"
 dependencies = [
  "actix-web",
+ "axum 0.8.4",
  "base64 0.22.1",
  "bincode 2.0.1",
  "chrono",
  "chrono-tz",
  "derive_more 2.0.1",
  "http 0.2.12",
- "http 1.2.0",
+ "http 1.3.1",
  "log",
  "opentalk-types-common",
  "serde",
@@ -6694,7 +6958,7 @@ checksum = "46d7ab32b827b5b495bd90fa95a6cb65ccc293555dcc3199ae2937d2d237c8ed"
 dependencies = [
  "async-trait",
  "bytes",
- "http 1.2.0",
+ "http 1.3.1",
  "opentelemetry",
  "reqwest 0.12.12",
  "tracing",
@@ -6707,7 +6971,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d899720fe06916ccba71c01d04ecd77312734e2de3467fd30d9d580c8ce85656"
 dependencies = [
  "futures-core",
- "http 1.2.0",
+ "http 1.3.1",
  "opentelemetry",
  "opentelemetry-http",
  "opentelemetry-proto",
@@ -8051,7 +8315,7 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "futures-util",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "http-body-util",
  "hyper 1.6.0",
@@ -8095,7 +8359,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "digest_auth",
- "http 1.2.0",
+ "http 1.3.1",
  "httpdate",
  "reqwest 0.12.12",
  "serde",
@@ -8727,6 +8991,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "serde_url_params"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c43307d0640738af32fe8d01e47119bc0fc8a686be470a44a586caff76dfb34"
+dependencies = [
+ "serde",
+ "url",
 ]
 
 [[package]]
@@ -9649,6 +9923,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-tungstenite"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "489a59b6730eda1b0171fcfda8b121f4bee2b35cba8645ca35c5f7ba3eb736c1"
+dependencies = [
+ "futures-util",
+ "log",
+ "tokio",
+ "tungstenite",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9703,11 +9989,11 @@ checksum = "877c5b330756d856ffcc4553ab34a5684481ade925ecc54bcd1bf02b1d0d4d52"
 dependencies = [
  "async-stream",
  "async-trait",
- "axum",
+ "axum 0.7.9",
  "base64 0.22.1",
  "bytes",
  "h2 0.4.8",
- "http 1.2.0",
+ "http 1.3.1",
  "http-body 1.0.1",
  "http-body-util",
  "hyper 1.6.0",
@@ -9772,6 +10058,7 @@ dependencies = [
  "tokio",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -9903,6 +10190,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5be21190ff5d38e8b4a2d3b6a3ae57f612cc39c96e83cedeaf7abc338a8bac4a"
 dependencies = [
  "core_maths",
+]
+
+[[package]]
+name = "tungstenite"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eadc29d668c91fcc564941132e17b28a7ceb2f3ebf0b9dae3e03fd7a6748eb0d"
+dependencies = [
+ "bytes",
+ "data-encoding",
+ "http 1.3.1",
+ "httparse",
+ "log",
+ "rand 0.9.0",
+ "sha1",
+ "thiserror 2.0.12",
+ "utf-8",
 ]
 
 [[package]]
@@ -10415,6 +10719,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "utf-8"
+version = "0.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
 name = "utf16_iter"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10441,6 +10751,7 @@ dependencies = [
  "indexmap 2.8.0",
  "serde",
  "serde_json",
+ "serde_yaml",
  "utoipa-gen",
 ]
 

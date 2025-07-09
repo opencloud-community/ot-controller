@@ -876,6 +876,7 @@ async fn remove_invitee_permissions(
         format!("/rooms/{room_id}/assets"),
         format!("/rooms/{room_id}/assets/*"),
         format!("/rooms/{room_id}/streaming_targets"),
+        format!("/rooms/{room_id}/roomserver/start"),
     ];
 
     _ = authz

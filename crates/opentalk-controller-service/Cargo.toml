@@ -38,6 +38,8 @@ opentalk-db-storage.workspace = true
 opentalk-keycloak-admin.workspace = true
 opentalk-mail-worker-protocol.workspace = true
 opentalk-nextcloud-client.workspace = true
+opentalk-roomserver-client.workspace = true
+opentalk-roomserver-types.workspace = true
 opentalk-signaling-core.workspace = true
 opentalk-types-api-v1 = { workspace = true, features = ["backend"] }
 opentalk-types-common = { workspace = true, features = [
